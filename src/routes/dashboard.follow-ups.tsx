@@ -1,0 +1,131 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Calendar, ChevronRight, CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+export const Route = createFileRoute("/dashboard/follow-ups")({
+  head: () => ({ meta: [{ title: "Follow-ups — CCAC" }] }),
+  component: FollowUpsPage,
+});
+
+type FollowUpRow = {
+  id: string;
+  due_date: string;
+  touch_number: number;
+  completed: boolean;
+  contact_id: string;
+  evangelism_contacts: {
+    id: string;
+    first_name: string;
+    last_name: string | null;
+    phone: string | null;
+    where_met: string | null;
+  } | null;
+};
+
+function FollowUpsPage() {
+  const { user } = useSession();
+  const [rows, setRows] = useState<FollowUpRow[]>([]);
+  const [filter, setFilter] = useState<"due" | "upcoming" | "done">("due");
+
+  const load = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("contact_follow_ups")
+      .select("*, evangelism_contacts(id, first_name, last_name, phone, where_met)")
+      .eq("assigned_to", user.id)
+      .order("due_date");
+    if (error) return toast.error(error.message);
+    setRows((data ?? []) as FollowUpRow[]);
+  };
+
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [user]);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const filtered = rows.filter((r) => {
+    if (filter === "done") return r.completed;
+    if (filter === "due") return !r.completed && r.due_date <= today;
+    return !r.completed && r.due_date > today;
+  });
+
+  const markDone = async (id: string) => {
+    const { error } = await supabase.from("contact_follow_ups").update({ completed: true, completed_at: new Date().toISOString() }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Touch complete — well done!");
+    load();
+  };
+
+  return (
+    <div className="space-y-8 max-w-4xl">
+      <div>
+        <div className="eyebrow text-accent mb-2">— Follow-ups</div>
+        <h1 className="font-display text-5xl">Your reminders</h1>
+        <p className="text-muted-foreground mt-2">Three touches per contact, scheduled for Mondays and Thursdays.</p>
+      </div>
+
+      <div className="flex gap-2">
+        <FilterBtn active={filter === "due"} onClick={() => setFilter("due")}>Due now</FilterBtn>
+        <FilterBtn active={filter === "upcoming"} onClick={() => setFilter("upcoming")}>Upcoming</FilterBtn>
+        <FilterBtn active={filter === "done"} onClick={() => setFilter("done")}>Completed</FilterBtn>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="border border-dashed border-border p-16 text-center">
+          <CheckCircle2 className="h-10 w-10 mx-auto text-accent mb-4" />
+          <div className="eyebrow text-muted-foreground">All caught up</div>
+          <p className="text-sm text-muted-foreground mt-2">Nothing in this view right now.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((r) => (
+            <div key={r.id} className="flex items-center gap-4 bg-card border border-border p-5">
+              <div className="flex-shrink-0 text-center w-16">
+                <div className="eyebrow text-accent text-[10px]">Touch</div>
+                <div className="font-display text-3xl">{r.touch_number}</div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <Link
+                  to="/dashboard/evangelism/$id"
+                  params={{ id: r.contact_id }}
+                  className="font-display text-xl hover:text-accent inline-flex items-center gap-2"
+                >
+                  {r.evangelism_contacts?.first_name} {r.evangelism_contacts?.last_name}
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+                <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(r.due_date).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+                  </span>
+                  {r.evangelism_contacts?.phone && <span>{r.evangelism_contacts.phone}</span>}
+                </div>
+              </div>
+              {!r.completed ? (
+                <Button onClick={() => markDone(r.id)} size="sm" className="bg-night text-night-foreground hover:bg-night/90 rounded-none eyebrow">
+                  Mark Done
+                </Button>
+              ) : (
+                <Badge variant="secondary">Done</Badge>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FilterBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`eyebrow px-4 py-2 border ${active ? "bg-night text-night-foreground border-night" : "bg-card text-muted-foreground border-border hover:text-foreground"}`}
+    >
+      {children}
+    </button>
+  );
+}
