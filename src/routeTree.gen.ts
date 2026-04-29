@@ -9,38 +9,188 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PlanVisitRouteImport } from './routes/plan-visit'
+import { Route as FindUsRouteImport } from './routes/find-us'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardFollowUpsRouteImport } from './routes/dashboard.follow-ups'
+import { Route as DashboardEvangelismRouteImport } from './routes/dashboard.evangelism'
+import { Route as DashboardEvangelismIdRouteImport } from './routes/dashboard.evangelism.$id'
 
+const PlanVisitRoute = PlanVisitRouteImport.update({
+  id: '/plan-visit',
+  path: '/plan-visit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FindUsRoute = FindUsRouteImport.update({
+  id: '/find-us',
+  path: '/find-us',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardFollowUpsRoute = DashboardFollowUpsRouteImport.update({
+  id: '/follow-ups',
+  path: '/follow-ups',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardEvangelismRoute = DashboardEvangelismRouteImport.update({
+  id: '/evangelism',
+  path: '/evangelism',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardEvangelismIdRoute = DashboardEvangelismIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => DashboardEvangelismRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/find-us': typeof FindUsRoute
+  '/plan-visit': typeof PlanVisitRoute
+  '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
+  '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
+  '/find-us': typeof FindUsRoute
+  '/plan-visit': typeof PlanVisitRoute
+  '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
+  '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
+  '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/find-us': typeof FindUsRoute
+  '/plan-visit': typeof PlanVisitRoute
+  '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
+  '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/auth'
+    | '/dashboard'
+    | '/find-us'
+    | '/plan-visit'
+    | '/dashboard/evangelism'
+    | '/dashboard/follow-ups'
+    | '/dashboard/'
+    | '/dashboard/evangelism/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/auth'
+    | '/find-us'
+    | '/plan-visit'
+    | '/dashboard/evangelism'
+    | '/dashboard/follow-ups'
+    | '/dashboard'
+    | '/dashboard/evangelism/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/auth'
+    | '/dashboard'
+    | '/find-us'
+    | '/plan-visit'
+    | '/dashboard/evangelism'
+    | '/dashboard/follow-ups'
+    | '/dashboard/'
+    | '/dashboard/evangelism/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  AuthRoute: typeof AuthRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
+  FindUsRoute: typeof FindUsRoute
+  PlanVisitRoute: typeof PlanVisitRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/plan-visit': {
+      id: '/plan-visit'
+      path: '/plan-visit'
+      fullPath: '/plan-visit'
+      preLoaderRoute: typeof PlanVisitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/find-us': {
+      id: '/find-us'
+      path: '/find-us'
+      fullPath: '/find-us'
+      preLoaderRoute: typeof FindUsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,21 +198,72 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/follow-ups': {
+      id: '/dashboard/follow-ups'
+      path: '/follow-ups'
+      fullPath: '/dashboard/follow-ups'
+      preLoaderRoute: typeof DashboardFollowUpsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/evangelism': {
+      id: '/dashboard/evangelism'
+      path: '/evangelism'
+      fullPath: '/dashboard/evangelism'
+      preLoaderRoute: typeof DashboardEvangelismRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/evangelism/$id': {
+      id: '/dashboard/evangelism/$id'
+      path: '/$id'
+      fullPath: '/dashboard/evangelism/$id'
+      preLoaderRoute: typeof DashboardEvangelismIdRouteImport
+      parentRoute: typeof DashboardEvangelismRoute
+    }
   }
 }
 
+interface DashboardEvangelismRouteChildren {
+  DashboardEvangelismIdRoute: typeof DashboardEvangelismIdRoute
+}
+
+const DashboardEvangelismRouteChildren: DashboardEvangelismRouteChildren = {
+  DashboardEvangelismIdRoute: DashboardEvangelismIdRoute,
+}
+
+const DashboardEvangelismRouteWithChildren =
+  DashboardEvangelismRoute._addFileChildren(DashboardEvangelismRouteChildren)
+
+interface DashboardRouteChildren {
+  DashboardEvangelismRoute: typeof DashboardEvangelismRouteWithChildren
+  DashboardFollowUpsRoute: typeof DashboardFollowUpsRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardEvangelismRoute: DashboardEvangelismRouteWithChildren,
+  DashboardFollowUpsRoute: DashboardFollowUpsRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  AuthRoute: AuthRoute,
+  DashboardRoute: DashboardRouteWithChildren,
+  FindUsRoute: FindUsRoute,
+  PlanVisitRoute: PlanVisitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
