@@ -9,8 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PlanVisitRouteImport } from './routes/plan-visit'
+import { Route as FindUsRouteImport } from './routes/find-us'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 
+const PlanVisitRoute = PlanVisitRouteImport.update({
+  id: '/plan-visit',
+  path: '/plan-visit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FindUsRoute = FindUsRouteImport.update({
+  id: '/find-us',
+  path: '/find-us',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +37,61 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/find-us': typeof FindUsRoute
+  '/plan-visit': typeof PlanVisitRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/find-us': typeof FindUsRoute
+  '/plan-visit': typeof PlanVisitRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/find-us': typeof FindUsRoute
+  '/plan-visit': typeof PlanVisitRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/about' | '/find-us' | '/plan-visit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/about' | '/find-us' | '/plan-visit'
+  id: '__root__' | '/' | '/about' | '/find-us' | '/plan-visit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  FindUsRoute: typeof FindUsRoute
+  PlanVisitRoute: typeof PlanVisitRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/plan-visit': {
+      id: '/plan-visit'
+      path: '/plan-visit'
+      fullPath: '/plan-visit'
+      preLoaderRoute: typeof PlanVisitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/find-us': {
+      id: '/find-us'
+      path: '/find-us'
+      fullPath: '/find-us'
+      preLoaderRoute: typeof FindUsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,7 +104,19 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  FindUsRoute: FindUsRoute,
+  PlanVisitRoute: PlanVisitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
