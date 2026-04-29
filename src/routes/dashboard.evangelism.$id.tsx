@@ -79,10 +79,11 @@ function ContactDetail() {
 
   const canEdit = user?.id === contact.added_by || isAdmin;
 
-  const updateFlag = async (field: keyof Contact, value: boolean) => {
-    const { error } = await supabase.from("evangelism_contacts").update({ [field]: value }).eq("id", id);
+  const updateFlag = async (field: "visited" | "baptized" | "holy_ghost" | "gospel_shared", value: boolean) => {
+    const patch = { [field]: value } as Partial<Contact>;
+    const { error } = await supabase.from("evangelism_contacts").update(patch).eq("id", id);
     if (error) return toast.error(error.message);
-    setContact({ ...contact, [field]: value });
+    if (contact) setContact({ ...contact, [field]: value });
   };
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {

@@ -16,6 +16,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardFollowUpsRouteImport } from './routes/dashboard.follow-ups'
+import { Route as DashboardEvangelismRouteImport } from './routes/dashboard.evangelism'
+import { Route as DashboardEvangelismIdRouteImport } from './routes/dashboard.evangelism.$id'
 
 const PlanVisitRoute = PlanVisitRouteImport.update({
   id: '/plan-visit',
@@ -52,6 +55,21 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardFollowUpsRoute = DashboardFollowUpsRouteImport.update({
+  id: '/follow-ups',
+  path: '/follow-ups',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardEvangelismRoute = DashboardEvangelismRouteImport.update({
+  id: '/evangelism',
+  path: '/evangelism',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardEvangelismIdRoute = DashboardEvangelismIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => DashboardEvangelismRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -60,7 +78,10 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/find-us': typeof FindUsRoute
   '/plan-visit': typeof PlanVisitRoute
+  '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
+  '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,7 +89,10 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/find-us': typeof FindUsRoute
   '/plan-visit': typeof PlanVisitRoute
+  '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
+  '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -78,7 +102,10 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/find-us': typeof FindUsRoute
   '/plan-visit': typeof PlanVisitRoute
+  '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
+  '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -89,9 +116,21 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/find-us'
     | '/plan-visit'
+    | '/dashboard/evangelism'
+    | '/dashboard/follow-ups'
     | '/dashboard/'
+    | '/dashboard/evangelism/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/auth' | '/find-us' | '/plan-visit' | '/dashboard'
+  to:
+    | '/'
+    | '/about'
+    | '/auth'
+    | '/find-us'
+    | '/plan-visit'
+    | '/dashboard/evangelism'
+    | '/dashboard/follow-ups'
+    | '/dashboard'
+    | '/dashboard/evangelism/$id'
   id:
     | '__root__'
     | '/'
@@ -100,7 +139,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/find-us'
     | '/plan-visit'
+    | '/dashboard/evangelism'
+    | '/dashboard/follow-ups'
     | '/dashboard/'
+    | '/dashboard/evangelism/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -163,14 +205,50 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/follow-ups': {
+      id: '/dashboard/follow-ups'
+      path: '/follow-ups'
+      fullPath: '/dashboard/follow-ups'
+      preLoaderRoute: typeof DashboardFollowUpsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/evangelism': {
+      id: '/dashboard/evangelism'
+      path: '/evangelism'
+      fullPath: '/dashboard/evangelism'
+      preLoaderRoute: typeof DashboardEvangelismRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/evangelism/$id': {
+      id: '/dashboard/evangelism/$id'
+      path: '/$id'
+      fullPath: '/dashboard/evangelism/$id'
+      preLoaderRoute: typeof DashboardEvangelismIdRouteImport
+      parentRoute: typeof DashboardEvangelismRoute
+    }
   }
 }
 
+interface DashboardEvangelismRouteChildren {
+  DashboardEvangelismIdRoute: typeof DashboardEvangelismIdRoute
+}
+
+const DashboardEvangelismRouteChildren: DashboardEvangelismRouteChildren = {
+  DashboardEvangelismIdRoute: DashboardEvangelismIdRoute,
+}
+
+const DashboardEvangelismRouteWithChildren =
+  DashboardEvangelismRoute._addFileChildren(DashboardEvangelismRouteChildren)
+
 interface DashboardRouteChildren {
+  DashboardEvangelismRoute: typeof DashboardEvangelismRouteWithChildren
+  DashboardFollowUpsRoute: typeof DashboardFollowUpsRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardEvangelismRoute: DashboardEvangelismRouteWithChildren,
+  DashboardFollowUpsRoute: DashboardFollowUpsRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 
