@@ -9,6 +9,7 @@ import { NotificationsBell } from "@/components/NotificationsBell";
 const navItems = [
   { to: "/", label: "Home" },
   { to: "/about", label: "About" },
+  { to: "/events", label: "Events" },
   { to: "/plan-visit", label: "Plan a Visit" },
   { to: "/find-us", label: "Find Us" },
 ];

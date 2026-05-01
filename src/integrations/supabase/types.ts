@@ -112,6 +112,33 @@ export type Database = {
         }
         Relationships: []
       }
+      event_guest_rsvps: {
+        Row: {
+          created_at: string
+          email: string
+          event_id: string
+          id: string
+          name: string
+          response: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          event_id: string
+          id?: string
+          name: string
+          response?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          event_id?: string
+          id?: string
+          name?: string
+          response?: string
+        }
+        Relationships: []
+      }
       event_rsvps: {
         Row: {
           created_at: string
