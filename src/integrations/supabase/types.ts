@@ -112,6 +112,95 @@ export type Database = {
         }
         Relationships: []
       }
+      event_rsvps: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          response: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          response?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          response?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          description: string | null
+          end_at: string | null
+          flyer_url: string | null
+          id: string
+          is_public: boolean
+          location: string | null
+          rejection_reason: string | null
+          start_at: string
+          status: string
+          submitted_by: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description?: string | null
+          end_at?: string | null
+          flyer_url?: string | null
+          id?: string
+          is_public?: boolean
+          location?: string | null
+          rejection_reason?: string | null
+          start_at: string
+          status?: string
+          submitted_by: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description?: string | null
+          end_at?: string | null
+          flyer_url?: string | null
+          id?: string
+          is_public?: boolean
+          location?: string | null
+          rejection_reason?: string | null
+          start_at?: string
+          status?: string
+          submitted_by?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
