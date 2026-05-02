@@ -128,7 +128,7 @@ function EventDetailPage() {
   useEffect(() => {
     if (user) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, id]);
+  }, [user, id, isAdmin, isLeader]);
 
   const setMyRsvp = async (response: Rsvp["response"]) => {
     if (!user || !event) return;
