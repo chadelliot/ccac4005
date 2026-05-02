@@ -82,7 +82,47 @@ function EventDetailPage() {
       if (r.response in c) (c as any)[r.response]++;
     });
     setRsvpCounts(c);
+
+    if (isAdmin || isLeader) {
+      const { data: guests } = await supabase
+        .from("event_guest_rsvps")
+        .select("id,name,email,response,created_at")
+        .eq("event_id", id)
+        .order("created_at", { ascending: false });
+      setGuestRsvps((guests ?? []) as GuestRsvp[]);
+    } else {
+      setGuestRsvps([]);
+    }
     setLoading(false);
+  };
+
+  const exportGuestsCsv = () => {
+    if (!event) return;
+    const header = ["Name", "Email", "Response", "Submitted at"];
+    const rows = guestRsvps.map((g) => [
+      g.name,
+      g.email,
+      g.response,
+      new Date(g.created_at).toISOString(),
+    ]);
+    const csv = [header, ...rows]
+      .map((row) =>
+        row
+          .map((cell) => {
+            const s = String(cell ?? "");
+            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+          })
+          .join(","),
+      )
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const slug = event.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    a.href = url;
+    a.download = `guest-rsvps-${slug || event.id}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
