@@ -250,6 +250,19 @@ function ContactDetail() {
             <Input name="address" defaultValue={contact.address ?? ""} maxLength={200} />
           </div>
           <div>
+            <Label>Status</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v as ContactStatus)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((s) => (
+                  <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label>Prayer request</Label>
             <Textarea name="prayer_request" defaultValue={contact.prayer_request ?? ""} rows={2} maxLength={1000} />
           </div>
