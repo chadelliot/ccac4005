@@ -6,8 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, MapPin, Calendar, Check, X, Users } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Check, X, Users, Download } from "lucide-react";
 import { StatusBadge } from "./dashboard.events";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/dashboard/events/$id")({
   head: () => ({ meta: [{ title: "Event — CCAC" }] }),
