@@ -459,6 +459,7 @@ function GuestResponseBadge({ response }: { response: GuestRsvp["response"] }) {
   return <Badge variant="outline">Can't make it</Badge>;
 }
 
+function RsvpButton({
   active,
   onClick,
   label,
