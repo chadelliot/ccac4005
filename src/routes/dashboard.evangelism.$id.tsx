@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ArrowLeft, Phone, MapPin, Calendar, Trash2 } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, Calendar, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const STATUS_OPTIONS = ["new", "contacted", "visiting", "member", "cold"] as const;
+type ContactStatus = (typeof STATUS_OPTIONS)[number];
 
 export const Route = createFileRoute("/dashboard/evangelism/$id")({
   head: () => ({ meta: [{ title: "Contact — CCAC" }] }),
@@ -51,6 +55,7 @@ const editSchema = z.object({
   where_met: z.string().trim().max(120).nullable(),
   notes: z.string().trim().max(2000).nullable(),
   prayer_request: z.string().trim().max(1000).nullable(),
+  status: z.enum(STATUS_OPTIONS),
 });
 
 function ContactDetail() {
@@ -61,6 +66,11 @@ function ContactDetail() {
   const [contact, setContact] = useState<Contact | null>(null);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<ContactStatus>("new");
+
+  useEffect(() => {
+    if (contact) setStatus((contact.status as ContactStatus) ?? "new");
+  }, [contact]);
 
   const load = async () => {
     const [{ data: c }, { data: f }] = await Promise.all([
@@ -97,6 +107,7 @@ function ContactDetail() {
       where_met: (fd.get("where_met") as string) || null,
       notes: (fd.get("notes") as string) || null,
       prayer_request: (fd.get("prayer_request") as string) || null,
+      status,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
@@ -150,28 +161,58 @@ function ContactDetail() {
         ) : (
           <div className="space-y-2">
             {followUps.map((f) => (
-              <div key={f.id} className={`flex items-center justify-between p-3 border ${f.completed ? "bg-muted border-border opacity-60" : "border-border"}`}>
-                <div>
+              <div key={f.id} className={`flex flex-wrap items-center justify-between gap-3 p-3 border ${f.completed ? "bg-muted border-border opacity-60" : "border-border"}`}>
+                <div className="min-w-0">
                   <div className="font-medium">Touch {f.touch_number}</div>
                   <div className="text-xs text-muted-foreground">
-                    {new Date(f.due_date).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+                    {new Date(f.due_date + "T00:00:00").toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
                   </div>
                 </div>
                 {f.completed ? (
                   <Badge variant="secondary">Done</Badge>
                 ) : (
                   canEdit && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        const { error } = await supabase.from("contact_follow_ups").update({ completed: true, completed_at: new Date().toISOString() }).eq("id", f.id);
-                        if (error) return toast.error(error.message);
-                        load();
-                      }}
-                    >
-                      Mark complete
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Input
+                        type="date"
+                        defaultValue={f.due_date}
+                        className="h-8 w-[150px]"
+                        onChange={async (e) => {
+                          const newDate = e.target.value;
+                          if (!newDate || newDate === f.due_date) return;
+                          const { error } = await supabase.from("contact_follow_ups").update({ due_date: newDate }).eq("id", f.id);
+                          if (error) return toast.error(error.message);
+                          toast.success("Rescheduled");
+                          load();
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          const { error } = await supabase.from("contact_follow_ups").update({ completed: true, completed_at: new Date().toISOString() }).eq("id", f.id);
+                          if (error) return toast.error(error.message);
+                          load();
+                        }}
+                      >
+                        Mark complete
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:bg-destructive/10"
+                        onClick={async () => {
+                          if (!confirm(`Cancel touch ${f.touch_number}?`)) return;
+                          const { error } = await supabase.from("contact_follow_ups").delete().eq("id", f.id);
+                          if (error) return toast.error(error.message);
+                          toast.success("Cancelled");
+                          load();
+                        }}
+                        title="Cancel touch"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   )
                 )}
               </div>
@@ -207,6 +248,19 @@ function ContactDetail() {
           <div>
             <Label>Address</Label>
             <Input name="address" defaultValue={contact.address ?? ""} maxLength={200} />
+          </div>
+          <div>
+            <Label>Status</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v as ContactStatus)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((s) => (
+                  <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>Prayer request</Label>
