@@ -6,8 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, MapPin, Calendar, Check, X, Users } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Check, X, Users, Download } from "lucide-react";
 import { StatusBadge } from "./dashboard.events";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/dashboard/events/$id")({
   head: () => ({ meta: [{ title: "Event — CCAC" }] }),
@@ -31,10 +40,18 @@ type EventRow = {
 
 type Rsvp = { response: "going" | "maybe" | "not_going" };
 
+type GuestRsvp = {
+  id: string;
+  name: string;
+  email: string;
+  response: "going" | "maybe" | "not_going";
+  created_at: string;
+};
+
 function EventDetailPage() {
   const { id } = Route.useParams();
   const { user } = useSession();
-  const { isAdmin } = useRoles(user);
+  const { isAdmin, isLeader } = useRoles(user);
   const navigate = useNavigate();
   const [event, setEvent] = useState<EventRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +59,7 @@ function EventDetailPage() {
   const [rsvpCounts, setRsvpCounts] = useState({ going: 0, maybe: 0, not_going: 0 });
   const [rejectionReason, setRejectionReason] = useState("");
   const [working, setWorking] = useState(false);
+  const [guestRsvps, setGuestRsvps] = useState<GuestRsvp[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -64,13 +82,53 @@ function EventDetailPage() {
       if (r.response in c) (c as any)[r.response]++;
     });
     setRsvpCounts(c);
+
+    if (isAdmin || isLeader) {
+      const { data: guests } = await supabase
+        .from("event_guest_rsvps")
+        .select("id,name,email,response,created_at")
+        .eq("event_id", id)
+        .order("created_at", { ascending: false });
+      setGuestRsvps((guests ?? []) as GuestRsvp[]);
+    } else {
+      setGuestRsvps([]);
+    }
     setLoading(false);
+  };
+
+  const exportGuestsCsv = () => {
+    if (!event) return;
+    const header = ["Name", "Email", "Response", "Submitted at"];
+    const rows = guestRsvps.map((g) => [
+      g.name,
+      g.email,
+      g.response,
+      new Date(g.created_at).toISOString(),
+    ]);
+    const csv = [header, ...rows]
+      .map((row) =>
+        row
+          .map((cell) => {
+            const s = String(cell ?? "");
+            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+          })
+          .join(","),
+      )
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const slug = event.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    a.href = url;
+    a.download = `guest-rsvps-${slug || event.id}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
     if (user) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, id]);
+  }, [user, id, isAdmin, isLeader]);
 
   const setMyRsvp = async (response: Rsvp["response"]) => {
     if (!user || !event) return;
@@ -308,6 +366,80 @@ function EventDetailPage() {
         </div>
       )}
 
+      {/* Guest RSVPs (admin/leader only, public events) */}
+      {(isAdmin || isLeader) && event.is_public && event.status === "approved" && (
+        <div className="border border-border bg-card p-6 space-y-4">
+          <div className="flex items-end justify-between flex-wrap gap-3">
+            <div>
+              <div className="eyebrow text-accent">— Guest RSVPs</div>
+              <div className="font-display text-2xl">
+                Public sign-ups{" "}
+                <span className="text-muted-foreground text-base font-sans">
+                  ({guestRsvps.length})
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Non-members who RSVP'd from the public events page.
+              </p>
+            </div>
+            <Button
+              onClick={exportGuestsCsv}
+              disabled={guestRsvps.length === 0}
+              variant="outline"
+              size="sm"
+            >
+              <Download className="h-4 w-4" /> Export CSV
+            </Button>
+          </div>
+
+          {guestRsvps.length === 0 ? (
+            <div className="text-sm text-muted-foreground border border-dashed border-border p-6 text-center">
+              No guest RSVPs yet.
+            </div>
+          ) : (
+            <div className="border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Response</TableHead>
+                    <TableHead className="text-right">Submitted</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {guestRsvps.map((g) => (
+                    <TableRow key={g.id}>
+                      <TableCell className="font-medium">{g.name}</TableCell>
+                      <TableCell>
+                        <a
+                          href={`mailto:${g.email}`}
+                          className="text-foreground hover:underline"
+                        >
+                          {g.email}
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <GuestResponseBadge response={g.response} />
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground text-xs">
+                        {new Date(g.created_at).toLocaleString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
+      )}
+
+
       {(isOwner || isAdmin) && (
         <div className="pt-4 border-t border-border">
           <Button variant="ghost" size="sm" onClick={remove} className="text-destructive">
@@ -317,6 +449,14 @@ function EventDetailPage() {
       )}
     </div>
   );
+}
+
+function GuestResponseBadge({ response }: { response: GuestRsvp["response"] }) {
+  if (response === "going")
+    return <Badge className="bg-emerald-600 hover:bg-emerald-600">Going</Badge>;
+  if (response === "maybe")
+    return <Badge className="bg-amber-500 hover:bg-amber-500 text-night">Maybe</Badge>;
+  return <Badge variant="outline">Can't make it</Badge>;
 }
 
 function RsvpButton({
