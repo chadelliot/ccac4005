@@ -451,7 +451,14 @@ function EventDetailPage() {
   );
 }
 
-function RsvpButton({
+function GuestResponseBadge({ response }: { response: GuestRsvp["response"] }) {
+  if (response === "going")
+    return <Badge className="bg-emerald-600 hover:bg-emerald-600">Going</Badge>;
+  if (response === "maybe")
+    return <Badge className="bg-amber-500 hover:bg-amber-500 text-night">Maybe</Badge>;
+  return <Badge variant="outline">Can't make it</Badge>;
+}
+
   active,
   onClick,
   label,
