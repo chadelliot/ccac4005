@@ -163,11 +163,11 @@ function EvangelismPage() {
               key={c.id}
               to="/dashboard/evangelism/$id"
               params={{ id: c.id }}
-              className="flex items-center justify-between gap-4 bg-card border border-border p-5 hover:border-foreground/30 transition-colors group"
+              className="flex items-center justify-between gap-4 bg-card border border-border p-5 hover:border-foreground/30 hover:bg-muted/30 transition-colors group cursor-pointer"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <div className="font-display text-xl">{c.first_name} {c.last_name}</div>
+                  <div className="font-display text-xl underline-offset-4 group-hover:underline">{c.first_name} {c.last_name}</div>
                   {c.baptized && <Badge variant="secondary" className="bg-accent/20 text-accent-foreground">Baptized</Badge>}
                   {c.holy_ghost && <Badge variant="secondary" className="bg-night text-night-foreground">Holy Ghost</Badge>}
                   {c.visited && <Badge variant="outline">Visited</Badge>}
@@ -177,7 +177,10 @@ function EvangelismPage() {
                   {c.where_met && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{c.where_met}</span>}
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
+              <div className="flex items-center gap-1 text-xs eyebrow text-muted-foreground group-hover:text-foreground shrink-0">
+                <span className="hidden sm:inline">View</span>
+                <ChevronRight className="h-5 w-5" />
+              </div>
             </Link>
           ))}
         </div>
