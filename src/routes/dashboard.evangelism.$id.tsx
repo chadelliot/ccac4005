@@ -107,6 +107,7 @@ function ContactDetail() {
       where_met: (fd.get("where_met") as string) || null,
       notes: (fd.get("notes") as string) || null,
       prayer_request: (fd.get("prayer_request") as string) || null,
+      status,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
