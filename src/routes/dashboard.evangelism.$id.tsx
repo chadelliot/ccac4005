@@ -161,28 +161,58 @@ function ContactDetail() {
         ) : (
           <div className="space-y-2">
             {followUps.map((f) => (
-              <div key={f.id} className={`flex items-center justify-between p-3 border ${f.completed ? "bg-muted border-border opacity-60" : "border-border"}`}>
-                <div>
+              <div key={f.id} className={`flex flex-wrap items-center justify-between gap-3 p-3 border ${f.completed ? "bg-muted border-border opacity-60" : "border-border"}`}>
+                <div className="min-w-0">
                   <div className="font-medium">Touch {f.touch_number}</div>
                   <div className="text-xs text-muted-foreground">
-                    {new Date(f.due_date).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+                    {new Date(f.due_date + "T00:00:00").toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
                   </div>
                 </div>
                 {f.completed ? (
                   <Badge variant="secondary">Done</Badge>
                 ) : (
                   canEdit && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        const { error } = await supabase.from("contact_follow_ups").update({ completed: true, completed_at: new Date().toISOString() }).eq("id", f.id);
-                        if (error) return toast.error(error.message);
-                        load();
-                      }}
-                    >
-                      Mark complete
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Input
+                        type="date"
+                        defaultValue={f.due_date}
+                        className="h-8 w-[150px]"
+                        onChange={async (e) => {
+                          const newDate = e.target.value;
+                          if (!newDate || newDate === f.due_date) return;
+                          const { error } = await supabase.from("contact_follow_ups").update({ due_date: newDate }).eq("id", f.id);
+                          if (error) return toast.error(error.message);
+                          toast.success("Rescheduled");
+                          load();
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          const { error } = await supabase.from("contact_follow_ups").update({ completed: true, completed_at: new Date().toISOString() }).eq("id", f.id);
+                          if (error) return toast.error(error.message);
+                          load();
+                        }}
+                      >
+                        Mark complete
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:bg-destructive/10"
+                        onClick={async () => {
+                          if (!confirm(`Cancel touch ${f.touch_number}?`)) return;
+                          const { error } = await supabase.from("contact_follow_ups").delete().eq("id", f.id);
+                          if (error) return toast.error(error.message);
+                          toast.success("Cancelled");
+                          load();
+                        }}
+                        title="Cancel touch"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   )
                 )}
               </div>
