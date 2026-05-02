@@ -66,6 +66,11 @@ function ContactDetail() {
   const [contact, setContact] = useState<Contact | null>(null);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<ContactStatus>("new");
+
+  useEffect(() => {
+    if (contact) setStatus((contact.status as ContactStatus) ?? "new");
+  }, [contact]);
 
   const load = async () => {
     const [{ data: c }, { data: f }] = await Promise.all([
