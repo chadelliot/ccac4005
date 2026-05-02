@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ArrowLeft, Phone, MapPin, Calendar, Trash2 } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, Calendar, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const STATUS_OPTIONS = ["new", "contacted", "visiting", "member", "cold"] as const;
+type ContactStatus = (typeof STATUS_OPTIONS)[number];
 
 export const Route = createFileRoute("/dashboard/evangelism/$id")({
   head: () => ({ meta: [{ title: "Contact — CCAC" }] }),
