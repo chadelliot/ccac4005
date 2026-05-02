@@ -440,6 +440,7 @@ function EventDetailPage() {
       )}
 
 
+      {(isOwner || isAdmin) && (
         <div className="pt-4 border-t border-border">
           <Button variant="ghost" size="sm" onClick={remove} className="text-destructive">
             Delete event
