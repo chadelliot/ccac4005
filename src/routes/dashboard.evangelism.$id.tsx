@@ -55,6 +55,7 @@ const editSchema = z.object({
   where_met: z.string().trim().max(120).nullable(),
   notes: z.string().trim().max(2000).nullable(),
   prayer_request: z.string().trim().max(1000).nullable(),
+  status: z.enum(STATUS_OPTIONS),
 });
 
 function ContactDetail() {
