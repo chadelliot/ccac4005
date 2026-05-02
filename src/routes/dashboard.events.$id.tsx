@@ -40,10 +40,18 @@ type EventRow = {
 
 type Rsvp = { response: "going" | "maybe" | "not_going" };
 
+type GuestRsvp = {
+  id: string;
+  name: string;
+  email: string;
+  response: "going" | "maybe" | "not_going";
+  created_at: string;
+};
+
 function EventDetailPage() {
   const { id } = Route.useParams();
   const { user } = useSession();
-  const { isAdmin } = useRoles(user);
+  const { isAdmin, isLeader } = useRoles(user);
   const navigate = useNavigate();
   const [event, setEvent] = useState<EventRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,6 +59,7 @@ function EventDetailPage() {
   const [rsvpCounts, setRsvpCounts] = useState({ going: 0, maybe: 0, not_going: 0 });
   const [rejectionReason, setRejectionReason] = useState("");
   const [working, setWorking] = useState(false);
+  const [guestRsvps, setGuestRsvps] = useState<GuestRsvp[]>([]);
 
   const load = async () => {
     setLoading(true);
