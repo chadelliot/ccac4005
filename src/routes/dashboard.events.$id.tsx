@@ -366,7 +366,80 @@ function EventDetailPage() {
         </div>
       )}
 
-      {(isOwner || isAdmin) && (
+      {/* Guest RSVPs (admin/leader only, public events) */}
+      {(isAdmin || isLeader) && event.is_public && event.status === "approved" && (
+        <div className="border border-border bg-card p-6 space-y-4">
+          <div className="flex items-end justify-between flex-wrap gap-3">
+            <div>
+              <div className="eyebrow text-accent">— Guest RSVPs</div>
+              <div className="font-display text-2xl">
+                Public sign-ups{" "}
+                <span className="text-muted-foreground text-base font-sans">
+                  ({guestRsvps.length})
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Non-members who RSVP'd from the public events page.
+              </p>
+            </div>
+            <Button
+              onClick={exportGuestsCsv}
+              disabled={guestRsvps.length === 0}
+              variant="outline"
+              size="sm"
+            >
+              <Download className="h-4 w-4" /> Export CSV
+            </Button>
+          </div>
+
+          {guestRsvps.length === 0 ? (
+            <div className="text-sm text-muted-foreground border border-dashed border-border p-6 text-center">
+              No guest RSVPs yet.
+            </div>
+          ) : (
+            <div className="border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Response</TableHead>
+                    <TableHead className="text-right">Submitted</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {guestRsvps.map((g) => (
+                    <TableRow key={g.id}>
+                      <TableCell className="font-medium">{g.name}</TableCell>
+                      <TableCell>
+                        <a
+                          href={`mailto:${g.email}`}
+                          className="text-foreground hover:underline"
+                        >
+                          {g.email}
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <GuestResponseBadge response={g.response} />
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground text-xs">
+                        {new Date(g.created_at).toLocaleString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
+      )}
+
+
         <div className="pt-4 border-t border-border">
           <Button variant="ghost" size="sm" onClick={remove} className="text-destructive">
             Delete event
