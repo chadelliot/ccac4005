@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSession, useRoles } from "@/lib/auth";
-import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar } from "lucide-react";
+import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar, UsersRound } from "lucide-react";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
