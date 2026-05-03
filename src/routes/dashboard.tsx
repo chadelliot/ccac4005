@@ -71,6 +71,7 @@ function DashboardLayout() {
           <div className="lg:hidden flex gap-3 overflow-x-auto">
             <DashLinkPill to="/dashboard" exact>Overview</DashLinkPill>
             <DashLinkPill to="/dashboard/events">Events</DashLinkPill>
+            <DashLinkPill to="/dashboard/groups">Groups</DashLinkPill>
             <DashLinkPill to="/dashboard/evangelism">Evangelism</DashLinkPill>
             <DashLinkPill to="/dashboard/follow-ups">Follow-ups</DashLinkPill>
           </div>
