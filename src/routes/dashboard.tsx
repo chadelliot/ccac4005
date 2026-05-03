@@ -49,6 +49,7 @@ function DashboardLayout() {
           <nav className="hidden lg:flex flex-col gap-1">
             <DashLink to="/dashboard" exact icon={<LayoutDashboard className="h-4 w-4" />}>Overview</DashLink>
             <DashLink to="/dashboard/events" icon={<Calendar className="h-4 w-4" />}>Events</DashLink>
+            <DashLink to="/dashboard/groups" icon={<UsersRound className="h-4 w-4" />}>Groups</DashLink>
             <DashLink to="/dashboard/evangelism" icon={<Users className="h-4 w-4" />}>Evangelism</DashLink>
             <DashLink to="/dashboard/follow-ups" icon={<Bell className="h-4 w-4" />}>Follow-ups</DashLink>
           </nav>
