@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSession, useRoles } from "@/lib/auth";
-import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar } from "lucide-react";
+import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar, UsersRound } from "lucide-react";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +49,7 @@ function DashboardLayout() {
           <nav className="hidden lg:flex flex-col gap-1">
             <DashLink to="/dashboard" exact icon={<LayoutDashboard className="h-4 w-4" />}>Overview</DashLink>
             <DashLink to="/dashboard/events" icon={<Calendar className="h-4 w-4" />}>Events</DashLink>
+            <DashLink to="/dashboard/groups" icon={<UsersRound className="h-4 w-4" />}>Groups</DashLink>
             <DashLink to="/dashboard/evangelism" icon={<Users className="h-4 w-4" />}>Evangelism</DashLink>
             <DashLink to="/dashboard/follow-ups" icon={<Bell className="h-4 w-4" />}>Follow-ups</DashLink>
           </nav>
@@ -70,6 +71,7 @@ function DashboardLayout() {
           <div className="lg:hidden flex gap-3 overflow-x-auto">
             <DashLinkPill to="/dashboard" exact>Overview</DashLinkPill>
             <DashLinkPill to="/dashboard/events">Events</DashLinkPill>
+            <DashLinkPill to="/dashboard/groups">Groups</DashLinkPill>
             <DashLinkPill to="/dashboard/evangelism">Evangelism</DashLinkPill>
             <DashLinkPill to="/dashboard/follow-ups">Follow-ups</DashLinkPill>
           </div>
