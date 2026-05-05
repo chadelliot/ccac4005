@@ -6,7 +6,23 @@ export type BookMeta = { name: string; abbr: string; chapters: number };
 export type Verse = [number, string];
 export type Chapter = { c: number; v: Verse[] };
 export type Book = { name: string; abbr: string; chapters: Chapter[] };
-export type LexEntry = { w: string; tl: string; pos: string; def: string; root: string };
+export type LexEntry = {
+  w: string;
+  tl: string;
+  pos: string;
+  def: string;
+  root?: string;
+  definition?: Array<{ t: string; s?: Array<{ t: string; s?: any[] }> }>;
+  definitionSource?: "Thayer" | "BDB" | "Strong's";
+  strongsDef?: string;
+  phonetic?: string;
+  origin?: string;
+  totalOccurrences?: number;
+  usageByWord?: Array<{ word: string; count: number; refs: string[] }>;
+  usageByBook?: Array<{ book: string; count: number }>;
+  kjv?: string;
+  deriv?: string;
+};
 export type Lexicon = Record<string, LexEntry>;
 
 const bookCache = new Map<string, Promise<Book>>();
