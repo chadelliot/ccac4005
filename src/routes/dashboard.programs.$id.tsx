@@ -57,7 +57,7 @@ function ProgramDetail() {
       user ? supabase.from("reading_program_progress").select("day_id").eq("user_id", user.id).eq("program_id", id) : Promise.resolve({ data: [] }),
     ]);
     setProgram(p as Program | null);
-    setDays((d ?? []) as Day[]);
+    setDays((d ?? []) as unknown as Day[]);
     setProgress(new Set(((pr ?? []) as { day_id: string }[]).map((x) => x.day_id)));
   };
 
