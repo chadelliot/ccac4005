@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, BookOpen, ChevronRight } from "lucide-react";
+import { Plus, BookMarked, ChevronRight, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/dashboard/programs")({
-  head: () => ({ meta: [{ title: "Reading Programs — CCAC" }] }),
+  head: () => ({ meta: [{ title: "Discipleship Programs — CCAC" }] }),
   component: ProgramsPage,
 });
 
@@ -22,13 +25,30 @@ type Program = {
   title: string;
   description: string | null;
   is_published: boolean;
+  status: string;
+  program_type: string;
+  cover_image: string | null;
+  estimated_duration: string | null;
   created_by: string;
   created_at: string;
 };
 
+const PROGRAM_TYPES = [
+  { value: "lesson_based", label: "Lesson-based discipleship" },
+  { value: "reading_plan", label: "Daily Bible reading plan" },
+  { value: "year_bible", label: "365-day Bible plan" },
+  { value: "topical", label: "Topical scripture study" },
+  { value: "devotional", label: "Devotional series" },
+  { value: "custom", label: "Custom program" },
+];
+
 const schema = z.object({
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().max(2000).optional(),
+  program_type: z.string(),
+  estimated_duration: z.string().trim().max(60).optional(),
+  includes_quiz: z.boolean(),
+  includes_certificate: z.boolean(),
 });
 
 function ProgramsPage() {
@@ -38,6 +58,14 @@ function ProgramsPage() {
   const [items, setItems] = useState<Program[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    program_type: "lesson_based",
+    estimated_duration: "",
+    includes_quiz: false,
+    includes_certificate: false,
+  });
 
   const load = async () => {
     const { data, error } = await supabase
@@ -53,29 +81,35 @@ function ProgramsPage() {
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) return;
-    const fd = new FormData(e.currentTarget);
-    const parsed = schema.safeParse({
-      title: fd.get("title"),
-      description: (fd.get("description") as string) || undefined,
-    });
+    const parsed = schema.safeParse(form);
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
-    const { error } = await supabase.from("reading_programs").insert({ ...parsed.data, created_by: user.id });
+    const { error } = await supabase.from("reading_programs").insert({
+      ...parsed.data,
+      description: parsed.data.description || null,
+      estimated_duration: parsed.data.estimated_duration || null,
+      created_by: user.id,
+      status: "draft",
+    });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Program created");
     setOpen(false);
-    (e.target as HTMLFormElement).reset();
+    setForm({ title: "", description: "", program_type: "lesson_based", estimated_duration: "", includes_quiz: false, includes_certificate: false });
     load();
   };
+
+  const myDrafts = items.filter((p) => p.status === "draft" && p.created_by === user?.id);
+  const published = items.filter((p) => p.status === "published");
+  const archived = items.filter((p) => p.status === "archived");
 
   return (
     <div className="space-y-8 max-w-6xl">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <div className="eyebrow text-accent mb-2">— Discipleship</div>
-          <h1 className="font-display text-5xl">Reading Programs</h1>
-          <p className="text-muted-foreground mt-2">Day-by-day Bible study plans to share with contacts and walk through together.</p>
+          <h1 className="font-display text-5xl">Programs</h1>
+          <p className="text-muted-foreground mt-2">Day-by-day Bible reading plans, lesson-based discipleship, quizzes, and certificates.</p>
         </div>
         {canCreate && (
           <Dialog open={open} onOpenChange={setOpen}>
@@ -86,16 +120,37 @@ function ProgramsPage() {
             </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader>
-                <DialogTitle className="font-display text-3xl">New Reading Program</DialogTitle>
+                <DialogTitle className="font-display text-3xl">New Program</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4">
                 <div>
                   <Label>Title</Label>
-                  <Input name="title" required maxLength={120} placeholder="Foundations of the Gospel" />
+                  <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required maxLength={120} placeholder="Foundations of the Gospel" />
+                </div>
+                <div>
+                  <Label>Program type</Label>
+                  <Select value={form.program_type} onValueChange={(v) => setForm({ ...form, program_type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PROGRAM_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Description</Label>
-                  <Textarea name="description" rows={4} maxLength={2000} placeholder="Who this is for, what it covers..." />
+                  <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} maxLength={2000} placeholder="Who this is for, what it covers..." />
+                </div>
+                <div>
+                  <Label>Estimated duration</Label>
+                  <Input value={form.estimated_duration} onChange={(e) => setForm({ ...form, estimated_duration: e.target.value })} placeholder="30 days" />
+                </div>
+                <div className="flex items-center justify-between border border-border p-3">
+                  <Label className="cursor-pointer">Include quiz</Label>
+                  <Switch checked={form.includes_quiz} onCheckedChange={(v) => setForm({ ...form, includes_quiz: v })} />
+                </div>
+                <div className="flex items-center justify-between border border-border p-3">
+                  <Label className="cursor-pointer">Issue certificate</Label>
+                  <Switch checked={form.includes_certificate} onCheckedChange={(v) => setForm({ ...form, includes_certificate: v })} />
                 </div>
                 <DialogFooter>
                   <Button type="submit" disabled={busy} className="w-full bg-night text-night-foreground hover:bg-night/90 rounded-none py-6 eyebrow">
@@ -108,33 +163,53 @@ function ProgramsPage() {
         )}
       </div>
 
-      {items.length === 0 ? (
-        <div className="border border-dashed border-border p-16 text-center">
-          <BookOpen className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
-          <div className="eyebrow text-muted-foreground">No programs yet</div>
-          {canCreate && <p className="text-sm text-muted-foreground mt-2">Create the first plan above.</p>}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {items.map((p) => (
-            <Link
-              key={p.id}
-              to="/dashboard/programs/$id"
-              params={{ id: p.id }}
-              className="flex items-center justify-between gap-4 bg-card border border-border p-5 hover:border-foreground/30 hover:bg-muted/30 transition-colors group"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="font-display text-xl group-hover:underline underline-offset-4">{p.title}</div>
-                  {!p.is_published && <Badge variant="outline">Draft</Badge>}
-                </div>
-                {p.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description}</p>}
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground shrink-0" />
-            </Link>
-          ))}
-        </div>
-      )}
+      <Tabs defaultValue="published">
+        <TabsList>
+          <TabsTrigger value="published">Published ({published.length})</TabsTrigger>
+          {canCreate && <TabsTrigger value="drafts">My drafts ({myDrafts.length})</TabsTrigger>}
+          {canCreate && <TabsTrigger value="archived">Archived ({archived.length})</TabsTrigger>}
+        </TabsList>
+        <TabsContent value="published" className="mt-4"><ProgramList items={published} canCreate={canCreate} /></TabsContent>
+        <TabsContent value="drafts" className="mt-4"><ProgramList items={myDrafts} canCreate={canCreate} /></TabsContent>
+        <TabsContent value="archived" className="mt-4"><ProgramList items={archived} canCreate={canCreate} /></TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function ProgramList({ items, canCreate }: { items: Program[]; canCreate: boolean }) {
+  if (items.length === 0) {
+    return (
+      <div className="border border-dashed border-border p-16 text-center">
+        <BookMarked className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+        <div className="eyebrow text-muted-foreground">No programs here yet</div>
+        {canCreate && <p className="text-sm text-muted-foreground mt-2">Use “New Program” to start.</p>}
+      </div>
+    );
+  }
+  const typeLabel = (t: string) => PROGRAM_TYPES.find((x) => x.value === t)?.label ?? t;
+  return (
+    <div className="space-y-2">
+      {items.map((p) => (
+        <Link
+          key={p.id}
+          to="/dashboard/programs/$id"
+          params={{ id: p.id }}
+          className="flex items-center justify-between gap-4 bg-card border border-border p-5 hover:border-foreground/30 hover:bg-muted/30 transition-colors group"
+        >
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="font-display text-xl group-hover:underline underline-offset-4">{p.title}</div>
+              <Badge variant="outline" className="text-[10px]">{typeLabel(p.program_type)}</Badge>
+              {p.status === "draft" && <Badge variant="outline">Draft</Badge>}
+              {p.status === "archived" && <Badge variant="outline">Archived</Badge>}
+              {p.program_type === "year_bible" && <Sparkles className="h-3 w-3 text-accent" />}
+            </div>
+            {p.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description}</p>}
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground shrink-0" />
+        </Link>
+      ))}
     </div>
   );
 }

@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      certificates: {
+        Row: {
+          certificate_subtitle: string | null
+          certificate_title: string
+          church_name: string | null
+          completion_date: string
+          id: string
+          issued_at: string
+          member_name: string
+          program_id: string
+          signature_name: string | null
+          signature_title: string | null
+          user_id: string
+        }
+        Insert: {
+          certificate_subtitle?: string | null
+          certificate_title: string
+          church_name?: string | null
+          completion_date?: string
+          id?: string
+          issued_at?: string
+          member_name: string
+          program_id: string
+          signature_name?: string | null
+          signature_title?: string | null
+          user_id: string
+        }
+        Update: {
+          certificate_subtitle?: string | null
+          certificate_title?: string
+          church_name?: string | null
+          completion_date?: string
+          id?: string
+          issued_at?: string
+          member_name?: string
+          program_id?: string
+          signature_name?: string | null
+          signature_title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "reading_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_follow_ups: {
         Row: {
           assigned_to: string
@@ -340,6 +390,45 @@ export type Database = {
         }
         Relationships: []
       }
+      lesson_progress: {
+        Row: {
+          completed_at: string
+          id: string
+          lesson_id: string
+          program_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          lesson_id: string
+          program_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          lesson_id?: string
+          program_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "program_lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_progress_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "reading_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -397,32 +486,328 @@ export type Database = {
         }
         Relationships: []
       }
+      program_enrollments: {
+        Row: {
+          certificate_issued: boolean
+          completion_date: string | null
+          current_day: number | null
+          current_lesson: number | null
+          enrolled_at: string
+          id: string
+          percent_complete: number
+          program_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          certificate_issued?: boolean
+          completion_date?: string | null
+          current_day?: number | null
+          current_lesson?: number | null
+          enrolled_at?: string
+          id?: string
+          percent_complete?: number
+          program_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          certificate_issued?: boolean
+          completion_date?: string | null
+          current_day?: number | null
+          current_lesson?: number | null
+          enrolled_at?: string
+          id?: string
+          percent_complete?: number
+          program_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_enrollments_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "reading_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_lessons: {
+        Row: {
+          call_to_action: string | null
+          completion_required: boolean
+          created_at: string
+          description: string | null
+          focus_scriptures: Json
+          id: string
+          lesson_number: number
+          program_id: string
+          reflection_questions: Json
+          scripture_text: string | null
+          teaching_notes: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          call_to_action?: string | null
+          completion_required?: boolean
+          created_at?: string
+          description?: string | null
+          focus_scriptures?: Json
+          id?: string
+          lesson_number: number
+          program_id: string
+          reflection_questions?: Json
+          scripture_text?: string | null
+          teaching_notes?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          call_to_action?: string | null
+          completion_required?: boolean
+          created_at?: string
+          description?: string | null
+          focus_scriptures?: Json
+          id?: string
+          lesson_number?: number
+          program_id?: string
+          reflection_questions?: Json
+          scripture_text?: string | null
+          teaching_notes?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_lessons_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "reading_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_attempts: {
+        Row: {
+          admin_override_score: number | null
+          ai_grading_feedback: Json | null
+          answers: Json
+          id: string
+          max_score: number
+          passed: boolean
+          percent: number
+          quiz_id: string
+          score: number
+          submitted_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_override_score?: number | null
+          ai_grading_feedback?: Json | null
+          answers?: Json
+          id?: string
+          max_score?: number
+          passed?: boolean
+          percent?: number
+          quiz_id: string
+          score?: number
+          submitted_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_override_score?: number | null
+          ai_grading_feedback?: Json | null
+          answers?: Json
+          id?: string
+          max_score?: number
+          passed?: boolean
+          percent?: number
+          quiz_id?: string
+          score?: number
+          submitted_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          acceptable_answers: Json | null
+          answer_options: Json | null
+          auto_grading_enabled: boolean
+          case_sensitive: boolean
+          correct_answer: string | null
+          created_at: string
+          explanation: string | null
+          grading_instructions: string | null
+          id: string
+          points: number
+          position: number
+          question_text: string
+          question_type: string
+          quiz_id: string
+          requires_admin_review: boolean
+        }
+        Insert: {
+          acceptable_answers?: Json | null
+          answer_options?: Json | null
+          auto_grading_enabled?: boolean
+          case_sensitive?: boolean
+          correct_answer?: string | null
+          created_at?: string
+          explanation?: string | null
+          grading_instructions?: string | null
+          id?: string
+          points?: number
+          position?: number
+          question_text: string
+          question_type: string
+          quiz_id: string
+          requires_admin_review?: boolean
+        }
+        Update: {
+          acceptable_answers?: Json | null
+          answer_options?: Json | null
+          auto_grading_enabled?: boolean
+          case_sensitive?: boolean
+          correct_answer?: string | null
+          created_at?: string
+          explanation?: string | null
+          grading_instructions?: string | null
+          id?: string
+          points?: number
+          position?: number
+          question_text?: string
+          question_type?: string
+          quiz_id?: string
+          requires_admin_review?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quizzes: {
+        Row: {
+          allow_retakes: boolean
+          created_at: string
+          description: string | null
+          id: string
+          lesson_id: string | null
+          passing_score: number
+          program_id: string
+          randomize_questions: boolean
+          required_for_completion: boolean
+          show_correct_answers: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          allow_retakes?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          lesson_id?: string | null
+          passing_score?: number
+          program_id: string
+          randomize_questions?: boolean
+          required_for_completion?: boolean
+          show_correct_answers?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          allow_retakes?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          lesson_id?: string | null
+          passing_score?: number
+          program_id?: string
+          randomize_questions?: boolean
+          required_for_completion?: boolean
+          show_correct_answers?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quizzes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "program_lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quizzes_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "reading_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reading_program_days: {
         Row: {
+          assigned_date: string | null
+          book_name: string | null
+          chapter_end: number | null
+          chapter_start: number | null
           created_at: string
           day_number: number
           id: string
           notes: string | null
           passages: Json
           program_id: string
+          reflection_question: string | null
+          scripture_reference: string | null
+          summary: string | null
           title: string | null
         }
         Insert: {
+          assigned_date?: string | null
+          book_name?: string | null
+          chapter_end?: number | null
+          chapter_start?: number | null
           created_at?: string
           day_number: number
           id?: string
           notes?: string | null
           passages?: Json
           program_id: string
+          reflection_question?: string | null
+          scripture_reference?: string | null
+          summary?: string | null
           title?: string | null
         }
         Update: {
+          assigned_date?: string | null
+          book_name?: string | null
+          chapter_end?: number | null
+          chapter_start?: number | null
           created_at?: string
           day_number?: number
           id?: string
           notes?: string | null
           passages?: Json
           program_id?: string
+          reflection_question?: string | null
+          scripture_reference?: string | null
+          summary?: string | null
           title?: string | null
         }
         Relationships: [
@@ -476,29 +861,62 @@ export type Database = {
       }
       reading_programs: {
         Row: {
+          certificate_config: Json | null
+          cover_image: string | null
           created_at: string
           created_by: string
           description: string | null
+          end_date: string | null
+          enrollment_required: boolean
+          estimated_duration: string | null
           id: string
+          includes_certificate: boolean
+          includes_quiz: boolean
           is_published: boolean
+          program_type: string
+          self_paced: boolean
+          start_date: string | null
+          status: string
           title: string
           updated_at: string
         }
         Insert: {
+          certificate_config?: Json | null
+          cover_image?: string | null
           created_at?: string
           created_by: string
           description?: string | null
+          end_date?: string | null
+          enrollment_required?: boolean
+          estimated_duration?: string | null
           id?: string
+          includes_certificate?: boolean
+          includes_quiz?: boolean
           is_published?: boolean
+          program_type?: string
+          self_paced?: boolean
+          start_date?: string | null
+          status?: string
           title: string
           updated_at?: string
         }
         Update: {
+          certificate_config?: Json | null
+          cover_image?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
+          end_date?: string | null
+          enrollment_required?: boolean
+          estimated_duration?: string | null
           id?: string
+          includes_certificate?: boolean
+          includes_quiz?: boolean
           is_published?: boolean
+          program_type?: string
+          self_paced?: boolean
+          start_date?: string | null
+          status?: string
           title?: string
           updated_at?: string
         }
