@@ -177,17 +177,34 @@ function ProgramsPage() {
   );
 }
 
-function ProgramList({ items, canCreate }: { items: Program[]; canCreate: boolean }) {
+function ProgramList({ items, canCreate, onChanged }: { items: Program[]; canCreate: boolean; onChanged?: () => void }) {
   if (items.length === 0) {
     return (
       <div className="border border-dashed border-border p-16 text-center">
         <BookMarked className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
         <div className="eyebrow text-muted-foreground">No programs here yet</div>
-        {canCreate && <p className="text-sm text-muted-foreground mt-2">Use “New Program” to start.</p>}
+        {canCreate && <p className="text-sm text-muted-foreground mt-2">Use “New Program” to start, then click a program to add days, lessons, quizzes, and a certificate.</p>}
       </div>
     );
   }
   const typeLabel = (t: string) => PROGRAM_TYPES.find((x) => x.value === t)?.label ?? t;
+
+  const publish = async (e: React.MouseEvent, p: Program) => {
+    e.preventDefault(); e.stopPropagation();
+    const { error } = await supabase.from("reading_programs").update({ status: "published", is_published: true }).eq("id", p.id);
+    if (error) return toast.error(error.message);
+    toast.success("Published");
+    onChanged?.();
+  };
+  const remove = async (e: React.MouseEvent, p: Program) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!confirm(`Delete "${p.title}"? This cannot be undone.`)) return;
+    const { error } = await supabase.from("reading_programs").delete().eq("id", p.id);
+    if (error) return toast.error(error.message);
+    toast.success("Deleted");
+    onChanged?.();
+  };
+
   return (
     <div className="space-y-2">
       {items.map((p) => (
@@ -207,6 +224,16 @@ function ProgramList({ items, canCreate }: { items: Program[]; canCreate: boolea
             </div>
             {p.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description}</p>}
           </div>
+          {canCreate && p.status === "draft" && (
+            <div className="flex items-center gap-1 shrink-0">
+              <Button size="sm" variant="outline" className="rounded-none eyebrow gap-1" onClick={(e) => publish(e, p)}>
+                <Send className="h-3 w-3" /> Publish
+              </Button>
+              <Button size="sm" variant="ghost" className="text-destructive" onClick={(e) => remove(e, p)} title="Delete draft">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
           <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground shrink-0" />
         </Link>
       ))}
