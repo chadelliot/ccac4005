@@ -48,6 +48,12 @@ export function VerseText({ text, showStrongs = true }: { text: string; showStro
                         {e?.phonetic && <span className="text-[11px] text-muted-foreground">/{e.phonetic}/</span>}
                       </div>
                       {e?.pos && <div className="text-[11px] text-muted-foreground">{e.pos}</div>}
+                      {e?.strongsDef && (
+                        <div className="mt-2">
+                          <div className="text-[10px] uppercase tracking-wide text-accent mb-1">Strong's</div>
+                          <div className="text-xs">{e.strongsDef}</div>
+                        </div>
+                      )}
                       {e?.definition ? (
                         <div className="mt-2">
                           <div className="text-[10px] uppercase tracking-wide text-accent mb-1">
@@ -80,13 +86,7 @@ export function VerseText({ text, showStrongs = true }: { text: string; showStro
                       ) : e?.def ? (
                         <div className="text-xs mt-1 whitespace-pre-line">{e.def}</div>
                       ) : (
-                        !lex && <div className="text-xs text-muted-foreground italic">Loading…</div>
-                      )}
-                      {e?.strongsDef && (
-                        <div className="mt-2">
-                          <div className="text-[10px] uppercase tracking-wide text-accent mb-1">Strong's</div>
-                          <div className="text-xs">{e.strongsDef}</div>
-                        </div>
+                        !lex && !e?.strongsDef && <div className="text-xs text-muted-foreground italic">Loading…</div>
                       )}
                       {e?.origin && (
                         <div className="text-[11px] text-muted-foreground mt-1">Origin: {e.origin}</div>
