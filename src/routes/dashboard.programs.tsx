@@ -53,6 +53,7 @@ const schema = z.object({
 
 function ProgramsPage() {
   const { user } = useSession();
+  const navigate = useNavigate();
   const { isAdmin, isLeader } = useRoles(user);
   const canCreate = isAdmin || isLeader;
   const [items, setItems] = useState<Program[]>([]);
