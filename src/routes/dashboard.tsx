@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSession, useRoles } from "@/lib/auth";
-import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar, UsersRound } from "lucide-react";
+import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar, UsersRound, BookOpen, BookMarked } from "lucide-react";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +52,8 @@ function DashboardLayout() {
             <DashLink to="/dashboard/groups" icon={<UsersRound className="h-4 w-4" />}>Groups</DashLink>
             <DashLink to="/dashboard/evangelism" icon={<Users className="h-4 w-4" />}>Evangelism</DashLink>
             <DashLink to="/dashboard/follow-ups" icon={<Bell className="h-4 w-4" />}>Follow-ups</DashLink>
+            <DashLink to="/dashboard/bible" icon={<BookOpen className="h-4 w-4" />}>Bible</DashLink>
+            <DashLink to="/dashboard/programs" icon={<BookMarked className="h-4 w-4" />}>Reading Programs</DashLink>
           </nav>
         </div>
         <div className="hidden lg:block space-y-3">
@@ -74,6 +76,8 @@ function DashboardLayout() {
             <DashLinkPill to="/dashboard/groups">Groups</DashLinkPill>
             <DashLinkPill to="/dashboard/evangelism">Evangelism</DashLinkPill>
             <DashLinkPill to="/dashboard/follow-ups">Follow-ups</DashLinkPill>
+            <DashLinkPill to="/dashboard/bible">Bible</DashLinkPill>
+            <DashLinkPill to="/dashboard/programs">Programs</DashLinkPill>
           </div>
           <div className="hidden lg:block" />
           <NotificationsBell />
