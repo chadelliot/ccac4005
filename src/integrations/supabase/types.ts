@@ -397,6 +397,113 @@ export type Database = {
         }
         Relationships: []
       }
+      reading_program_days: {
+        Row: {
+          created_at: string
+          day_number: number
+          id: string
+          notes: string | null
+          passages: Json
+          program_id: string
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          day_number: number
+          id?: string
+          notes?: string | null
+          passages?: Json
+          program_id: string
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          day_number?: number
+          id?: string
+          notes?: string | null
+          passages?: Json
+          program_id?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_program_days_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "reading_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reading_program_progress: {
+        Row: {
+          completed_at: string
+          day_id: string
+          id: string
+          program_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          day_id: string
+          id?: string
+          program_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          day_id?: string
+          id?: string
+          program_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_program_progress_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "reading_program_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reading_program_progress_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "reading_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reading_programs: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_published: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
