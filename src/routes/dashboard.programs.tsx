@@ -169,9 +169,9 @@ function ProgramsPage() {
           {canCreate && <TabsTrigger value="drafts">My drafts ({myDrafts.length})</TabsTrigger>}
           {canCreate && <TabsTrigger value="archived">Archived ({archived.length})</TabsTrigger>}
         </TabsList>
-        <TabsContent value="published" className="mt-4"><ProgramList items={published} canCreate={canCreate} /></TabsContent>
-        <TabsContent value="drafts" className="mt-4"><ProgramList items={myDrafts} canCreate={canCreate} /></TabsContent>
-        <TabsContent value="archived" className="mt-4"><ProgramList items={archived} canCreate={canCreate} /></TabsContent>
+        <TabsContent value="published" className="mt-4"><ProgramList items={published} canCreate={canCreate} onChanged={load} /></TabsContent>
+        <TabsContent value="drafts" className="mt-4"><ProgramList items={myDrafts} canCreate={canCreate} onChanged={load} /></TabsContent>
+        <TabsContent value="archived" className="mt-4"><ProgramList items={archived} canCreate={canCreate} onChanged={load} /></TabsContent>
       </Tabs>
     </div>
   );
