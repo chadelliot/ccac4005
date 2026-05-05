@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
+
 import { PassageView } from "@/components/bible/PassageView";
 import { getBooksMeta, parseRefInput, passageLabel, type BookMeta, type Passage } from "@/lib/bible";
 import { AIPlanGenerator } from "@/components/programs/AIPlanGenerator";
