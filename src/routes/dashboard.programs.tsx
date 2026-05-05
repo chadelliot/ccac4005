@@ -85,19 +85,20 @@ function ProgramsPage() {
     const parsed = schema.safeParse(form);
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
-    const { error } = await supabase.from("reading_programs").insert({
+    const { data: created, error } = await supabase.from("reading_programs").insert({
       ...parsed.data,
       description: parsed.data.description || null,
       estimated_duration: parsed.data.estimated_duration || null,
       created_by: user.id,
       status: "draft",
-    });
+    }).select("id").maybeSingle();
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("Program created");
+    toast.success("Draft created — add days, lessons, and a quiz next.");
     setOpen(false);
     setForm({ title: "", description: "", program_type: "lesson_based", estimated_duration: "", includes_quiz: false, includes_certificate: false });
-    load();
+    if (created?.id) navigate({ to: "/dashboard/programs/$id", params: { id: created.id } });
+    else load();
   };
 
   const myDrafts = items.filter((p) => p.status === "draft" && p.created_by === user?.id);
