@@ -210,34 +210,39 @@ function ProgramList({ items, canCreate, onChanged }: { items: Program[]; canCre
   return (
     <div className="space-y-2">
       {items.map((p) => (
-        <Link
+        <div
           key={p.id}
-          to="/dashboard/programs/$id"
-          params={{ id: p.id }}
-          className="flex items-center justify-between gap-4 bg-card border border-border p-5 hover:border-foreground/30 hover:bg-muted/30 transition-colors group"
+          className="relative flex items-center justify-between gap-4 bg-card border border-border p-5 min-h-[88px] hover:border-foreground/30 hover:bg-muted/30 focus-within:border-foreground/40 transition-colors group"
         >
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3 flex-wrap">
-              <div className="font-display text-xl group-hover:underline underline-offset-4">{p.title}</div>
-              <Badge variant="outline" className="text-[10px]">{typeLabel(p.program_type)}</Badge>
-              {p.status === "draft" && <Badge variant="outline">Draft</Badge>}
-              {p.status === "archived" && <Badge variant="outline">Archived</Badge>}
-              {p.program_type === "year_bible" && <Sparkles className="h-3 w-3 text-accent" />}
+              <Link
+                to="/dashboard/programs/$id"
+                params={{ id: p.id }}
+                aria-label={`Open ${p.title}`}
+                className="font-display text-xl group-hover:underline underline-offset-4 outline-none focus-visible:underline before:content-[''] before:absolute before:inset-0 before:z-0 before:rounded-sm focus-visible:before:ring-2 focus-visible:before:ring-accent"
+              >
+                {p.title}
+              </Link>
+              <Badge variant="outline" className="text-[10px] relative z-10 pointer-events-none">{typeLabel(p.program_type)}</Badge>
+              {p.status === "draft" && <Badge variant="outline" className="relative z-10 pointer-events-none">Draft</Badge>}
+              {p.status === "archived" && <Badge variant="outline" className="relative z-10 pointer-events-none">Archived</Badge>}
+              {p.program_type === "year_bible" && <Sparkles className="h-3 w-3 text-accent relative z-10" />}
             </div>
-            {p.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description}</p>}
+            {p.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2 relative z-10 pointer-events-none">{p.description}</p>}
           </div>
           {canCreate && p.status === "draft" && (
-            <div className="flex items-center gap-1 shrink-0">
-              <Button size="sm" variant="outline" className="rounded-none eyebrow gap-1" onClick={(e) => publish(e, p)}>
+            <div className="flex items-center gap-1 shrink-0 relative z-10">
+              <Button size="sm" variant="outline" className="rounded-none eyebrow gap-1 h-10" onClick={(e) => publish(e, p)}>
                 <Send className="h-3 w-3" /> Publish
               </Button>
-              <Button size="sm" variant="ghost" className="text-destructive" onClick={(e) => remove(e, p)} title="Delete draft">
+              <Button size="sm" variant="ghost" className="text-destructive h-10 w-10" onClick={(e) => remove(e, p)} title="Delete draft" aria-label={`Delete ${p.title}`}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           )}
-          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground shrink-0" />
-        </Link>
+          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground shrink-0 relative z-10 pointer-events-none" />
+        </div>
       ))}
     </div>
   );
