@@ -87,6 +87,20 @@ function ProgramDetail() {
   useEffect(() => { getBooksMeta().then(setBooks); }, []);
   useEffect(() => { if (user) load(); /* eslint-disable-next-line */ }, [id, user]);
 
+  const completedCount = days.filter((d) => progress.has(d.id)).length;
+  const completion = days.length ? Math.round((completedCount / days.length) * 100) : 0;
+
+  // Sync enrollment percent when it changes (must run on every render — keep above any early return)
+  useEffect(() => {
+    if (enrollment && completion !== Math.round(enrollment.percent_complete)) {
+      const isComplete = completion === 100 && days.length > 0;
+      supabase.from("program_enrollments").update({
+        percent_complete: completion,
+        completion_date: isComplete ? new Date().toISOString() : null,
+      }).eq("id", enrollment.id);
+    }
+  }, [completion, enrollment, days.length]);
+
   if (!program) return <div className="eyebrow text-muted-foreground">Loading...</div>;
 
   const setStatus = async (status: string) => {
@@ -154,19 +168,6 @@ function ProgramDetail() {
     load();
   };
 
-  const completedCount = days.filter((d) => progress.has(d.id)).length;
-  const completion = days.length ? Math.round((completedCount / days.length) * 100) : 0;
-
-  // Sync enrollment percent occasionally
-  useEffect(() => {
-    if (enrollment && completion !== Math.round(enrollment.percent_complete)) {
-      const isComplete = completion === 100 && days.length > 0;
-      supabase.from("program_enrollments").update({
-        percent_complete: completion,
-        completion_date: isComplete ? new Date().toISOString() : null,
-      }).eq("id", enrollment.id);
-    }
-  }, [completion, enrollment, days.length]);
 
   const downloadCert = async () => {
     if (!user || !program) return;
