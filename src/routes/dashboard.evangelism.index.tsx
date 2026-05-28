@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
-export const Route = createFileRoute("/dashboard/evangelism")({
+export const Route = createFileRoute("/dashboard/evangelism/")({
   head: () => ({ meta: [{ title: "Evangelism — CCAC" }] }),
   component: EvangelismPage,
 });
