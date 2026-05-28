@@ -88,10 +88,46 @@ function EvangelismPage() {
     load();
   };
 
-  const filtered = contacts.filter((c) => {
+  const monthKey = (iso: string) => {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  };
+  const monthLabel = (key: string) => {
+    const [y, m] = key.split("-").map(Number);
+    return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  };
+
+  const matchesSearch = (c: Contact) => {
     const text = `${c.first_name} ${c.last_name ?? ""} ${c.phone ?? ""} ${c.where_met ?? ""}`.toLowerCase();
     return text.includes(q.toLowerCase());
-  });
+  };
+
+  const nowKey = monthKey(new Date().toISOString());
+  const currentMonthContacts = useMemo(
+    () => contacts.filter((c) => monthKey(c.created_at) === nowKey).filter(matchesSearch),
+    [contacts, q, nowKey],
+  );
+
+  const monthKeys = useMemo(() => {
+    const set = new Set(contacts.map((c) => monthKey(c.created_at)));
+    return Array.from(set).sort((a, b) => b.localeCompare(a));
+  }, [contacts]);
+
+  const [sortMode, setSortMode] = useState<"alpha" | "recent">("recent");
+  const [monthFilter, setMonthFilter] = useState<string>("all");
+
+  const allFiltered = useMemo(() => {
+    let list = contacts.filter(matchesSearch);
+    if (monthFilter !== "all") list = list.filter((c) => monthKey(c.created_at) === monthFilter);
+    if (sortMode === "alpha") {
+      list = [...list].sort((a, b) =>
+        `${a.first_name} ${a.last_name ?? ""}`.localeCompare(`${b.first_name} ${b.last_name ?? ""}`),
+      );
+    } else {
+      list = [...list].sort((a, b) => b.created_at.localeCompare(a.created_at));
+    }
+    return list;
+  }, [contacts, q, monthFilter, sortMode]);
 
   return (
     <div className="space-y-8 max-w-6xl">
@@ -153,40 +189,84 @@ function EvangelismPage() {
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search contacts..." className="pl-9" />
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="border border-dashed border-border p-16 text-center">
-          <div className="eyebrow text-muted-foreground">No contacts yet</div>
-          <p className="text-sm text-muted-foreground mt-2">Add the first soul you've met this week.</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {filtered.map((c) => (
-            <Link
-              key={c.id}
-              to="/dashboard/evangelism/$id"
-              params={{ id: c.id }}
-              className="flex items-center justify-between gap-4 bg-card border border-border p-5 hover:border-foreground/30 hover:bg-muted/30 transition-colors group cursor-pointer"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="font-display text-xl underline-offset-4 group-hover:underline">{c.first_name} {c.last_name}</div>
-                  {c.baptized && <Badge variant="secondary" className="bg-accent/20 text-accent-foreground">Baptized</Badge>}
-                  {c.holy_ghost && <Badge variant="secondary" className="bg-night text-night-foreground">Holy Ghost</Badge>}
-                  {c.visited && <Badge variant="outline">Visited</Badge>}
-                </div>
-                <div className="flex flex-wrap gap-4 mt-2 text-xs text-muted-foreground">
-                  {c.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone}</span>}
-                  {c.where_met && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{c.where_met}</span>}
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-xs eyebrow text-muted-foreground group-hover:text-foreground shrink-0">
-                <span className="hidden sm:inline">View</span>
-                <ChevronRight className="h-5 w-5" />
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+      <Tabs defaultValue="month" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="month">This Month ({currentMonthContacts.length})</TabsTrigger>
+          <TabsTrigger value="all">All Contacts ({contacts.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="month" className="space-y-4">
+          <div className="eyebrow text-muted-foreground text-xs">— {monthLabel(nowKey)}</div>
+          <ContactList contacts={currentMonthContacts} emptyText="No contacts added this month yet." />
+        </TabsContent>
+
+        <TabsContent value="all" className="space-y-4">
+          <div className="flex flex-wrap gap-3 items-center">
+            <Select value={monthFilter} onValueChange={setMonthFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by month" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All months</SelectItem>
+                {monthKeys.map((k) => (
+                  <SelectItem key={k} value={k}>{monthLabel(k)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortMode} onValueChange={(v) => setSortMode(v as "alpha" | "recent")}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Most recent</SelectItem>
+                <SelectItem value="alpha">A–Z</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <ContactList contacts={allFiltered} emptyText="No contacts match these filters." />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+
+function ContactList({ contacts, emptyText }: { contacts: Contact[]; emptyText: string }) {
+  if (contacts.length === 0) {
+    return (
+      <div className="border border-dashed border-border p-16 text-center">
+        <div className="eyebrow text-muted-foreground">{emptyText}</div>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {contacts.map((c) => (
+        <Link
+          key={c.id}
+          to="/dashboard/evangelism/$id"
+          params={{ id: c.id }}
+          className="flex items-center justify-between gap-4 bg-card border border-border p-5 hover:border-foreground/30 hover:bg-muted/30 transition-colors group cursor-pointer"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="font-display text-xl underline-offset-4 group-hover:underline">{c.first_name} {c.last_name}</div>
+              {c.baptized && <Badge variant="secondary" className="bg-accent/20 text-accent-foreground">Baptized</Badge>}
+              {c.holy_ghost && <Badge variant="secondary" className="bg-night text-night-foreground">Holy Ghost</Badge>}
+              {c.visited && <Badge variant="outline">Visited</Badge>}
+            </div>
+            <div className="flex flex-wrap gap-4 mt-2 text-xs text-muted-foreground">
+              {c.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone}</span>}
+              {c.where_met && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{c.where_met}</span>}
+              <span>{new Date(c.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 text-xs eyebrow text-muted-foreground group-hover:text-foreground shrink-0">
+            <span className="hidden sm:inline">View</span>
+            <ChevronRight className="h-5 w-5" />
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
