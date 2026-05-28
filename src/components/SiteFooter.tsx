@@ -23,7 +23,7 @@ export function SiteFooter() {
             <li><Link to="/about" className="hover:text-gold">About Us</Link></li>
             <li><Link to="/plan-visit" className="hover:text-gold">Plan a Visit</Link></li>
             <li><Link to="/find-us" className="hover:text-gold">Find Us</Link></li>
-            <li><a href="https://www.paypal.me/christchurchap" target="_blank" rel="noreferrer" className="hover:text-gold">Give Online</a></li>
+            <li><Link to="/give" className="hover:text-gold">Give</Link></li>
           </ul>
         </div>
       </div>
