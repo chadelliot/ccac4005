@@ -78,6 +78,8 @@ function EventDetailPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [working, setWorking] = useState(false);
   const [guestRsvps, setGuestRsvps] = useState<GuestRsvp[]>([]);
+  const [editOpen, setEditOpen] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
