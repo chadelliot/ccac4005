@@ -170,14 +170,15 @@ function HomePage() {
           <p className="mt-8 text-night-foreground/70 text-lg leading-relaxed max-w-2xl mx-auto">
             Every seed sown helps us reach souls, raise disciples, and build the Kingdom right here in Baltimore.
           </p>
-          <a
-            href="https://www.paypal.me/christchurchap"
-            target="_blank"
-            rel="noreferrer"
+          <Link
+            to="/give"
             className="inline-flex items-center mt-10 bg-gold text-gold-foreground px-10 py-5 eyebrow hover:bg-gold/90"
           >
-            Give via PayPal
-          </a>
+            Give Now
+          </Link>
+          <div className="mt-4 text-xs eyebrow text-night-foreground/50">
+            PayPal · Cash App · Zelle
+          </div>
         </div>
       </section>
 

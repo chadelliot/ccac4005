@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PlanVisitRouteImport } from './routes/plan-visit'
+import { Route as GiveRouteImport } from './routes/give'
 import { Route as FindUsRouteImport } from './routes/find-us'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -35,6 +36,11 @@ import { Route as DashboardEvangelismIdRouteImport } from './routes/dashboard.ev
 const PlanVisitRoute = PlanVisitRouteImport.update({
   id: '/plan-visit',
   path: '/plan-visit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GiveRoute = GiveRouteImport.update({
+  id: '/give',
+  path: '/give',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FindUsRoute = FindUsRouteImport.update({
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/events': typeof EventsRouteWithChildren
   '/find-us': typeof FindUsRoute
+  '/give': typeof GiveRoute
   '/plan-visit': typeof PlanVisitRoute
   '/dashboard/bible': typeof DashboardBibleRoute
   '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/events': typeof EventsRouteWithChildren
   '/find-us': typeof FindUsRoute
+  '/give': typeof GiveRoute
   '/plan-visit': typeof PlanVisitRoute
   '/dashboard/bible': typeof DashboardBibleRoute
   '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/events': typeof EventsRouteWithChildren
   '/find-us': typeof FindUsRoute
+  '/give': typeof GiveRoute
   '/plan-visit': typeof PlanVisitRoute
   '/dashboard/bible': typeof DashboardBibleRoute
   '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events'
     | '/find-us'
+    | '/give'
     | '/plan-visit'
     | '/dashboard/bible'
     | '/dashboard/evangelism'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/events'
     | '/find-us'
+    | '/give'
     | '/plan-visit'
     | '/dashboard/bible'
     | '/dashboard/follow-ups'
@@ -266,6 +277,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events'
     | '/find-us'
+    | '/give'
     | '/plan-visit'
     | '/dashboard/bible'
     | '/dashboard/evangelism'
@@ -291,6 +303,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   EventsRoute: typeof EventsRouteWithChildren
   FindUsRoute: typeof FindUsRoute
+  GiveRoute: typeof GiveRoute
   PlanVisitRoute: typeof PlanVisitRoute
 }
 
@@ -301,6 +314,13 @@ declare module '@tanstack/react-router' {
       path: '/plan-visit'
       fullPath: '/plan-visit'
       preLoaderRoute: typeof PlanVisitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/give': {
+      id: '/give'
+      path: '/give'
+      fullPath: '/give'
+      preLoaderRoute: typeof GiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/find-us': {
@@ -547,6 +567,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   EventsRoute: EventsRouteWithChildren,
   FindUsRoute: FindUsRoute,
+  GiveRoute: GiveRoute,
   PlanVisitRoute: PlanVisitRoute,
 }
 export const routeTree = rootRouteImport

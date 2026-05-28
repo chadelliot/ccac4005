@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { MapPin, Clock, Phone } from "lucide-react";
@@ -41,7 +41,7 @@ function FindUs() {
           <div className="border border-border p-8">
             <Phone className="h-6 w-6 text-accent mb-4" />
             <div className="eyebrow text-muted-foreground mb-2">Contact</div>
-            <a href="https://www.paypal.me/christchurchap" target="_blank" rel="noreferrer" className="font-display text-xl hover:text-accent">Give Online →</a>
+            <Link to="/give" className="font-display text-xl hover:text-accent">Give Online →</Link>
           </div>
         </div>
         <div className="mx-auto max-w-5xl px-6 lg:px-10 mt-12">
