@@ -236,8 +236,10 @@ function EventDetailPage() {
     );
 
   const isOwner = user?.id === event.submitted_by;
+  const canEdit = isAdmin || (isOwner && event.status === "pending");
   const start = new Date(event.start_at);
   const end = event.end_at ? new Date(event.end_at) : null;
+
 
   return (
     <div className="max-w-4xl space-y-8">
