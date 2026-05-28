@@ -1,12 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, MapPin, Calendar, Check, X, Users, Download } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Check, X, Users, Download, Pencil } from "lucide-react";
 import { StatusBadge } from "./dashboard.events.index";
 import {
   Table,
@@ -16,7 +18,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+
+const editSchema = z.object({
+  title: z.string().trim().min(3, "Title must be at least 3 characters").max(120),
+  description: z.string().trim().max(2000).optional().or(z.literal("")),
+  location: z.string().trim().max(200).optional().or(z.literal("")),
+  start_at: z.string().min(1, "Start date/time is required"),
+  end_at: z.string().optional().or(z.literal("")),
+  is_public: z.boolean(),
+});
 
 export const Route = createFileRoute("/dashboard/events/$id")({
   head: () => ({ meta: [{ title: "Event — CCAC" }] }),
