@@ -70,7 +70,7 @@ export function SiteHeader() {
             </Button>
           )}
           <Button asChild size="sm" className="bg-night-foreground text-night hover:bg-white/90 rounded-none px-6 tracking-wider uppercase text-xs">
-            <a href="https://www.paypal.me/christchurchap" target="_blank" rel="noreferrer">Give Online</a>
+            <Link to="/give">Give</Link>
           </Button>
         </div>
 
