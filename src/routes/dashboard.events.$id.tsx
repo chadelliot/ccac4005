@@ -1,12 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, MapPin, Calendar, Check, X, Users, Download } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Check, X, Users, Download, Pencil } from "lucide-react";
 import { StatusBadge } from "./dashboard.events.index";
 import {
   Table,
@@ -16,7 +18,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+
+const editSchema = z.object({
+  title: z.string().trim().min(3, "Title must be at least 3 characters").max(120),
+  description: z.string().trim().max(2000).optional().or(z.literal("")),
+  location: z.string().trim().max(200).optional().or(z.literal("")),
+  start_at: z.string().min(1, "Start date/time is required"),
+  end_at: z.string().optional().or(z.literal("")),
+  is_public: z.boolean(),
+});
 
 export const Route = createFileRoute("/dashboard/events/$id")({
   head: () => ({ meta: [{ title: "Event — CCAC" }] }),
@@ -60,6 +78,8 @@ function EventDetailPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [working, setWorking] = useState(false);
   const [guestRsvps, setGuestRsvps] = useState<GuestRsvp[]>([]);
+  const [editOpen, setEditOpen] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
@@ -216,17 +236,38 @@ function EventDetailPage() {
     );
 
   const isOwner = user?.id === event.submitted_by;
+  const canEdit = isAdmin || (isOwner && event.status === "pending");
   const start = new Date(event.start_at);
   const end = event.end_at ? new Date(event.end_at) : null;
 
   return (
     <div className="max-w-4xl space-y-8">
-      <Link
-        to="/dashboard/events"
-        className="inline-flex items-center gap-2 text-xs eyebrow text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3 w-3" /> All events
-      </Link>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <Link
+          to="/dashboard/events"
+          className="inline-flex items-center gap-2 text-xs eyebrow text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-3 w-3" /> All events
+        </Link>
+        {canEdit && (
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="h-4 w-4" /> Edit event
+          </Button>
+        )}
+      </div>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        {editOpen && (
+          <EditEventDialog
+            event={event}
+            onSaved={() => {
+              setEditOpen(false);
+              load();
+            }}
+          />
+        )}
+      </Dialog>
+
 
       <div className="grid md:grid-cols-[1fr_1.2fr] gap-8">
         <div className="bg-muted overflow-hidden">
@@ -481,3 +522,196 @@ function RsvpButton({
     </button>
   );
 }
+
+function toLocalInput(iso: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function EditEventDialog({
+  event,
+  onSaved,
+}: {
+  event: EventRow;
+  onSaved: () => void;
+}) {
+  const { user } = useSession();
+  const [title, setTitle] = useState(event.title);
+  const [description, setDescription] = useState(event.description ?? "");
+  const [location, setLocation] = useState(event.location ?? "");
+  const [startAt, setStartAt] = useState(toLocalInput(event.start_at));
+  const [endAt, setEndAt] = useState(toLocalInput(event.end_at));
+  const [isPublic, setIsPublic] = useState(event.is_public);
+  const [flyer, setFlyer] = useState<File | null>(null);
+  const [removeFlyer, setRemoveFlyer] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    const parsed = editSchema.safeParse({
+      title,
+      description,
+      location,
+      start_at: startAt,
+      end_at: endAt,
+      is_public: isPublic,
+    });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      let flyer_url: string | null | undefined = undefined;
+      if (removeFlyer && !flyer) {
+        flyer_url = null;
+      }
+      if (flyer) {
+        if (flyer.size > 5 * 1024 * 1024) {
+          toast.error("Flyer must be under 5MB");
+          setSaving(false);
+          return;
+        }
+        const ext = flyer.name.split(".").pop() || "jpg";
+        const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("event-flyers")
+          .upload(path, flyer, { upsert: false });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from("event-flyers").getPublicUrl(path);
+        flyer_url = pub.publicUrl;
+      }
+
+      const update: {
+        title: string;
+        description: string | null;
+        location: string | null;
+        start_at: string;
+        end_at: string | null;
+        is_public: boolean;
+        flyer_url?: string | null;
+      } = {
+        title: parsed.data.title,
+        description: parsed.data.description || null,
+        location: parsed.data.location || null,
+        start_at: new Date(parsed.data.start_at).toISOString(),
+        end_at: parsed.data.end_at ? new Date(parsed.data.end_at).toISOString() : null,
+        is_public: parsed.data.is_public,
+      };
+      if (flyer_url !== undefined) update.flyer_url = flyer_url;
+
+      const { error } = await supabase.from("events").update(update).eq("id", event.id);
+      if (error) throw error;
+      toast.success("Event updated");
+      onSaved();
+    } catch (err: any) {
+      toast.error(err.message ?? "Could not save event");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle className="font-display text-2xl">Edit Event</DialogTitle>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="e-title">Title</Label>
+          <Input id="e-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} required />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="e-desc">Description</Label>
+          <Textarea
+            id="e-desc"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            maxLength={2000}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="e-loc">Location</Label>
+          <Input id="e-loc" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={200} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="e-start">Starts</Label>
+            <Input
+              id="e-start"
+              type="datetime-local"
+              value={startAt}
+              onChange={(e) => setStartAt(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="e-end">Ends</Label>
+            <Input
+              id="e-end"
+              type="datetime-local"
+              value={endAt}
+              onChange={(e) => setEndAt(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Flyer</Label>
+          {event.flyer_url && !flyer && !removeFlyer && (
+            <div className="flex items-center gap-3">
+              <img src={event.flyer_url} alt="" className="h-16 w-16 object-cover border border-border" />
+              <button
+                type="button"
+                onClick={() => setRemoveFlyer(true)}
+                className="text-xs text-destructive hover:underline"
+              >
+                Remove current flyer
+              </button>
+            </div>
+          )}
+          {removeFlyer && !flyer && (
+            <div className="text-xs text-muted-foreground">
+              Current flyer will be removed.{" "}
+              <button
+                type="button"
+                onClick={() => setRemoveFlyer(false)}
+                className="text-foreground hover:underline"
+              >
+                Undo
+              </button>
+            </div>
+          )}
+          <Input
+            id="e-flyer"
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFlyer(e.target.files?.[0] ?? null)}
+          />
+          <p className="text-xs text-muted-foreground">
+            {event.flyer_url ? "Upload a new image to replace the current flyer." : "Optional, max 5MB."}
+          </p>
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
+            className="h-4 w-4"
+          />
+          Share publicly on the website
+        </label>
+        <DialogFooter>
+          <Button type="submit" disabled={saving} className="w-full sm:w-auto">
+            {saving ? "Saving…" : "Save changes"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
