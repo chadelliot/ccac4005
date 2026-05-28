@@ -19,7 +19,7 @@ import {
 import { toast } from "sonner";
 import { Calendar, MapPin, Plus, ImagePlus } from "lucide-react";
 
-export const Route = createFileRoute("/dashboard/events")({
+export const Route = createFileRoute("/dashboard/events/")({
   head: () => ({ meta: [{ title: "Events — CCAC" }] }),
   component: EventsPage,
 });
