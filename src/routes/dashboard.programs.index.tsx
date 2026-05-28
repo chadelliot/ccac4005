@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
-export const Route = createFileRoute("/dashboard/programs")({
+export const Route = createFileRoute("/dashboard/programs/")({
   head: () => ({ meta: [{ title: "Discipleship Programs — CCAC" }] }),
   component: ProgramsPage,
 });
