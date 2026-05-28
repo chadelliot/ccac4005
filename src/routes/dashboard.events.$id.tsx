@@ -241,13 +241,32 @@ function EventDetailPage() {
   const end = event.end_at ? new Date(event.end_at) : null;
 
 
-  return (
-    <div className="max-w-4xl space-y-8">
-      <Link
-        to="/dashboard/events"
-        className="inline-flex items-center gap-2 text-xs eyebrow text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3 w-3" /> All events
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <Link
+          to="/dashboard/events"
+          className="inline-flex items-center gap-2 text-xs eyebrow text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-3 w-3" /> All events
+        </Link>
+        {canEdit && (
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="h-4 w-4" /> Edit event
+          </Button>
+        )}
+      </div>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        {editOpen && (
+          <EditEventDialog
+            event={event}
+            onSaved={() => {
+              setEditOpen(false);
+              load();
+            }}
+          />
+        )}
+      </Dialog>
+
       </Link>
 
       <div className="grid md:grid-cols-[1fr_1.2fr] gap-8">
