@@ -101,7 +101,7 @@ export function SiteHeader() {
             ) : (
               <Link to="/auth" onClick={() => setOpen(false)} className="eyebrow py-3 text-gold">Member Login</Link>
             )}
-            <a href="https://www.paypal.me/christchurchap" target="_blank" rel="noreferrer" className="eyebrow py-3 text-gold">Give Online</a>
+            <Link to="/give" onClick={() => setOpen(false)} className="eyebrow py-3 text-gold">Give</Link>
           </div>
         </div>
       )}
