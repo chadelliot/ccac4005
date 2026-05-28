@@ -586,7 +586,15 @@ function EditEventDialog({
         flyer_url = pub.publicUrl;
       }
 
-      const update: Record<string, unknown> = {
+      const update: {
+        title: string;
+        description: string | null;
+        location: string | null;
+        start_at: string;
+        end_at: string | null;
+        is_public: boolean;
+        flyer_url?: string | null;
+      } = {
         title: parsed.data.title,
         description: parsed.data.description || null,
         location: parsed.data.location || null,
