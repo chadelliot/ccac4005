@@ -240,7 +240,8 @@ function EventDetailPage() {
   const start = new Date(event.start_at);
   const end = event.end_at ? new Date(event.end_at) : null;
 
-
+  return (
+    <div className="max-w-4xl space-y-8">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <Link
           to="/dashboard/events"
@@ -267,7 +268,6 @@ function EventDetailPage() {
         )}
       </Dialog>
 
-      </Link>
 
       <div className="grid md:grid-cols-[1fr_1.2fr] gap-8">
         <div className="bg-muted overflow-hidden">
