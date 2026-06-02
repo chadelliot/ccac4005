@@ -628,5 +628,131 @@ function FilterChip({ children, active, onClick }: { children: React.ReactNode; 
   );
 }
 
+function WitnessesPanel({
+  witnesses,
+  profiles,
+  soulsByWitness,
+  onChanged,
+}: {
+  witnesses: Witness[];
+  profiles: Profile[];
+  soulsByWitness: Record<string, number>;
+  onChanged: () => void;
+}) {
+  const [newName, setNewName] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const sortedProfiles = useMemo(
+    () => [...profiles].sort((a, b) => (a.display_name ?? "").localeCompare(b.display_name ?? "")),
+    [profiles],
+  );
+
+  const addWitness = async () => {
+    const name = newName.trim();
+    if (!name) return;
+    setBusy("new");
+    const { error } = await supabase.from("witnesses").insert({ name });
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    setNewName("");
+    toast.success("Witness added");
+    onChanged();
+  };
+
+  const setLink = async (id: string, userId: string | null) => {
+    setBusy(id);
+    const { error } = await supabase.from("witnesses").update({ linked_user_id: userId }).eq("id", id);
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    toast.success(userId ? "Linked to user — past souls now visible to them" : "Unlinked");
+    onChanged();
+  };
+
+  const remove = async (id: string, name: string) => {
+    if (!confirm(`Delete witness "${name}"? Souls credited to them will keep their record but lose the credit link.`)) return;
+    setBusy(id);
+    const { error } = await supabase.from("witnesses").delete().eq("id", id);
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    toast.success("Witness deleted");
+    onChanged();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-card border border-border p-4 flex gap-2 items-center">
+        <Input
+          placeholder="Add a witness (e.g. Sister Mary)"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addWitness()}
+          className="max-w-sm"
+        />
+        <Button
+          onClick={addWitness}
+          disabled={busy === "new" || !newName.trim()}
+          className="rounded-none eyebrow bg-night text-night-foreground hover:bg-night/90"
+        >
+          Add Witness
+        </Button>
+        <p className="text-xs text-muted-foreground ml-auto">
+          Link a witness to a user account to give them visibility on souls they ministered to.
+        </p>
+      </div>
+
+      <div className="border border-border bg-card overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Souls credited</TableHead>
+              <TableHead>Linked user account</TableHead>
+              <TableHead className="w-[100px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {witnesses.length === 0 ? (
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No witnesses yet.</TableCell></TableRow>
+            ) : witnesses.map((w) => (
+              <TableRow key={w.id}>
+                <TableCell className="font-medium">{w.name}</TableCell>
+                <TableCell className="text-sm text-muted-foreground tabular-nums">{soulsByWitness[w.id] ?? 0}</TableCell>
+                <TableCell>
+                  <Select
+                    value={w.linked_user_id ?? "none"}
+                    onValueChange={(v) => setLink(w.id, v === "none" ? null : v)}
+                    disabled={busy === w.id}
+                  >
+                    <SelectTrigger className="w-[240px]">
+                      <SelectValue placeholder="Not linked" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Not linked —</SelectItem>
+                      {sortedProfiles.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.display_name ?? "Unnamed user"}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={busy === w.id}
+                    onClick={() => remove(w.id, w.name)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
 // silence unused-import lint
 void Users;
