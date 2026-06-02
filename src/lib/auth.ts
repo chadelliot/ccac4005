@@ -27,10 +27,12 @@ export function useSession() {
 export function useRoles(user: User | null) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
       setRoles([]);
+      setLoadedUserId(null);
       setLoading(false);
       return;
     }
@@ -43,6 +45,13 @@ export function useRoles(user: User | null) {
       .then(({ data }) => {
         if (!active) return;
         setRoles((data ?? []).map((r) => r.role as AppRole));
+        setLoadedUserId(user.id);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setRoles([]);
+        setLoadedUserId(user.id);
         setLoading(false);
       });
     return () => {
@@ -50,9 +59,11 @@ export function useRoles(user: User | null) {
     };
   }, [user]);
 
+  const effectiveLoading = loading || (!!user && loadedUserId !== user.id);
+
   return {
     roles,
-    loading,
+    loading: effectiveLoading,
     isAdmin: roles.includes("admin"),
     isLeader: roles.includes("leader") || roles.includes("admin"),
   };
