@@ -49,10 +49,13 @@ const contactSchema = z.object({
 
 function EvangelismPage() {
   const { user } = useSession();
+  const { isAdmin, isLeader } = useRoles(user);
+  const canSeeAdmin = isAdmin || isLeader;
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const geocodeFn = useServerFn(geocodeAddress);
 
   const load = async () => {
     const { data, error } = await supabase
@@ -81,12 +84,37 @@ function EvangelismPage() {
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
-    const { error } = await supabase.from("evangelism_contacts").insert({ ...parsed.data, added_by: user.id });
+    const { data: inserted, error } = await supabase
+      .from("evangelism_contacts")
+      .insert({ ...parsed.data, added_by: user.id })
+      .select("id")
+      .single();
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Contact added — 3 follow-up touches scheduled");
     setOpen(false);
     (e.target as HTMLFormElement).reset();
+    // fire-and-forget geocoding
+    const query = parsed.data.address || parsed.data.where_met;
+    if (inserted?.id && query) {
+      geocodeFn({ data: { query } })
+        .then(async (r) => {
+          if (r.ok && r.latitude != null && r.longitude != null) {
+            await supabase
+              .from("evangelism_contacts")
+              .update({
+                latitude: r.latitude,
+                longitude: r.longitude,
+                city: r.city,
+                region: r.region,
+                country: r.country,
+                geocoded_at: new Date().toISOString(),
+              })
+              .eq("id", inserted.id);
+          }
+        })
+        .catch(() => {});
+    }
     load();
   };
 
