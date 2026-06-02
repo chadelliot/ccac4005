@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Search, Phone, MapPin, ChevronRight, Shield } from "lucide-react";
+import { Plus, Search, Phone, MapPin, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -49,8 +49,8 @@ const contactSchema = z.object({
 
 function EvangelismPage() {
   const { user } = useSession();
-  const { isAdmin, isLeader } = useRoles(user);
-  const canSeeAdmin = isAdmin || isLeader;
+  const { isAdmin, loading: rolesLoading } = useRoles(user);
+  const navigate = useNavigate();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -65,6 +65,10 @@ function EvangelismPage() {
     if (error) toast.error(error.message);
     setContacts((data ?? []) as Contact[]);
   };
+
+  useEffect(() => {
+    if (isAdmin) navigate({ to: "/dashboard/evangelism/admin", replace: true });
+  }, [isAdmin, navigate]);
 
   useEffect(() => {
     load();
@@ -168,13 +172,6 @@ function EvangelismPage() {
           <p className="text-muted-foreground mt-2">People we've met, prayed with, and are following up on.</p>
         </div>
         <div className="flex gap-2">
-          {canSeeAdmin && (
-            <Button asChild variant="outline" className="rounded-none px-5 py-6 eyebrow">
-              <Link to="/dashboard/evangelism/admin">
-                <Shield className="h-4 w-4" /> Admin View
-              </Link>
-            </Button>
-          )}
           <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="bg-night text-night-foreground hover:bg-night/90 rounded-none px-6 py-6 eyebrow">
