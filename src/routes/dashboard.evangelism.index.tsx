@@ -167,7 +167,15 @@ function EvangelismPage() {
           <h1 className="font-display text-5xl">Contacts</h1>
           <p className="text-muted-foreground mt-2">People we've met, prayed with, and are following up on.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex gap-2">
+          {canSeeAdmin && (
+            <Button asChild variant="outline" className="rounded-none px-5 py-6 eyebrow">
+              <Link to="/dashboard/evangelism/admin">
+                <Shield className="h-4 w-4" /> Admin View
+              </Link>
+            </Button>
+          )}
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="bg-night text-night-foreground hover:bg-night/90 rounded-none px-6 py-6 eyebrow">
               <Plus className="h-4 w-4" /> Add Contact
