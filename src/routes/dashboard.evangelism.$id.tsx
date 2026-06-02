@@ -297,9 +297,16 @@ function ContactDetail() {
             <Button type="submit" disabled={busy} className="bg-night text-night-foreground hover:bg-night/90 rounded-none px-8 eyebrow">
               {busy ? "Saving..." : "Save Changes"}
             </Button>
-            <Button type="button" onClick={handleDelete} variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10 rounded-none">
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <DeleteContactDialog
+              contactId={id}
+              contactName={`${contact.first_name}${contact.last_name ? " " + contact.last_name : ""}`}
+              onDeleted={() => navigate({ to: "/dashboard/evangelism" })}
+              trigger={
+                <Button type="button" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10 rounded-none">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              }
+            />
           </div>
         </form>
       )}
