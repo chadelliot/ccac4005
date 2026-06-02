@@ -341,7 +341,9 @@ function EvangelismAdmin() {
           <TabsTrigger value="map">Map</TabsTrigger>
           <TabsTrigger value="all">All Contacts ({contacts.length})</TabsTrigger>
           <TabsTrigger value="touches">Follow-ups</TabsTrigger>
+          <TabsTrigger value="witnesses">Witnesses ({witnesses.length})</TabsTrigger>
         </TabsList>
+
 
         {/* MAP */}
         <TabsContent value="map" className="space-y-5">
