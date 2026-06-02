@@ -70,6 +70,8 @@ function ContactDetail() {
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<ContactStatus>("new");
+  const geocodeFn = useServerFn(geocodeAddress);
+
 
   useEffect(() => {
     if (contact) setStatus((contact.status as ContactStatus) ?? "new");
