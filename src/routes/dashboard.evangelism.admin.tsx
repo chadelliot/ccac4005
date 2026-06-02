@@ -100,6 +100,7 @@ function EvangelismAdmin() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [witnesses, setWitnesses] = useState<Witness[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [backfilling, setBackfilling] = useState(false);
 
@@ -113,10 +114,11 @@ function EvangelismAdmin() {
 
   const load = async () => {
     setLoadingData(true);
-    const [{ data: c }, { data: f }, { data: p }] = await Promise.all([
+    const [{ data: c }, { data: f }, { data: p }, { data: w }] = await Promise.all([
       supabase.from("evangelism_contacts").select("*").order("created_at", { ascending: false }),
       supabase.from("contact_follow_ups").select("id, contact_id, due_date, touch_number, completed"),
       supabase.from("profiles").select("id, display_name"),
+      supabase.from("witnesses").select("id, name, linked_user_id").order("name"),
     ]);
     setContacts((c ?? []) as Contact[]);
     setFollowUps((f ?? []) as FollowUp[]);
@@ -125,8 +127,10 @@ function EvangelismAdmin() {
       map[row.id] = row as Profile;
     });
     setProfiles(map);
+    setWitnesses((w ?? []) as Witness[]);
     setLoadingData(false);
   };
+
 
   useEffect(() => {
     if (!sessionLoading && !rolesLoading && user && isAdmin) load();
