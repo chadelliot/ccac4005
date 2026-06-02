@@ -2,9 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Search, Phone, MapPin, ChevronRight } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Plus, Search, Phone, MapPin, ChevronRight, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/lib/auth";
+import { useSession, useRoles } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { geocodeAddress } from "@/lib/evangelismGeocode.functions";
 
 export const Route = createFileRoute("/dashboard/evangelism/")({
   head: () => ({ meta: [{ title: "Evangelism — CCAC" }] }),
@@ -47,10 +49,13 @@ const contactSchema = z.object({
 
 function EvangelismPage() {
   const { user } = useSession();
+  const { isAdmin, isLeader } = useRoles(user);
+  const canSeeAdmin = isAdmin || isLeader;
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const geocodeFn = useServerFn(geocodeAddress);
 
   const load = async () => {
     const { data, error } = await supabase
@@ -79,12 +84,37 @@ function EvangelismPage() {
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
-    const { error } = await supabase.from("evangelism_contacts").insert({ ...parsed.data, added_by: user.id });
+    const { data: inserted, error } = await supabase
+      .from("evangelism_contacts")
+      .insert({ ...parsed.data, added_by: user.id })
+      .select("id")
+      .single();
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Contact added — 3 follow-up touches scheduled");
     setOpen(false);
     (e.target as HTMLFormElement).reset();
+    // fire-and-forget geocoding
+    const query = parsed.data.address || parsed.data.where_met;
+    if (inserted?.id && query) {
+      geocodeFn({ data: { query } })
+        .then(async (r) => {
+          if (r.ok && r.latitude != null && r.longitude != null) {
+            await supabase
+              .from("evangelism_contacts")
+              .update({
+                latitude: r.latitude,
+                longitude: r.longitude,
+                city: r.city,
+                region: r.region,
+                country: r.country,
+                geocoded_at: new Date().toISOString(),
+              })
+              .eq("id", inserted.id);
+          }
+        })
+        .catch(() => {});
+    }
     load();
   };
 
@@ -137,7 +167,15 @@ function EvangelismPage() {
           <h1 className="font-display text-5xl">Contacts</h1>
           <p className="text-muted-foreground mt-2">People we've met, prayed with, and are following up on.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex gap-2">
+          {canSeeAdmin && (
+            <Button asChild variant="outline" className="rounded-none px-5 py-6 eyebrow">
+              <Link to="/dashboard/evangelism/admin">
+                <Shield className="h-4 w-4" /> Admin View
+              </Link>
+            </Button>
+          )}
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="bg-night text-night-foreground hover:bg-night/90 rounded-none px-6 py-6 eyebrow">
               <Plus className="h-4 w-4" /> Add Contact
@@ -182,6 +220,7 @@ function EvangelismPage() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="relative max-w-md">

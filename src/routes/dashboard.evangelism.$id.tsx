@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Phone, MapPin, Calendar, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
@@ -12,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DeleteContactDialog } from "@/components/evangelism/DeleteContactDialog";
+import { geocodeAddress } from "@/lib/evangelismGeocode.functions";
 
 const STATUS_OPTIONS = ["new", "contacted", "visiting", "member", "cold"] as const;
 type ContactStatus = (typeof STATUS_OPTIONS)[number];
@@ -67,6 +70,8 @@ function ContactDetail() {
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<ContactStatus>("new");
+  const geocodeFn = useServerFn(geocodeAddress);
+
 
   useEffect(() => {
     if (contact) setStatus((contact.status as ContactStatus) ?? "new");
@@ -111,20 +116,38 @@ function ContactDetail() {
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
+    const addressChanged =
+      (parsed.data.address ?? null) !== (contact?.address ?? null) ||
+      (parsed.data.where_met ?? null) !== (contact?.where_met ?? null);
     const { error } = await supabase.from("evangelism_contacts").update(parsed.data).eq("id", id);
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Saved");
+    if (addressChanged) {
+      const q = parsed.data.address || parsed.data.where_met;
+      if (q) {
+        geocodeFn({ data: { query: q } })
+          .then(async (r) => {
+            if (r.ok && r.latitude != null && r.longitude != null) {
+              await supabase
+                .from("evangelism_contacts")
+                .update({
+                  latitude: r.latitude,
+                  longitude: r.longitude,
+                  city: r.city,
+                  region: r.region,
+                  country: r.country,
+                  geocoded_at: new Date().toISOString(),
+                })
+                .eq("id", id);
+            }
+          })
+          .catch(() => {});
+      }
+    }
     load();
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Delete this contact and all their follow-ups?")) return;
-    const { error } = await supabase.from("evangelism_contacts").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Deleted");
-    navigate({ to: "/dashboard/evangelism" });
-  };
 
   return (
     <div className="max-w-4xl space-y-8">
@@ -274,9 +297,16 @@ function ContactDetail() {
             <Button type="submit" disabled={busy} className="bg-night text-night-foreground hover:bg-night/90 rounded-none px-8 eyebrow">
               {busy ? "Saving..." : "Save Changes"}
             </Button>
-            <Button type="button" onClick={handleDelete} variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10 rounded-none">
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <DeleteContactDialog
+              contactId={id}
+              contactName={`${contact.first_name}${contact.last_name ? " " + contact.last_name : ""}`}
+              onDeleted={() => navigate({ to: "/dashboard/evangelism" })}
+              trigger={
+                <Button type="button" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10 rounded-none">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              }
+            />
           </div>
         </form>
       )}
