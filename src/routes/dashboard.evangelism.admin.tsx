@@ -63,6 +63,7 @@ type Contact = {
   region: string | null;
   country: string | null;
   geocoded_at: string | null;
+  witness_id: string | null;
 };
 
 type FollowUp = {
@@ -74,6 +75,8 @@ type FollowUp = {
 };
 
 type Profile = { id: string; display_name: string | null };
+type Witness = { id: string; name: string; linked_user_id: string | null };
+
 
 function fullName(c: Contact) {
   return `${c.first_name}${c.last_name ? " " + c.last_name : ""}`.trim();
