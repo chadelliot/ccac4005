@@ -38,22 +38,24 @@ export function useRoles(user: User | null) {
     }
     let active = true;
     setLoading(true);
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .then(({ data }) => {
+    const loadRoles = async () => {
+      try {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id);
         if (!active) return;
         setRoles((data ?? []).map((r) => r.role as AppRole));
         setLoadedUserId(user.id);
         setLoading(false);
-      })
-      .catch(() => {
+      } catch {
         if (!active) return;
         setRoles([]);
         setLoadedUserId(user.id);
         setLoading(false);
-      });
+      }
+    };
+    loadRoles();
     return () => {
       active = false;
     };
