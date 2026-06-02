@@ -129,6 +129,7 @@ export type Database = {
           updated_at: string
           visited: boolean
           where_met: string | null
+          witness_id: string | null
         }
         Insert: {
           added_by: string
@@ -153,6 +154,7 @@ export type Database = {
           updated_at?: string
           visited?: boolean
           where_met?: string | null
+          witness_id?: string | null
         }
         Update: {
           added_by?: string
@@ -177,8 +179,17 @@ export type Database = {
           updated_at?: string
           visited?: boolean
           where_met?: string | null
+          witness_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "evangelism_contacts_witness_id_fkey"
+            columns: ["witness_id"]
+            isOneToOne: false
+            referencedRelation: "witnesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       event_guest_rsvps: {
         Row: {
@@ -958,6 +969,30 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      witnesses: {
+        Row: {
+          created_at: string
+          id: string
+          linked_user_id: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          linked_user_id?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          linked_user_id?: string | null
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }

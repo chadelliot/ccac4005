@@ -63,6 +63,7 @@ type Contact = {
   region: string | null;
   country: string | null;
   geocoded_at: string | null;
+  witness_id: string | null;
 };
 
 type FollowUp = {
@@ -74,6 +75,8 @@ type FollowUp = {
 };
 
 type Profile = { id: string; display_name: string | null };
+type Witness = { id: string; name: string; linked_user_id: string | null };
+
 
 function fullName(c: Contact) {
   return `${c.first_name}${c.last_name ? " " + c.last_name : ""}`.trim();
@@ -97,6 +100,7 @@ function EvangelismAdmin() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [witnesses, setWitnesses] = useState<Witness[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [backfilling, setBackfilling] = useState(false);
 
@@ -110,10 +114,11 @@ function EvangelismAdmin() {
 
   const load = async () => {
     setLoadingData(true);
-    const [{ data: c }, { data: f }, { data: p }] = await Promise.all([
+    const [{ data: c }, { data: f }, { data: p }, { data: w }] = await Promise.all([
       supabase.from("evangelism_contacts").select("*").order("created_at", { ascending: false }),
       supabase.from("contact_follow_ups").select("id, contact_id, due_date, touch_number, completed"),
       supabase.from("profiles").select("id, display_name"),
+      supabase.from("witnesses").select("id, name, linked_user_id").order("name"),
     ]);
     setContacts((c ?? []) as Contact[]);
     setFollowUps((f ?? []) as FollowUp[]);
@@ -122,8 +127,10 @@ function EvangelismAdmin() {
       map[row.id] = row as Profile;
     });
     setProfiles(map);
+    setWitnesses((w ?? []) as Witness[]);
     setLoadingData(false);
   };
+
 
   useEffect(() => {
     if (!sessionLoading && !rolesLoading && user && isAdmin) load();
@@ -188,6 +195,19 @@ function EvangelismAdmin() {
     const set = new Set(contacts.map((c) => c.where_met).filter(Boolean) as string[]);
     return Array.from(set).sort();
   }, [contacts]);
+
+  const witnessById = useMemo(() => {
+    const m: Record<string, Witness> = {};
+    witnesses.forEach((w) => (m[w.id] = w));
+    return m;
+  }, [witnesses]);
+
+  const soulsByWitness = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const c of contacts) if (c.witness_id) m[c.witness_id] = (m[c.witness_id] ?? 0) + 1;
+    return m;
+  }, [contacts]);
+
 
   const followUpByContact = useMemo(() => {
     const m: Record<string, { total: number; done: number; overdue: number; nextDue: string | null }> = {};
@@ -334,7 +354,9 @@ function EvangelismAdmin() {
           <TabsTrigger value="map">Map</TabsTrigger>
           <TabsTrigger value="all">All Contacts ({contacts.length})</TabsTrigger>
           <TabsTrigger value="touches">Follow-ups</TabsTrigger>
+          <TabsTrigger value="witnesses">Witnesses ({witnesses.length})</TabsTrigger>
         </TabsList>
+
 
         {/* MAP */}
         <TabsContent value="map" className="space-y-5">
@@ -460,6 +482,7 @@ function EvangelismAdmin() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Witness</TableHead>
                   <TableHead>Added by</TableHead>
                   <TableHead>Where met</TableHead>
                   <TableHead>Phone</TableHead>
@@ -471,11 +494,12 @@ function EvangelismAdmin() {
               </TableHeader>
               <TableBody>
                 {loadingData ? (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Loading…</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Loading…</TableCell></TableRow>
                 ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No contacts match these filters.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No contacts match these filters.</TableCell></TableRow>
                 ) : filtered.map((c) => {
                   const fu = followUpByContact[c.id] || { total: 0, done: 0, overdue: 0, nextDue: null };
+                  const witness = c.witness_id ? witnessById[c.witness_id] : null;
                   return (
                     <TableRow key={c.id} className="group">
                       <TableCell>
@@ -483,9 +507,11 @@ function EvangelismAdmin() {
                           {fullName(c)}
                         </Link>
                       </TableCell>
+                      <TableCell className="text-sm">{witness ? witness.name : <span className="text-muted-foreground">—</span>}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{profiles[c.added_by]?.display_name ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{c.where_met ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{c.phone ?? "—"}</TableCell>
+
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {c.gospel_shared && <Badge variant="outline" className="text-[10px]">Gospel</Badge>}
@@ -564,7 +590,18 @@ function EvangelismAdmin() {
             ))}
           </div>
         </TabsContent>
+
+        {/* WITNESSES */}
+        <TabsContent value="witnesses" className="space-y-4">
+          <WitnessesPanel
+            witnesses={witnesses}
+            profiles={Object.values(profiles)}
+            soulsByWitness={soulsByWitness}
+            onChanged={load}
+          />
+        </TabsContent>
       </Tabs>
+
     </div>
   );
 }
@@ -588,6 +625,132 @@ function FilterChip({ children, active, onClick }: { children: React.ReactNode; 
     >
       {children}
     </button>
+  );
+}
+
+function WitnessesPanel({
+  witnesses,
+  profiles,
+  soulsByWitness,
+  onChanged,
+}: {
+  witnesses: Witness[];
+  profiles: Profile[];
+  soulsByWitness: Record<string, number>;
+  onChanged: () => void;
+}) {
+  const [newName, setNewName] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const sortedProfiles = useMemo(
+    () => [...profiles].sort((a, b) => (a.display_name ?? "").localeCompare(b.display_name ?? "")),
+    [profiles],
+  );
+
+  const addWitness = async () => {
+    const name = newName.trim();
+    if (!name) return;
+    setBusy("new");
+    const { error } = await supabase.from("witnesses").insert({ name });
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    setNewName("");
+    toast.success("Witness added");
+    onChanged();
+  };
+
+  const setLink = async (id: string, userId: string | null) => {
+    setBusy(id);
+    const { error } = await supabase.from("witnesses").update({ linked_user_id: userId }).eq("id", id);
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    toast.success(userId ? "Linked to user — past souls now visible to them" : "Unlinked");
+    onChanged();
+  };
+
+  const remove = async (id: string, name: string) => {
+    if (!confirm(`Delete witness "${name}"? Souls credited to them will keep their record but lose the credit link.`)) return;
+    setBusy(id);
+    const { error } = await supabase.from("witnesses").delete().eq("id", id);
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    toast.success("Witness deleted");
+    onChanged();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-card border border-border p-4 flex gap-2 items-center">
+        <Input
+          placeholder="Add a witness (e.g. Sister Mary)"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addWitness()}
+          className="max-w-sm"
+        />
+        <Button
+          onClick={addWitness}
+          disabled={busy === "new" || !newName.trim()}
+          className="rounded-none eyebrow bg-night text-night-foreground hover:bg-night/90"
+        >
+          Add Witness
+        </Button>
+        <p className="text-xs text-muted-foreground ml-auto">
+          Link a witness to a user account to give them visibility on souls they ministered to.
+        </p>
+      </div>
+
+      <div className="border border-border bg-card overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Souls credited</TableHead>
+              <TableHead>Linked user account</TableHead>
+              <TableHead className="w-[100px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {witnesses.length === 0 ? (
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No witnesses yet.</TableCell></TableRow>
+            ) : witnesses.map((w) => (
+              <TableRow key={w.id}>
+                <TableCell className="font-medium">{w.name}</TableCell>
+                <TableCell className="text-sm text-muted-foreground tabular-nums">{soulsByWitness[w.id] ?? 0}</TableCell>
+                <TableCell>
+                  <Select
+                    value={w.linked_user_id ?? "none"}
+                    onValueChange={(v) => setLink(w.id, v === "none" ? null : v)}
+                    disabled={busy === w.id}
+                  >
+                    <SelectTrigger className="w-[240px]">
+                      <SelectValue placeholder="Not linked" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Not linked —</SelectItem>
+                      {sortedProfiles.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.display_name ?? "Unnamed user"}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={busy === w.id}
+                    onClick={() => remove(w.id, w.name)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   );
 }
 
