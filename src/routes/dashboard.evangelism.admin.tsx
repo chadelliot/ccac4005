@@ -482,6 +482,7 @@ function EvangelismAdmin() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Witness</TableHead>
                   <TableHead>Added by</TableHead>
                   <TableHead>Where met</TableHead>
                   <TableHead>Phone</TableHead>
@@ -493,11 +494,12 @@ function EvangelismAdmin() {
               </TableHeader>
               <TableBody>
                 {loadingData ? (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Loading…</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Loading…</TableCell></TableRow>
                 ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No contacts match these filters.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No contacts match these filters.</TableCell></TableRow>
                 ) : filtered.map((c) => {
                   const fu = followUpByContact[c.id] || { total: 0, done: 0, overdue: 0, nextDue: null };
+                  const witness = c.witness_id ? witnessById[c.witness_id] : null;
                   return (
                     <TableRow key={c.id} className="group">
                       <TableCell>
@@ -505,9 +507,11 @@ function EvangelismAdmin() {
                           {fullName(c)}
                         </Link>
                       </TableCell>
+                      <TableCell className="text-sm">{witness ? witness.name : <span className="text-muted-foreground">—</span>}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{profiles[c.added_by]?.display_name ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{c.where_met ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{c.phone ?? "—"}</TableCell>
+
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {c.gospel_shared && <Badge variant="outline" className="text-[10px]">Gospel</Badge>}
