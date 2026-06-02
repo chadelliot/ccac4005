@@ -110,15 +110,21 @@ export type Database = {
           added_by: string
           address: string | null
           baptized: boolean
+          city: string | null
+          country: string | null
           created_at: string
           first_name: string
+          geocoded_at: string | null
           gospel_shared: boolean
           holy_ghost: boolean
           id: string
           last_name: string | null
+          latitude: number | null
+          longitude: number | null
           notes: string | null
           phone: string | null
           prayer_request: string | null
+          region: string | null
           status: string
           updated_at: string
           visited: boolean
@@ -128,15 +134,21 @@ export type Database = {
           added_by: string
           address?: string | null
           baptized?: boolean
+          city?: string | null
+          country?: string | null
           created_at?: string
           first_name: string
+          geocoded_at?: string | null
           gospel_shared?: boolean
           holy_ghost?: boolean
           id?: string
           last_name?: string | null
+          latitude?: number | null
+          longitude?: number | null
           notes?: string | null
           phone?: string | null
           prayer_request?: string | null
+          region?: string | null
           status?: string
           updated_at?: string
           visited?: boolean
@@ -146,15 +158,21 @@ export type Database = {
           added_by?: string
           address?: string | null
           baptized?: boolean
+          city?: string | null
+          country?: string | null
           created_at?: string
           first_name?: string
+          geocoded_at?: string | null
           gospel_shared?: boolean
           holy_ghost?: boolean
           id?: string
           last_name?: string | null
+          latitude?: number | null
+          longitude?: number | null
           notes?: string | null
           phone?: string | null
           prayer_request?: string | null
+          region?: string | null
           status?: string
           updated_at?: string
           visited?: boolean
