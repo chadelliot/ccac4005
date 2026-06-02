@@ -116,20 +116,38 @@ function ContactDetail() {
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
+    const addressChanged =
+      (parsed.data.address ?? null) !== (contact?.address ?? null) ||
+      (parsed.data.where_met ?? null) !== (contact?.where_met ?? null);
     const { error } = await supabase.from("evangelism_contacts").update(parsed.data).eq("id", id);
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Saved");
+    if (addressChanged) {
+      const q = parsed.data.address || parsed.data.where_met;
+      if (q) {
+        geocodeFn({ data: { query: q } })
+          .then(async (r) => {
+            if (r.ok && r.latitude != null && r.longitude != null) {
+              await supabase
+                .from("evangelism_contacts")
+                .update({
+                  latitude: r.latitude,
+                  longitude: r.longitude,
+                  city: r.city,
+                  region: r.region,
+                  country: r.country,
+                  geocoded_at: new Date().toISOString(),
+                })
+                .eq("id", id);
+            }
+          })
+          .catch(() => {});
+      }
+    }
     load();
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Delete this contact and all their follow-ups?")) return;
-    const { error } = await supabase.from("evangelism_contacts").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Deleted");
-    navigate({ to: "/dashboard/evangelism" });
-  };
 
   return (
     <div className="max-w-4xl space-y-8">
