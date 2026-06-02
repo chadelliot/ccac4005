@@ -90,7 +90,7 @@ function monthLabel(key: string) {
 
 function EvangelismAdmin() {
   const { user, loading: sessionLoading } = useSession();
-  const { isAdmin, isLeader, loading: rolesLoading } = useRoles(user);
+  const { isAdmin, loading: rolesLoading } = useRoles(user);
   const navigate = useNavigate();
   const geocodeFn = useServerFn(geocodeAddress);
 
@@ -102,11 +102,11 @@ function EvangelismAdmin() {
 
   // gate
   useEffect(() => {
-    if (!sessionLoading && !rolesLoading && user && !isAdmin && !isLeader) {
-      toast.error("Admins and leaders only");
+    if (!sessionLoading && !rolesLoading && user && !isAdmin) {
+      toast.error("Admins only");
       navigate({ to: "/dashboard/evangelism" });
     }
-  }, [sessionLoading, rolesLoading, user, isAdmin, isLeader, navigate]);
+  }, [sessionLoading, rolesLoading, user, isAdmin, navigate]);
 
   const load = async () => {
     setLoadingData(true);
@@ -126,8 +126,8 @@ function EvangelismAdmin() {
   };
 
   useEffect(() => {
-    if (user && (isAdmin || isLeader)) load();
-  }, [user, isAdmin, isLeader]);
+    if (!sessionLoading && !rolesLoading && user && isAdmin) load();
+  }, [sessionLoading, rolesLoading, user, isAdmin]);
 
   // backfill geocoding for contacts missing coords
   const backfillGeocodes = async () => {
@@ -289,7 +289,7 @@ function EvangelismAdmin() {
   if (sessionLoading || rolesLoading || !user) {
     return <div className="eyebrow text-muted-foreground">Loading...</div>;
   }
-  if (!isAdmin && !isLeader) return null;
+  if (!isAdmin) return null;
 
   return (
     <div className="space-y-8 max-w-7xl">
