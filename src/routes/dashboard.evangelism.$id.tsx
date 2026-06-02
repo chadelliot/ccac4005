@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Phone, MapPin, Calendar, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
@@ -12,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DeleteContactDialog } from "@/components/evangelism/DeleteContactDialog";
+import { geocodeAddress } from "@/lib/evangelismGeocode.functions";
 
 const STATUS_OPTIONS = ["new", "contacted", "visiting", "member", "cold"] as const;
 type ContactStatus = (typeof STATUS_OPTIONS)[number];
