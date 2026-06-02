@@ -196,6 +196,19 @@ function EvangelismAdmin() {
     return Array.from(set).sort();
   }, [contacts]);
 
+  const witnessById = useMemo(() => {
+    const m: Record<string, Witness> = {};
+    witnesses.forEach((w) => (m[w.id] = w));
+    return m;
+  }, [witnesses]);
+
+  const soulsByWitness = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const c of contacts) if (c.witness_id) m[c.witness_id] = (m[c.witness_id] ?? 0) + 1;
+    return m;
+  }, [contacts]);
+
+
   const followUpByContact = useMemo(() => {
     const m: Record<string, { total: number; done: number; overdue: number; nextDue: string | null }> = {};
     const today = new Date().toISOString().slice(0, 10);
