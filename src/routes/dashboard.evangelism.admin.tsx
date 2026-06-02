@@ -289,7 +289,7 @@ function EvangelismAdmin() {
   if (sessionLoading || rolesLoading || !user) {
     return <div className="eyebrow text-muted-foreground">Loading...</div>;
   }
-  if (!isAdmin && !isLeader) return null;
+  if (!isAdmin) return null;
 
   return (
     <div className="space-y-8 max-w-7xl">
