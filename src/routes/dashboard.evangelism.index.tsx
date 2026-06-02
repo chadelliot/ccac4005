@@ -67,6 +67,10 @@ function EvangelismPage() {
   };
 
   useEffect(() => {
+    if (isAdmin) navigate({ to: "/dashboard/evangelism/admin", replace: true });
+  }, [isAdmin, navigate]);
+
+  useEffect(() => {
     load();
   }, []);
 
