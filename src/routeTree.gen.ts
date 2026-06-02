@@ -31,6 +31,7 @@ import { Route as DashboardEvangelismIndexRouteImport } from './routes/dashboard
 import { Route as DashboardProgramsIdRouteImport } from './routes/dashboard.programs.$id'
 import { Route as DashboardGroupsIdRouteImport } from './routes/dashboard.groups.$id'
 import { Route as DashboardEventsIdRouteImport } from './routes/dashboard.events.$id'
+import { Route as DashboardEvangelismAdminRouteImport } from './routes/dashboard.evangelism.admin'
 import { Route as DashboardEvangelismIdRouteImport } from './routes/dashboard.evangelism.$id'
 
 const PlanVisitRoute = PlanVisitRouteImport.update({
@@ -144,6 +145,12 @@ const DashboardEventsIdRoute = DashboardEventsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => DashboardEventsRoute,
 } as any)
+const DashboardEvangelismAdminRoute =
+  DashboardEvangelismAdminRouteImport.update({
+    id: '/admin',
+    path: '/admin',
+    getParentRoute: () => DashboardEvangelismRoute,
+  } as any)
 const DashboardEvangelismIdRoute = DashboardEvangelismIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -168,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/events/$id': typeof EventsIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
+  '/dashboard/evangelism/admin': typeof DashboardEvangelismAdminRoute
   '/dashboard/events/$id': typeof DashboardEventsIdRoute
   '/dashboard/groups/$id': typeof DashboardGroupsIdRoute
   '/dashboard/programs/$id': typeof DashboardProgramsIdRoute
@@ -189,6 +197,7 @@ export interface FileRoutesByTo {
   '/events/$id': typeof EventsIdRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
+  '/dashboard/evangelism/admin': typeof DashboardEvangelismAdminRoute
   '/dashboard/events/$id': typeof DashboardEventsIdRoute
   '/dashboard/groups/$id': typeof DashboardGroupsIdRoute
   '/dashboard/programs/$id': typeof DashboardProgramsIdRoute
@@ -215,6 +224,7 @@ export interface FileRoutesById {
   '/events/$id': typeof EventsIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
+  '/dashboard/evangelism/admin': typeof DashboardEvangelismAdminRoute
   '/dashboard/events/$id': typeof DashboardEventsIdRoute
   '/dashboard/groups/$id': typeof DashboardGroupsIdRoute
   '/dashboard/programs/$id': typeof DashboardProgramsIdRoute
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/events/$id'
     | '/dashboard/'
     | '/dashboard/evangelism/$id'
+    | '/dashboard/evangelism/admin'
     | '/dashboard/events/$id'
     | '/dashboard/groups/$id'
     | '/dashboard/programs/$id'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/events/$id'
     | '/dashboard'
     | '/dashboard/evangelism/$id'
+    | '/dashboard/evangelism/admin'
     | '/dashboard/events/$id'
     | '/dashboard/groups/$id'
     | '/dashboard/programs/$id'
@@ -288,6 +300,7 @@ export interface FileRouteTypes {
     | '/events/$id'
     | '/dashboard/'
     | '/dashboard/evangelism/$id'
+    | '/dashboard/evangelism/admin'
     | '/dashboard/events/$id'
     | '/dashboard/groups/$id'
     | '/dashboard/programs/$id'
@@ -463,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardEventsIdRouteImport
       parentRoute: typeof DashboardEventsRoute
     }
+    '/dashboard/evangelism/admin': {
+      id: '/dashboard/evangelism/admin'
+      path: '/admin'
+      fullPath: '/dashboard/evangelism/admin'
+      preLoaderRoute: typeof DashboardEvangelismAdminRouteImport
+      parentRoute: typeof DashboardEvangelismRoute
+    }
     '/dashboard/evangelism/$id': {
       id: '/dashboard/evangelism/$id'
       path: '/$id'
@@ -475,11 +495,13 @@ declare module '@tanstack/react-router' {
 
 interface DashboardEvangelismRouteChildren {
   DashboardEvangelismIdRoute: typeof DashboardEvangelismIdRoute
+  DashboardEvangelismAdminRoute: typeof DashboardEvangelismAdminRoute
   DashboardEvangelismIndexRoute: typeof DashboardEvangelismIndexRoute
 }
 
 const DashboardEvangelismRouteChildren: DashboardEvangelismRouteChildren = {
   DashboardEvangelismIdRoute: DashboardEvangelismIdRoute,
+  DashboardEvangelismAdminRoute: DashboardEvangelismAdminRoute,
   DashboardEvangelismIndexRoute: DashboardEvangelismIndexRoute,
 }
 
