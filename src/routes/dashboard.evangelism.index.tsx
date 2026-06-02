@@ -49,8 +49,8 @@ const contactSchema = z.object({
 
 function EvangelismPage() {
   const { user } = useSession();
-  const { isAdmin, isLeader } = useRoles(user);
-  const canSeeAdmin = isAdmin || isLeader;
+  const { isAdmin, loading: rolesLoading } = useRoles(user);
+  const navigate = useNavigate();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
