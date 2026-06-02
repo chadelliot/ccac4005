@@ -2,9 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Search, Phone, MapPin, ChevronRight } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Plus, Search, Phone, MapPin, ChevronRight, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/lib/auth";
+import { useSession, useRoles } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { geocodeAddress } from "@/lib/evangelismGeocode.functions";
 
 export const Route = createFileRoute("/dashboard/evangelism/")({
   head: () => ({ meta: [{ title: "Evangelism — CCAC" }] }),
