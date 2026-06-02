@@ -35,6 +35,7 @@ export function useRoles(user: User | null) {
       return;
     }
     let active = true;
+    setLoading(true);
     supabase
       .from("user_roles")
       .select("role")
