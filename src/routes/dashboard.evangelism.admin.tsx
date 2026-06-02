@@ -590,7 +590,18 @@ function EvangelismAdmin() {
             ))}
           </div>
         </TabsContent>
+
+        {/* WITNESSES */}
+        <TabsContent value="witnesses" className="space-y-4">
+          <WitnessesPanel
+            witnesses={witnesses}
+            profiles={Object.values(profiles)}
+            soulsByWitness={soulsByWitness}
+            onChanged={load}
+          />
+        </TabsContent>
       </Tabs>
+
     </div>
   );
 }
