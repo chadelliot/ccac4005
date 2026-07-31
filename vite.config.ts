@@ -5,6 +5,11 @@ import tailwindcss from "@tailwindcss/vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ mode }) => {
+  // `vite build --mode mobile` emits a client-only bundle for the Capacitor
+  // shell — no server, since none can run on-device. The website build is
+  // unchanged.
+  const isMobile = mode === "mobile";
+
   // Mirror VITE_* vars into import.meta.env for the client and SSR builds alike.
   const env = loadEnv(mode, process.cwd(), "VITE_");
   const envDefine = Object.fromEntries(
@@ -46,6 +51,9 @@ export default defineConfig(({ mode }) => {
             specifiers: ["server-only"],
           },
         },
+        ...(isMobile
+          ? { spa: { enabled: true, prerender: { outputPath: "/index.html" } } }
+          : {}),
       }),
       viteReact(),
     ],

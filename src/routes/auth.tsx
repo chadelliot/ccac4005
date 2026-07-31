@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { siteUrl } from "@/lib/siteUrl";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -60,7 +61,7 @@ function AuthPage() {
       email: email.data,
       password: password.data,
       options: {
-        emailRedirectTo: window.location.origin + "/dashboard",
+        emailRedirectTo: siteUrl("/dashboard"),
         data: { display_name: name.data },
       },
     });
