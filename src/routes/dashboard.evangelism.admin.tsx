@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft,
   Search,
@@ -35,7 +34,7 @@ import {
 } from "@/components/ui/table";
 import { EvangelismMap, type MapContact } from "@/components/evangelism/EvangelismMap";
 import { DeleteContactDialog } from "@/components/evangelism/DeleteContactDialog";
-import { geocodeAddress } from "@/lib/evangelismGeocode.functions";
+import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 
 export const Route = createFileRoute("/dashboard/evangelism/admin")({
   head: () => ({ meta: [{ title: "Evangelism Admin — CCAC" }] }),
@@ -95,7 +94,6 @@ function EvangelismAdmin() {
   const { user, loading: sessionLoading } = useSession();
   const { isAdmin, loading: rolesLoading } = useRoles(user);
   const navigate = useNavigate();
-  const geocodeFn = useServerFn(geocodeAddress);
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);

@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
 import { Plus, Search, Phone, MapPin, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
@@ -14,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { geocodeAddress } from "@/lib/evangelismGeocode.functions";
+import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 
 export const Route = createFileRoute("/dashboard/evangelism/")({
   head: () => ({ meta: [{ title: "Evangelism — CCAC" }] }),
@@ -55,7 +54,6 @@ function EvangelismPage() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const geocodeFn = useServerFn(geocodeAddress);
 
   const load = async () => {
     const { data, error } = await supabase
