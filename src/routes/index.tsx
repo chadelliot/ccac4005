@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import heroImg from "@/assets/hero-worship.jpg";
+import { HeroVideo } from "@/components/HeroVideo";
 import bibleImg from "@/assets/bible-light.jpg";
 import communityImg from "@/assets/community.jpg";
 
@@ -32,14 +32,7 @@ function HomePage() {
     <div className="bg-background text-foreground">
       {/* HERO */}
       <section className="relative min-h-screen overflow-hidden bg-night text-night-foreground">
-        <img
-          src={heroImg}
-          alt="Worship at Christ Cathedral Apostolic Church"
-          className="absolute inset-0 h-full w-full object-cover"
-          width={1920}
-          height={1280}
-        />
-        <div className="absolute inset-0 hero-overlay" />
+        <HeroVideo />
         <SiteHeader />
 
         <div className="relative mx-auto max-w-7xl px-6 lg:px-10 pt-40 pb-32 lg:pt-48">
