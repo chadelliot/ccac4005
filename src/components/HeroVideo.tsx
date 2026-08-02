@@ -1,17 +1,36 @@
-import { useEffect, useRef, useState } from "react";
-import heroVideo from "@/assets/hero.mp4";
+import { useEffect, useState } from "react";
 import heroPoster from "@/assets/hero-poster.webp";
 
+const VIDEO_ID = "g89_eCMcs_w";
+
+// controls/modestbranding/iv_load_policy strip the player chrome; the iframe is
+// also pointer-events:none and over-scaled below, so no YouTube UI can surface.
+// loop needs `playlist` set to the same id — on its own it does nothing.
+const PARAMS = new URLSearchParams({
+  autoplay: "1",
+  mute: "1",
+  loop: "1",
+  playlist: VIDEO_ID,
+  controls: "0",
+  modestbranding: "1",
+  rel: "0",
+  iv_load_policy: "3",
+  disablekb: "1",
+  fs: "0",
+  playsinline: "1",
+});
+
+const SRC = `https://www.youtube-nocookie.com/embed/${VIDEO_ID}?${PARAMS}`;
+
 /**
- * Looping, muted worship footage behind the homepage hero.
+ * Looping worship footage behind the homepage hero, streamed from YouTube.
  *
- * The poster renders immediately and the video fades in once it can play, so
- * the hero never flashes empty on a slow connection. Anyone with
- * prefers-reduced-motion set keeps the still.
+ * The poster paints immediately and the player fades in behind it, so the hero
+ * is never empty — and if YouTube is blocked or offline, the poster is simply
+ * what stays. Anyone with prefers-reduced-motion keeps the still.
  */
 export function HeroVideo() {
-  const ref = useRef<HTMLVideoElement>(null);
-  const [ready, setReady] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -22,32 +41,6 @@ export function HeroVideo() {
     return () => mq.removeEventListener("change", apply);
   }, []);
 
-  // Some browsers pause muted autoplay when the tab is backgrounded and do not
-  // resume on return; nudge it so the loop keeps running for the whole visit.
-  useEffect(() => {
-    if (reducedMotion) return;
-    const el = ref.current;
-    if (!el) return;
-    // If the video was already buffered when this mounted, `canplay` has
-    // already fired and the React handler would never see it.
-    if (el.readyState >= 3) setReady(true);
-
-    const play = () => {
-      const p = el.play();
-      if (p) p.catch(() => {});
-    };
-    play();
-    const onVisible = () => {
-      if (!document.hidden) play();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    el.addEventListener("pause", play);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisible);
-      el.removeEventListener("pause", play);
-    };
-  }, [reducedMotion]);
-
   return (
     <>
       <img
@@ -56,22 +49,31 @@ export function HeroVideo() {
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover"
       />
+
       {!reducedMotion && (
-        <video
-          ref={ref}
-          src={heroVideo}
-          poster={heroPoster}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
+        <div
           aria-hidden="true"
-          onCanPlay={() => setReady(true)}
-          style={{ opacity: ready ? 1 : 0, transition: "opacity 1s ease" }}
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+          className="absolute inset-0 overflow-hidden pointer-events-none"
+          style={{ opacity: loaded ? 1 : 0, transition: "opacity 1.2s ease" }}
+        >
+          <iframe
+            src={SRC}
+            title=""
+            tabIndex={-1}
+            allow="autoplay; encrypted-media"
+            referrerPolicy="strict-origin-when-cross-origin"
+            onLoad={() => setLoaded(true)}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border-0 pointer-events-none"
+            style={{
+              // Cover the hero the way object-fit:cover would, then over-scale
+              // so any residual player chrome sits outside the visible area.
+              width: "max(135vw, calc(135vh * 16 / 9))",
+              height: "max(135vh, calc(135vw * 9 / 16))",
+            }}
+          />
+        </div>
       )}
+
       <div className="absolute inset-0 hero-overlay" />
       <div className="absolute inset-0 hero-texture pointer-events-none" />
     </>

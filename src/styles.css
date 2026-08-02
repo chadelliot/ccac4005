@@ -191,8 +191,8 @@
     ),
     linear-gradient(
       180deg,
-      color-mix(in oklab, var(--night) 78%, transparent) 0%,
-      color-mix(in oklab, var(--night) 86%, transparent) 55%,
+      color-mix(in oklab, var(--night) 86%, transparent) 0%,
+      color-mix(in oklab, var(--night) 92%, transparent) 55%,
       var(--night) 100%
     );
 }
