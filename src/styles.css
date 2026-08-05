@@ -202,17 +202,21 @@
    images sitting on top of it. */
 @utility leader-bleed {
   opacity: 0.07;
-  -webkit-mask-image: radial-gradient(
-    62% 58% at 50% 42%,
-    #000 0%,
-    rgba(0, 0, 0, 0.85) 45%,
-    transparent 78%
+  /* Vertical fade at both ends: the top can run off the page and the bottom
+     dissolves instead of stopping on a hard horizontal edge. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 22%,
+    #000 58%,
+    transparent 96%
   );
-  mask-image: radial-gradient(
-    62% 58% at 50% 42%,
-    #000 0%,
-    rgba(0, 0, 0, 0.85) 45%,
-    transparent 78%
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 22%,
+    #000 58%,
+    transparent 96%
   );
 }
 

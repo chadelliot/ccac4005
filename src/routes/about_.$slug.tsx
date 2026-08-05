@@ -46,7 +46,7 @@ function LeaderPage() {
       </div>
 
       <section className="py-20 lg:py-28">
-        <div className="mx-auto max-w-6xl px-6 lg:px-10">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10">
           <div className="grid gap-12 lg:grid-cols-5 lg:gap-16 items-start">
             <div className="lg:col-span-2">
               <img
