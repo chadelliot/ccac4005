@@ -112,8 +112,12 @@ export type Database = {
           baptized: boolean
           city: string | null
           country: string | null
+          co_witness: string | null
           created_at: string
           first_name: string
+          follow_up_interval_days: number
+          follow_up_opt_in: boolean
+          follow_up_touches: number
           geocoded_at: string | null
           gospel_shared: boolean
           holy_ghost: boolean
@@ -121,10 +125,12 @@ export type Database = {
           last_name: string | null
           latitude: number | null
           longitude: number | null
+          met_on: string
           notes: string | null
           phone: string | null
           prayer_request: string | null
           region: string | null
+          source: string
           status: string
           updated_at: string
           visited: boolean
@@ -137,8 +143,12 @@ export type Database = {
           baptized?: boolean
           city?: string | null
           country?: string | null
+          co_witness?: string | null
           created_at?: string
           first_name: string
+          follow_up_interval_days?: number
+          follow_up_opt_in?: boolean
+          follow_up_touches?: number
           geocoded_at?: string | null
           gospel_shared?: boolean
           holy_ghost?: boolean
@@ -146,10 +156,12 @@ export type Database = {
           last_name?: string | null
           latitude?: number | null
           longitude?: number | null
+          met_on?: string
           notes?: string | null
           phone?: string | null
           prayer_request?: string | null
           region?: string | null
+          source?: string
           status?: string
           updated_at?: string
           visited?: boolean
@@ -162,8 +174,12 @@ export type Database = {
           baptized?: boolean
           city?: string | null
           country?: string | null
+          co_witness?: string | null
           created_at?: string
           first_name?: string
+          follow_up_interval_days?: number
+          follow_up_opt_in?: boolean
+          follow_up_touches?: number
           geocoded_at?: string | null
           gospel_shared?: boolean
           holy_ghost?: boolean
@@ -171,10 +187,12 @@ export type Database = {
           last_name?: string | null
           latitude?: number | null
           longitude?: number | null
+          met_on?: string
           notes?: string | null
           phone?: string | null
           prayer_request?: string | null
           region?: string | null
+          source?: string
           status?: string
           updated_at?: string
           visited?: boolean
