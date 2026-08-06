@@ -76,6 +76,8 @@ function EventDetailPage() {
   const [rsvp, setRsvp] = useState<Rsvp | null>(null);
   const [rsvpCounts, setRsvpCounts] = useState({ going: 0, maybe: 0, not_going: 0 });
   const [rejectionReason, setRejectionReason] = useState("");
+  // Seeded from the submitter's request, but the admin has the final say.
+  const [publishPublicly, setPublishPublicly] = useState(false);
   const [working, setWorking] = useState(false);
   const [guestRsvps, setGuestRsvps] = useState<GuestRsvp[]>([]);
   const [editOpen, setEditOpen] = useState(false);
@@ -96,6 +98,7 @@ function EventDetailPage() {
       supabase.from("event_rsvps").select("response").eq("event_id", id),
     ]);
     setEvent((ev ?? null) as EventRow | null);
+    setPublishPublicly(Boolean((ev as EventRow | null)?.is_public));
     setRsvp((myRsvp ?? null) as Rsvp | null);
     const c = { going: 0, maybe: 0, not_going: 0 };
     (counts ?? []).forEach((r: any) => {
@@ -166,13 +169,17 @@ function EventDetailPage() {
     load();
   };
 
-  const approve = async () => {
+  // Approval decides public visibility too. Without this, an event submitted
+  // with "share publicly" left unticked gets approved and silently never
+  // reaches the public site — the admin has no way to tell.
+  const approve = async (publish: boolean) => {
     if (!event) return;
     setWorking(true);
     const { error } = await supabase
       .from("events")
       .update({
         status: "approved",
+        is_public: publish,
         approved_by: user?.id,
         approved_at: new Date().toISOString(),
         rejection_reason: null,
@@ -183,7 +190,11 @@ function EventDetailPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("Event approved — members notified");
+    toast.success(
+      publish
+        ? "Approved — live on the public site, members notified"
+        : "Approved for members only — not shown on the public site",
+    );
     load();
   };
 
@@ -358,9 +369,31 @@ function EventDetailPage() {
         <div className="border border-border bg-card p-6 space-y-4">
           <div className="eyebrow text-accent">— Admin review</div>
           <div className="font-display text-2xl">Approve or request changes</div>
+
+          <label className="flex items-start gap-3 cursor-pointer border border-border p-3">
+            <input
+              type="checkbox"
+              checked={publishPublicly}
+              onChange={(e) => setPublishPublicly(e.target.checked)}
+              className="mt-1 h-4 w-4 accent-current"
+            />
+            <span>
+              <span className="eyebrow block">Publish to the public website</span>
+              <span className="text-sm text-muted-foreground">
+                {publishPublicly
+                  ? "Will appear on the public events page and in the app for visitors."
+                  : "Members only — visitors will not see this event anywhere."}
+                {!event.is_public && publishPublicly
+                  ? " The submitter did not request this."
+                  : ""}
+              </span>
+            </span>
+          </label>
+
           <div className="flex gap-2 flex-wrap">
-            <Button onClick={approve} disabled={working}>
-              <Check className="h-4 w-4" /> Approve & notify members
+            <Button onClick={() => approve(publishPublicly)} disabled={working}>
+              <Check className="h-4 w-4" />{" "}
+              {publishPublicly ? "Approve & publish" : "Approve for members"}
             </Button>
           </div>
           <div className="space-y-2 pt-2">
@@ -385,7 +418,7 @@ function EventDetailPage() {
           <div className="eyebrow text-muted-foreground">— Change status</div>
           <div className="flex gap-2 flex-wrap">
             {event.status !== "approved" && (
-              <Button onClick={approve} disabled={working} variant="outline">
+              <Button onClick={() => approve(event.is_public)} disabled={working} variant="outline">
                 <Check className="h-4 w-4" /> Approve
               </Button>
             )}
