@@ -38,7 +38,7 @@ function HomePage() {
         <div className="relative mx-auto max-w-7xl px-6 lg:px-10 pt-40 pb-32 lg:pt-48">
           <div className="flex items-center gap-3 mb-8">
             <div className="h-px w-10 bg-gold" />
-            <div className="eyebrow text-gold">Baltimore, Maryland · Apostolic Ministry</div>
+            <div className="eyebrow text-gold">Baltimore, Maryland · The Life Center</div>
           </div>
 
           <p className="max-w-md text-night-foreground/80 leading-relaxed mb-12">

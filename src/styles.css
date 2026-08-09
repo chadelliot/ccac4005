@@ -11,7 +11,7 @@
  */
 
 @theme inline {
-  --font-display: "Fraunces", "Cormorant Garamond", Georgia, serif;
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
@@ -150,17 +150,18 @@
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
-    font-weight: 500;
+    letter-spacing: -0.015em;
+    font-weight: 600;
   }
 }
 
 /* Display headline utility */
 @utility display-hero {
   font-family: var(--font-display);
-  font-weight: 500;
-  letter-spacing: -0.04em;
-  line-height: 0.92;
+  /* Bold on the hero — Playfair's thin strokes need the weight at this size */
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 0.94;
 }
 
 /* Eyebrow label */
