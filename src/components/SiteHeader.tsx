@@ -5,6 +5,7 @@ import { useSession } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/NotificationsBell";
+import logo from "@/assets/ccac-logo.webp";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -28,9 +29,13 @@ export function SiteHeader() {
     <header className="absolute top-0 left-0 right-0 z-40">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
         <Link to="/" className="group flex items-center gap-3 text-night-foreground">
-          <div className="flex h-10 w-10 items-center justify-center rounded-sm border border-gold/40 text-gold font-display text-lg leading-none">
-            C
-          </div>
+          <img
+            src={logo}
+            alt=""
+            width={600}
+            height={600}
+            className="h-11 w-11 shrink-0 object-contain"
+          />
           <div className="leading-tight">
             <div className="font-display text-xl tracking-tight">CCAC</div>
             <div className="eyebrow text-[10px] text-gold/80">Christ Cathedral Apostolic</div>
