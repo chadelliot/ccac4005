@@ -157,7 +157,7 @@ function HomePage() {
 
       {/* GIVE CTA */}
       <section className="py-24 bg-night text-night-foreground">
-        <div className="mx-auto max-w-4xl px-6 lg:px-10 text-center">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10 text-center">
           <div className="eyebrow text-gold mb-6">— Partner With Us</div>
           <h2 className="font-display text-5xl lg:text-7xl">Give Online</h2>
           <p className="mt-8 text-night-foreground/70 text-lg leading-relaxed max-w-2xl mx-auto">

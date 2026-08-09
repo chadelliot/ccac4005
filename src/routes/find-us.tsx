@@ -27,7 +27,7 @@ function FindUs() {
       </div>
 
       <section className="py-24">
-        <div className="mx-auto max-w-5xl px-6 lg:px-10 grid md:grid-cols-3 gap-8">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10 grid md:grid-cols-3 gap-8">
           <div className="border border-border p-8">
             <MapPin className="h-6 w-6 text-accent mb-4" />
             <div className="eyebrow text-muted-foreground mb-2">Address</div>
@@ -44,7 +44,7 @@ function FindUs() {
             <Link to="/give" className="font-display text-xl hover:text-accent">Give Online →</Link>
           </div>
         </div>
-        <div className="mx-auto max-w-5xl px-6 lg:px-10 mt-12">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10 mt-12">
           <iframe
             title="Map"
             src="https://www.google.com/maps?q=4005+Old+York+Road+Baltimore+MD&output=embed"

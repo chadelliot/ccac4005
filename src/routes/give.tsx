@@ -76,7 +76,7 @@ function GivePage() {
 
       <main className="flex-1">
         <section className="border-b border-border">
-          <div className="mx-auto max-w-5xl px-6 lg:px-10 py-20">
+          <div className="mx-auto max-w-7xl px-6 lg:px-10 py-20">
             <div className="eyebrow text-accent mb-4">— Giving</div>
             <h1 className="font-display text-5xl md:text-6xl leading-[1.05] max-w-3xl">
               Partner with the ministry of Christ Cathedral.
@@ -88,7 +88,7 @@ function GivePage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-6 lg:px-10 py-16">
+        <section className="mx-auto max-w-7xl px-6 lg:px-10 py-16">
           <div className="grid md:grid-cols-3 gap-5">
             {OPTIONS.map((o) => (
               <GivingCard key={o.key} option={o} />

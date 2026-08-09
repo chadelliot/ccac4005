@@ -45,7 +45,7 @@ function PlanVisit() {
       </div>
 
       <section className="py-24">
-        <div className="mx-auto max-w-5xl px-6 lg:px-10">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10">
           <div className="eyebrow text-accent mb-8">— Service Times</div>
           <div className="grid gap-8 md:grid-cols-3">
             {SERVICES.map((s) => (
@@ -63,7 +63,7 @@ function PlanVisit() {
       </section>
 
       <section className="pb-24">
-        <div className="mx-auto max-w-5xl px-6 lg:px-10 grid gap-12 md:grid-cols-2">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10 grid gap-12 md:grid-cols-2">
           <div className="border-l-2 border-accent pl-6">
             <div className="eyebrow text-accent mb-3">Where</div>
             <div className="font-display text-3xl">4005 Old York Road</div>
@@ -104,7 +104,7 @@ function PlanVisit() {
       </section>
 
       <section className="pb-24">
-        <div className="mx-auto max-w-5xl px-6 lg:px-10">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10">
           <img
             src={flyer}
             alt="Plan your visit — Christ Cathedral Apostolic Church, 4005 Old York Rd, Baltimore, MD 21218"
@@ -115,9 +115,9 @@ function PlanVisit() {
       </section>
 
       <section className="pb-24">
-        <div className="mx-auto max-w-3xl px-6 lg:px-10 text-center">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10 text-center">
           <div className="eyebrow text-accent mb-4">— Stay Connected</div>
-          <p className="text-muted-foreground leading-relaxed">
+          <p className="mx-auto max-w-3xl text-muted-foreground leading-relaxed">
             After your visit, we would love to stay connected. Follow us on social media,
             introduce yourself to one of our leaders, and let us know how we can serve you
             and your family. We cannot wait to meet you and worship with you — your next
