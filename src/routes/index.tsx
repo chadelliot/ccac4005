@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Christ Cathedral Apostolic Church — Life Changing" },
-      { name: "description", content: "A thriving apostolic ministry in Baltimore where lives are transformed by the power of Jesus Christ. Sundays at 2:27 PM." },
+      { name: "description", content: "A thriving ministry in Baltimore where lives are transformed by the power of Jesus Christ. Sundays at 2:27 PM." },
       { property: "og:title", content: "Christ Cathedral Apostolic Church" },
       { property: "og:description", content: "Life Changing. Apostolic ministry in Baltimore, MD." },
     ],
@@ -90,7 +90,7 @@ function HomePage() {
               Welcome to Christ Cathedral Apostolic Church
             </h2>
             <p className="mt-8 text-lg text-muted-foreground leading-relaxed">
-              A thriving apostolic ministry in the heart of Baltimore with a passion to see lives
+              A thriving ministry in the heart of Baltimore with a passion to see lives
               transformed by the power of Jesus Christ. We are committed to preaching truth,
               building strong disciples, and creating an atmosphere where people can encounter
               God in a real and life-changing way.

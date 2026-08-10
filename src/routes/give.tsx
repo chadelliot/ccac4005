@@ -70,13 +70,11 @@ const OPTIONS: Option[] = [
 function GivePage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="bg-night text-night-foreground">
-        <SiteHeader />
-      </div>
+      <SiteHeader tone="light" />
 
       <main className="flex-1">
         <section className="border-b border-border">
-          <div className="mx-auto max-w-7xl px-6 lg:px-10 py-20">
+          <div className="mx-auto max-w-7xl px-6 lg:px-10 pt-32 pb-20">
             <div className="eyebrow text-accent mb-4">— Giving</div>
             <h1 className="font-display text-5xl md:text-6xl leading-[1.05] max-w-3xl">
               Partner with the ministry of Christ Cathedral.
