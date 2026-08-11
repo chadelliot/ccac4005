@@ -102,7 +102,7 @@ function LeadershipBackdrop() {
         alt=""
         width={1024}
         height={1536}
-        className="leader-bleed absolute -top-[6%] -right-16 w-[32rem] lg:w-[40rem] h-auto"
+        className="leader-bleed absolute top-[14%] -right-40 w-[32rem] lg:w-[40rem] h-auto"
         loading="lazy"
       />
       <img
@@ -110,7 +110,7 @@ function LeadershipBackdrop() {
         alt=""
         width={1115}
         height={1982}
-        className="leader-bleed absolute top-[30%] right-[20rem] lg:right-[27rem] w-[21rem] lg:w-[26rem] h-auto"
+        className="leader-bleed absolute top-[26%] right-[15rem] lg:right-[21rem] w-[21rem] lg:w-[26rem] h-auto"
         loading="lazy"
       />
     </div>
