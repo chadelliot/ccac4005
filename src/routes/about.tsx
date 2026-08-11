@@ -143,8 +143,9 @@ function AboutPage() {
         </div>
       </section>
 
-      {/* Who we are / mission / doctrine — full-bleed band of equal thirds. */}
-      <section className="pb-24 lg:pb-32">
+      {/* Who we are / mission / doctrine — full-bleed band of equal thirds.
+          No bottom padding: the band runs straight into the footer. */}
+      <section>
         <div className={CONTAINER}>
           <p className="mb-16 max-w-3xl text-muted-foreground leading-relaxed">
             Whether you are new to church, returning to your faith, or looking
