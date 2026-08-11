@@ -202,24 +202,11 @@
    there, edges dissolved so they read as part of the paper instead of as
    images sitting on top of it. */
 @utility leader-bleed {
+  /* The feather is baked into the image alpha (see bishop-soft / copastor-soft),
+     so there is no rectangle edge left to hide with a CSS mask. */
   opacity: 0.07;
-  /* Vertical fade at both ends: the top can run off the page and the bottom
-     dissolves instead of stopping on a hard horizontal edge. */
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    #000 22%,
-    #000 58%,
-    transparent 96%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    #000 22%,
-    #000 58%,
-    transparent 96%
-  );
 }
+
 
 /* Faint film grain so the flat gradient has some tooth. The SVG is inlined so
    it costs no request; opacity is deliberately very low. */

@@ -2,16 +2,23 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { LEADERS } from "@/lib/leadership";
-import bishop from "@/assets/bishop-justin-marcus.webp";
-import coPastor from "@/assets/copastor-brandi-marcus.webp";
+import bishop from "@/assets/bishop-soft.webp";
+import coPastor from "@/assets/copastor-soft.webp";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "About — Christ Cathedral Apostolic Church" },
-      { name: "description", content: "Learn about Christ Cathedral Apostolic Church, our mission, beliefs, and apostolic ministry in Baltimore." },
+      {
+        name: "description",
+        content:
+          "Learn about Christ Cathedral Apostolic Church, our mission, beliefs, and apostolic ministry in Baltimore.",
+      },
       { property: "og:title", content: "About CCAC" },
-      { property: "og:description", content: "Apostolic ministry, rooted in the Word, empowered by the Holy Ghost." },
+      {
+        property: "og:description",
+        content: "Apostolic ministry, rooted in the Word, empowered by the Holy Ghost.",
+      },
     ],
   }),
   component: AboutPage,
@@ -68,9 +75,7 @@ function LeaderCard({
       </h3>
       <div className="mt-1 text-muted-foreground">{name}</div>
       <p className="mt-3 text-muted-foreground leading-relaxed">{summary}</p>
-      <span className="mt-4 inline-block eyebrow text-gold">
-        Read full bio →
-      </span>
+      <span className="mt-4 inline-block eyebrow text-gold">Read full bio →</span>
     </Link>
   );
 }
@@ -97,7 +102,7 @@ function LeadershipBackdrop() {
         alt=""
         width={1024}
         height={1536}
-        className="leader-bleed absolute -top-[12%] -right-16 w-[30rem] lg:w-[38rem] h-auto"
+        className="leader-bleed absolute -top-[6%] -right-16 w-[32rem] lg:w-[40rem] h-auto"
         loading="lazy"
       />
       <img
@@ -105,7 +110,7 @@ function LeadershipBackdrop() {
         alt=""
         width={1115}
         height={1982}
-        className="leader-bleed absolute top-[34%] right-[19rem] lg:right-[26rem] w-[20rem] lg:w-[25rem] h-auto"
+        className="leader-bleed absolute top-[30%] right-[20rem] lg:right-[27rem] w-[21rem] lg:w-[26rem] h-auto"
         loading="lazy"
       />
     </div>
@@ -123,8 +128,11 @@ function AboutPage() {
         </div>
       </div>
 
-      {/* Leadership leads the page. */}
-      <section className="relative overflow-hidden py-24 lg:py-28">
+      {/* Leadership leads the page. The backdrop spans this whole block —
+          cards and invitation both — so the portraits run all the way down to
+          the colour band and get clipped by it, rather than stopping short in
+          empty space. */}
+      <section className="relative overflow-hidden pt-24 pb-24 lg:pt-28 lg:pb-28">
         <LeadershipBackdrop />
         <div className={`relative ${CONTAINER}`}>
           <div className="eyebrow text-accent mb-12">— Our Leadership</div>
@@ -141,16 +149,12 @@ function AboutPage() {
             ))}
           </div>
         </div>
-      </section>
 
-      {/* Who we are / mission / doctrine — full-bleed band of equal thirds.
-          No bottom padding: the band runs straight into the footer. */}
-      <section>
-        <div className={CONTAINER}>
-          <p className="mb-16 max-w-3xl text-muted-foreground leading-relaxed">
-            Whether you are new to church, returning to your faith, or looking
-            for a place to grow deeper in God, Christ Cathedral is a place where
-            you can belong, be loved, and be transformed.{" "}
+        <div className={`relative ${CONTAINER}`}>
+          <p className="mt-24 lg:mt-28 max-w-3xl text-muted-foreground leading-relaxed">
+            Whether you are new to church, returning to your faith, or looking for a place to grow
+            deeper in God, Christ Cathedral is a place where you can belong, be loved, and be
+            transformed.{" "}
             <Link
               to="/plan-visit"
               className="text-accent underline underline-offset-4 hover:text-gold transition-colors"
@@ -160,24 +164,22 @@ function AboutPage() {
             .
           </p>
         </div>
-
-        <div className="grid lg:grid-cols-3">
-          {PILLARS.map((p) => (
-            <div
-              key={p.eyebrow}
-              className={`flex flex-col px-8 py-16 lg:px-12 lg:py-24 ${p.className}`}
-            >
-              <div className={`eyebrow mb-6 ${p.eyebrowClass}`}>
-                {p.eyebrow}
-              </div>
-              <h2 className="font-display text-3xl lg:text-4xl leading-tight">
-                {p.title}
-              </h2>
-              <p className="mt-5 leading-relaxed opacity-85">{p.body}</p>
-            </div>
-          ))}
-        </div>
       </section>
+
+      {/* Who we are / mission / doctrine — full-bleed band of equal thirds.
+          No bottom padding: the band runs straight into the footer. */}
+      <div className="grid lg:grid-cols-3">
+        {PILLARS.map((p) => (
+          <div
+            key={p.eyebrow}
+            className={`flex flex-col px-8 py-16 lg:px-12 lg:py-24 ${p.className}`}
+          >
+            <div className={`eyebrow mb-6 ${p.eyebrowClass}`}>{p.eyebrow}</div>
+            <h2 className="font-display text-3xl lg:text-4xl leading-tight">{p.title}</h2>
+            <p className="mt-5 leading-relaxed opacity-85">{p.body}</p>
+          </div>
+        ))}
+      </div>
 
       <SiteFooter />
     </div>
