@@ -20,6 +20,7 @@ export function SiteFooter() {
         <div>
           <div className="eyebrow text-gold mb-4">Connect</div>
           <ul className="space-y-2 text-sm text-night-foreground/70">
+            <li><Link to="/live" className="hover:text-gold">Watch Live</Link></li>
             <li><Link to="/about" className="hover:text-gold">About Us</Link></li>
             <li><Link to="/plan-visit" className="hover:text-gold">Plan a Visit</Link></li>
             <li><Link to="/find-us" className="hover:text-gold">Find Us</Link></li>

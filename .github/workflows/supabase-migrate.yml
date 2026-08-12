@@ -1,0 +1,76 @@
+name: Migrate owned Supabase project
+
+on:
+  push:
+    branches:
+      - agent/facebook-live-page
+    paths:
+      - '.github/workflows/supabase-migrate.yml'
+      - 'supabase/**'
+      - 'src/**'
+      - 'vite.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.env.mobile'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Choose how far to go"
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run
+          - apply-schema
+          - deploy-facebook-live
+
+permissions:
+  contents: read
+
+env:
+  SUPABASE_PROJECT_ID: epjkfkvisvcgytjjuqaq
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link new Supabase project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Preview database migrations
+        run: supabase db push --dry-run
+
+      - name: Set up Node
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install frontend dependencies
+        if: ${{ github.event_name == 'push' }}
+        run: npm ci
+
+      - name: Build static site
+        if: ${{ github.event_name == 'push' }}
+        env:
+          VITE_GOOGLE_MAPS_BROWSER_KEY: ${{ secrets.VITE_GOOGLE_MAPS_BROWSER_KEY }}
+        run: npm run build:mobile
+
+      - name: Apply database migrations
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'apply-schema' }}
+        run: supabase db push
+
+      - name: Deploy Facebook livestream function
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'deploy-facebook-live' }}
+        run: supabase functions deploy facebook-live-status --project-ref "$SUPABASE_PROJECT_ID"

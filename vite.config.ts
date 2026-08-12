@@ -15,6 +15,7 @@ const PUBLIC_PAGES = [
   "/events",
   "/find-us",
   "/give",
+  "/live",
 ];
 
 export default defineConfig(({ mode }) => {
