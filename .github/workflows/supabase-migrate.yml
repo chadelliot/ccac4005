@@ -6,7 +6,6 @@ on:
       - agent/facebook-live-page
     paths:
       - '.github/workflows/supabase-migrate.yml'
-      - 'supabase/**'
   workflow_dispatch:
     inputs:
       action:
@@ -46,7 +45,7 @@ jobs:
         run: supabase db push --dry-run
 
       - name: Apply database migrations
-        if: ${{ github.event_name == 'workflow_dispatch' && (inputs.action == 'apply-schema' || inputs.action == 'apply-schema-and-functions') }}
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.action == 'apply-schema' || inputs.action == 'apply-schema-and-functions')) }}
         run: supabase db push
 
       - name: Deploy Edge Functions
