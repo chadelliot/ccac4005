@@ -72,7 +72,8 @@ async function getVideos({
 }) {
   const fields = "id,title,description,status,permalink_url,creation_time";
   const params = new URLSearchParams({
-    broadcast_status: broadcastStatus,
+    // Meta's current Graph API expects broadcast_status as an array.
+    broadcast_status: JSON.stringify([broadcastStatus]),
     source: "owner",
     fields,
     limit: "1",
