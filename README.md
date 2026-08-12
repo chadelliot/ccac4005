@@ -14,25 +14,44 @@ I want help creating an app that can double as a website, but also streamline th
 
 6. Leadership - There should be a section to discuss and share plans between Sr. and Secondary leadership—upcoming events, files, assessment reminders for accountability sake etc.
 
-This project was built with [Lovable](https://lovable.dev).
+---
 
-**Live app**: https://ccac4005.lovable.app
+## Stack
 
-## Build with Lovable
+TanStack Start (React 19) + Vite, Tailwind 4, shadcn/ui, and Supabase for auth,
+data, and storage. Two Supabase edge functions: `program-ai` (Claude API — plan
+drafting, quiz generation, short-answer grading) and `geocode-address` (Google
+Geocoding for the evangelism map). The full KJV text ships as static JSON under
+`public/bible/`, so passages render with no API call.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/b2a2132a-9058-42d8-8a26-0902b39cd67f).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+The project was originally built with Lovable; it is now developed locally and
+no longer depends on any Lovable service.
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Requires Node.js and npm.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+npm install
+cp .env.example .env   # then fill in the values
 npm run dev
 ```
+
+The dev server runs on **port 8080**. Useful scripts: `npm run build`,
+`npm run lint`, `npm run format`.
+
+### Secrets
+
+Client-side values go in `.env` (see `.env.example`) — `.env` is gitignored and
+must stay that way; the Supabase publishable key is safe to ship in the bundle,
+the Google Maps browser key must be restricted by HTTP referrer.
+
+Server-side keys are Supabase function secrets, never in `.env`:
+
+```sh
+supabase secrets set ANTHROPIC_API_KEY=...      # program-ai
+supabase secrets set GOOGLE_MAPS_SERVER_KEY=... # geocode-address
+```
+
+Both edge functions require a signed-in caller and are declared `verify_jwt`
+in `supabase/config.toml`.

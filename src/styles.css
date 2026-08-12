@@ -11,7 +11,7 @@
  */
 
 @theme inline {
-  --font-display: "Fraunces", "Cormorant Garamond", Georgia, serif;
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
@@ -45,6 +45,7 @@
   --color-night: var(--night);
   --color-night-foreground: var(--night-foreground);
   --color-gold: var(--gold);
+  --color-royal: var(--royal);
   --color-gold-foreground: var(--gold-foreground);
   --color-cream: var(--cream);
 
@@ -101,6 +102,8 @@
   --gold: oklch(0.78 0.14 75);
   --gold-foreground: oklch(0.18 0.04 265);
   --cream: oklch(0.97 0.012 80);
+  /* Royal purple, taken from the CCAC seal */
+  --royal: oklch(0.42 0.17 303);
 
   --sidebar: oklch(0.16 0.04 265);
   --sidebar-foreground: oklch(0.95 0.005 85);
@@ -147,17 +150,18 @@
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
-    font-weight: 500;
+    letter-spacing: -0.015em;
+    font-weight: 600;
   }
 }
 
 /* Display headline utility */
 @utility display-hero {
   font-family: var(--font-display);
-  font-weight: 500;
-  letter-spacing: -0.04em;
-  line-height: 0.92;
+  /* Bold on the hero — Playfair's thin strokes need the weight at this size */
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 0.94;
 }
 
 /* Eyebrow label */
@@ -169,12 +173,45 @@
   font-weight: 600;
 }
 
-/* Hero gradient overlay */
+/* Hero gradient overlay.
+   Three layers over the video, in brand order: a royal-purple bloom from the
+   lower left (the seal), a warm gold spotlight from the upper right, then a
+   midnight wash that deepens to solid --night at the bottom so the hero reads
+   as one piece with the section beneath it. */
 @utility hero-overlay {
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--night) 55%, transparent) 0%,
-    color-mix(in oklab, var(--night) 75%, transparent) 60%,
-    var(--night) 100%
-  );
+  background:
+    radial-gradient(
+      70% 55% at 12% 88%,
+      color-mix(in oklab, var(--royal) 55%, transparent) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      55% 45% at 82% 8%,
+      color-mix(in oklab, var(--gold) 16%, transparent) 0%,
+      transparent 68%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--night) 86%, transparent) 0%,
+      color-mix(in oklab, var(--night) 92%, transparent) 55%,
+      var(--night) 100%
+    );
+}
+
+/* Leadership portraits used as page furniture rather than photographs: barely
+   there, edges dissolved so they read as part of the paper instead of as
+   images sitting on top of it. */
+@utility leader-bleed {
+  /* The feather is baked into the image alpha (see bishop-soft / copastor-soft),
+     so there is no rectangle edge left to hide with a CSS mask. */
+  opacity: 0.07;
+}
+
+
+/* Faint film grain so the flat gradient has some tooth. The SVG is inlined so
+   it costs no request; opacity is deliberately very low. */
+@utility hero-texture {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  opacity: 0.055;
+  mix-blend-mode: overlay;
 }

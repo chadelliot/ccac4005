@@ -25,30 +25,43 @@ function NotFoundComponent() {
   );
 }
 
+// Social scrapers won't follow a relative path, so the share image has to be an
+// absolute URL. Falls back to the church domain until VITE_PUBLIC_SITE_URL is set.
+const SITE_URL =
+  (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, "") ??
+  "https://www.ccacbmore.com";
+const OG_IMAGE = `${SITE_URL}/og-image.jpg`;
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Christ Cathedral Apostolic Church — Baltimore, MD" },
-      { name: "description", content: "A thriving apostolic ministry in the heart of Baltimore where lives are transformed by the power of Jesus Christ." },
+      { name: "description", content: "A thriving ministry in the heart of Baltimore where lives are transformed by the power of Jesus Christ." },
       { name: "author", content: "CCAC" },
       { property: "og:title", content: "Christ Cathedral Apostolic Church — Baltimore, MD" },
-      { property: "og:description", content: "A thriving apostolic ministry in the heart of Baltimore where lives are transformed by the power of Jesus Christ." },
+      { property: "og:description", content: "A thriving ministry in the heart of Baltimore where lives are transformed by the power of Jesus Christ." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Christ Cathedral Apostolic Church — Baltimore, MD" },
-      { name: "twitter:description", content: "A thriving apostolic ministry in the heart of Baltimore where lives are transformed by the power of Jesus Christ." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/uJeUFibwexYxsDSsJ1ce26nVAEJ3/social-images/social-1778027760453-CCAC_INVITE_2022.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/uJeUFibwexYxsDSsJ1ce26nVAEJ3/social-images/social-1778027760453-CCAC_INVITE_2022.webp" },
+      { name: "twitter:description", content: "A thriving ministry in the heart of Baltimore where lives are transformed by the power of Jesus Christ." },
+      { property: "og:image", content: OG_IMAGE },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:site_name", content: "Christ Cathedral Apostolic Church" },
+      { name: "twitter:image", content: OG_IMAGE },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..900&family=Inter:wght@400;500;600;700&display=swap",
       },
     ],
   }),

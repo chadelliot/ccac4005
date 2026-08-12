@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
 import { Plus, Search, Phone, MapPin, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
@@ -14,7 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { geocodeAddress } from "@/lib/evangelismGeocode.functions";
+import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
+import { listWitnesses, resolveWitnessId, splitWitnessNames, type Witness } from "@/lib/witnesses";
 
 export const Route = createFileRoute("/dashboard/evangelism/")({
   head: () => ({ meta: [{ title: "Evangelism — CCAC" }] }),
@@ -36,6 +36,9 @@ type Contact = {
   status: string;
   added_by: string;
   created_at: string;
+  met_on: string;
+  co_witness: string | null;
+  witness_id: string | null;
 };
 
 const contactSchema = z.object({
@@ -45,7 +48,18 @@ const contactSchema = z.object({
   address: z.string().trim().max(200).optional(),
   where_met: z.string().trim().max(120).optional(),
   notes: z.string().trim().max(2000).optional(),
+  met_on: z.string().trim().min(1, "Date met required"),
+  co_witness: z.string().trim().max(120).optional(),
 });
+
+function today() {
+  // Local date, not UTC — toISOString() would roll the outreach date forward a
+  // day for anyone logging after ~7pm Eastern.
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
 
 function EvangelismPage() {
   const { user } = useSession();
@@ -55,16 +69,33 @@ function EvangelismPage() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const geocodeFn = useServerFn(geocodeAddress);
+  const [witnessOptions, setWitnessOptions] = useState<Witness[]>([]);
+  const [witnessName, setWitnessName] = useState("");
+  const [followUp, setFollowUp] = useState(false);
 
   const load = async () => {
     const { data, error } = await supabase
       .from("evangelism_contacts")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("met_on", { ascending: false });
     if (error) toast.error(error.message);
     setContacts((data ?? []) as Contact[]);
   };
+
+  // Default the witness to whoever is logging it — most souls are logged by the
+  // person who met them — while still allowing another name to be typed.
+  useEffect(() => {
+    if (!user) return;
+    listWitnesses().then(setWitnessOptions);
+    supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.display_name) setWitnessName((prev) => prev || data.display_name!);
+      });
+  }, [user]);
 
   useEffect(() => {
     if (isAdmin) navigate({ to: "/dashboard/evangelism/admin", replace: true });
@@ -85,19 +116,45 @@ function EvangelismPage() {
       address: fd.get("address") || undefined,
       where_met: fd.get("where_met") || undefined,
       notes: fd.get("notes") || undefined,
+      met_on: fd.get("met_on"),
+      co_witness: fd.get("co_witness") || undefined,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
+
+    // A typed name becomes a witness record so credit survives; the first name
+    // given takes it, anyone else typed alongside is kept as co-witness.
+    const typed = (fd.get("witness_name") as string) ?? "";
+    const { primary, coWitness } = splitWitnessNames(typed);
+    const witness_id = await resolveWitnessId(primary);
+
+    const touches = Number(fd.get("follow_up_touches")) || 3;
+    const interval = Number(fd.get("follow_up_interval_days")) || 3;
+
     const { data: inserted, error } = await supabase
       .from("evangelism_contacts")
-      .insert({ ...parsed.data, added_by: user.id })
+      .insert({
+        ...parsed.data,
+        co_witness: parsed.data.co_witness || coWitness,
+        witness_id,
+        added_by: user.id,
+        follow_up_opt_in: followUp,
+        follow_up_touches: touches,
+        follow_up_interval_days: interval,
+      })
       .select("id")
       .single();
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("Contact added — 3 follow-up touches scheduled");
+    toast.success(
+      followUp
+        ? `Contact added — ${touches} follow-up${touches === 1 ? "" : "s"} scheduled`
+        : "Contact added",
+    );
     setOpen(false);
+    setFollowUp(false);
     (e.target as HTMLFormElement).reset();
+    listWitnesses().then(setWitnessOptions);
     // fire-and-forget geocoding
     const query = parsed.data.address || parsed.data.where_met;
     if (inserted?.id && query) {
@@ -138,13 +195,20 @@ function EvangelismPage() {
 
   const nowKey = monthKey(new Date().toISOString());
   const currentMonthContacts = useMemo(
-    () => contacts.filter((c) => monthKey(c.created_at) === nowKey).filter(matchesSearch),
+    () => contacts.filter((c) => monthKey(c.met_on) === nowKey).filter(matchesSearch),
     [contacts, q, nowKey],
   );
 
   const monthKeys = useMemo(() => {
-    const set = new Set(contacts.map((c) => monthKey(c.created_at)));
+    const set = new Set(contacts.map((c) => monthKey(c.met_on)));
     return Array.from(set).sort((a, b) => b.localeCompare(a));
+  }, [contacts]);
+
+  const locationOptions = useMemo(() => {
+    const set = new Set(
+      contacts.map((c) => (c.where_met ?? "").trim()).filter(Boolean),
+    );
+    return Array.from(set).sort();
   }, [contacts]);
 
   const [sortMode, setSortMode] = useState<"alpha" | "recent">("recent");
@@ -152,13 +216,13 @@ function EvangelismPage() {
 
   const allFiltered = useMemo(() => {
     let list = contacts.filter(matchesSearch);
-    if (monthFilter !== "all") list = list.filter((c) => monthKey(c.created_at) === monthFilter);
+    if (monthFilter !== "all") list = list.filter((c) => monthKey(c.met_on) === monthFilter);
     if (sortMode === "alpha") {
       list = [...list].sort((a, b) =>
         `${a.first_name} ${a.last_name ?? ""}`.localeCompare(`${b.first_name} ${b.last_name ?? ""}`),
       );
     } else {
-      list = [...list].sort((a, b) => b.created_at.localeCompare(a.created_at));
+      list = [...list].sort((a, b) => b.met_on.localeCompare(a.met_on));
     }
     return list;
   }, [contacts, q, monthFilter, sortMode]);
@@ -201,17 +265,93 @@ function EvangelismPage() {
                 <Label>Address</Label>
                 <Input name="address" maxLength={200} />
               </div>
-              <div>
-                <Label>Where we met</Label>
-                <Input name="where_met" maxLength={120} placeholder="Old Town Mall, door-to-door, etc." />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Where we met</Label>
+                  <Input
+                    name="where_met"
+                    maxLength={120}
+                    list="outreach-locations"
+                    placeholder="Eastpoint Mall"
+                  />
+                  {/* Suggests locations already in use so the same place doesn't
+                      get logged three different ways and split the reporting. */}
+                  <datalist id="outreach-locations">
+                    {locationOptions.map((l) => (
+                      <option key={l} value={l} />
+                    ))}
+                  </datalist>
+                </div>
+                <div>
+                  <Label>Date met</Label>
+                  <Input name="met_on" type="date" required defaultValue={today()} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Who witnessed</Label>
+                  <Input
+                    name="witness_name"
+                    maxLength={120}
+                    list="witness-names"
+                    value={witnessName}
+                    onChange={(e) => setWitnessName(e.target.value)}
+                    placeholder="Your name"
+                  />
+                  <datalist id="witness-names">
+                    {witnessOptions.map((w) => (
+                      <option key={w.id} value={w.name} />
+                    ))}
+                  </datalist>
+                </div>
+                <div>
+                  <Label>Alongside (optional)</Label>
+                  <Input name="co_witness" maxLength={120} placeholder="Second witness" />
+                </div>
               </div>
               <div>
                 <Label>Notes</Label>
                 <Textarea name="notes" rows={3} maxLength={2000} placeholder="What stood out? Prayer needs?" />
               </div>
+
+              <div className="border border-border p-4 space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={followUp}
+                    onChange={(e) => setFollowUp(e.target.checked)}
+                    className="h-4 w-4 accent-current"
+                  />
+                  <span className="eyebrow">Set follow-up reminders</span>
+                </label>
+                {followUp && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>How many touches</Label>
+                      <Input
+                        name="follow_up_touches"
+                        type="number"
+                        min={1}
+                        max={12}
+                        defaultValue={3}
+                      />
+                    </div>
+                    <div>
+                      <Label>Every (days)</Label>
+                      <Input
+                        name="follow_up_interval_days"
+                        type="number"
+                        min={1}
+                        max={90}
+                        defaultValue={3}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
               <DialogFooter>
                 <Button type="submit" disabled={busy} className="w-full bg-night text-night-foreground hover:bg-night/90 rounded-none py-6 eyebrow">
-                  {busy ? "Saving..." : "Save & Schedule Follow-ups"}
+                  {busy ? "Saving..." : "Save Contact"}
                 </Button>
               </DialogFooter>
             </form>

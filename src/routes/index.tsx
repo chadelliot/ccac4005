@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import heroImg from "@/assets/hero-worship.jpg";
+import { HeroVideo } from "@/components/HeroVideo";
 import bibleImg from "@/assets/bible-light.jpg";
 import communityImg from "@/assets/community.jpg";
 
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Christ Cathedral Apostolic Church — Life Changing" },
-      { name: "description", content: "A thriving apostolic ministry in Baltimore where lives are transformed by the power of Jesus Christ. Sundays at 2:27 PM." },
+      { name: "description", content: "A thriving ministry in Baltimore where lives are transformed by the power of Jesus Christ. Sundays at 2:27 PM." },
       { property: "og:title", content: "Christ Cathedral Apostolic Church" },
       { property: "og:description", content: "Life Changing. Apostolic ministry in Baltimore, MD." },
     ],
@@ -32,20 +32,13 @@ function HomePage() {
     <div className="bg-background text-foreground">
       {/* HERO */}
       <section className="relative min-h-screen overflow-hidden bg-night text-night-foreground">
-        <img
-          src={heroImg}
-          alt="Worship at Christ Cathedral Apostolic Church"
-          className="absolute inset-0 h-full w-full object-cover"
-          width={1920}
-          height={1280}
-        />
-        <div className="absolute inset-0 hero-overlay" />
+        <HeroVideo />
         <SiteHeader />
 
         <div className="relative mx-auto max-w-7xl px-6 lg:px-10 pt-40 pb-32 lg:pt-48">
           <div className="flex items-center gap-3 mb-8">
             <div className="h-px w-10 bg-gold" />
-            <div className="eyebrow text-gold">Baltimore, Maryland · Apostolic Ministry</div>
+            <div className="eyebrow text-gold">Baltimore, Maryland · The Life Center</div>
           </div>
 
           <p className="max-w-md text-night-foreground/80 leading-relaxed mb-12">
@@ -97,7 +90,7 @@ function HomePage() {
               Welcome to Christ Cathedral Apostolic Church
             </h2>
             <p className="mt-8 text-lg text-muted-foreground leading-relaxed">
-              A thriving apostolic ministry in the heart of Baltimore with a passion to see lives
+              A thriving ministry in the heart of Baltimore with a passion to see lives
               transformed by the power of Jesus Christ. We are committed to preaching truth,
               building strong disciples, and creating an atmosphere where people can encounter
               God in a real and life-changing way.
@@ -164,7 +157,7 @@ function HomePage() {
 
       {/* GIVE CTA */}
       <section className="py-24 bg-night text-night-foreground">
-        <div className="mx-auto max-w-4xl px-6 lg:px-10 text-center">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10 text-center">
           <div className="eyebrow text-gold mb-6">— Partner With Us</div>
           <h2 className="font-display text-5xl lg:text-7xl">Give Online</h2>
           <p className="mt-8 text-night-foreground/70 text-lg leading-relaxed max-w-2xl mx-auto">

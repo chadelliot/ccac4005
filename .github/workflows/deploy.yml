@@ -1,0 +1,65 @@
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Pages needs these to publish; the token is scoped per-run.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; let a newer push supersede an in-flight one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # `build:mobile` is the client-only target: it turns on TanStack Start's
+      # SPA mode and prerenders a shell to dist/client/index.html. That is what
+      # Pages needs — there is no server to run the SSR build.
+      - name: Build static site
+        env:
+          # Optional. The public pages don't need it; the evangelism map does.
+          VITE_GOOGLE_MAPS_BROWSER_KEY: ${{ secrets.VITE_GOOGLE_MAPS_BROWSER_KEY }}
+        run: npm run build:mobile
+
+      - name: Add SPA fallback and disable Jekyll
+        run: |
+          # Pages serves static files only, so a deep link like /about would
+          # 404. Pages renders 404.html for any unmatched path, and the router
+          # takes it from there.
+          cp dist/client/index.html dist/client/404.html
+          # Without this, Pages runs the output through Jekyll, which silently
+          # drops any file or directory beginning with an underscore.
+          touch dist/client/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/client
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,1 +1,9 @@
 project_id = "xrphocnodeacddutulqe"
+
+# Both functions must reject anonymous callers — they spend metered third-party
+# quota (Google Maps, the AI gateway) on behalf of whoever calls them.
+[functions.geocode-address]
+verify_jwt = true
+
+[functions.program-ai]
+verify_jwt = true

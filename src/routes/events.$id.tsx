@@ -53,11 +53,9 @@ function PublicEventDetail() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="bg-night text-night-foreground">
-        <SiteHeader />
-      </div>
+      <SiteHeader tone="light" />
 
-      <main className="flex-1 mx-auto max-w-5xl w-full px-6 lg:px-10 py-16">
+      <main className="flex-1 mx-auto max-w-7xl w-full px-6 lg:px-10 pt-32 pb-16">
         <Link
           to="/events"
           className="eyebrow text-muted-foreground hover:text-foreground inline-flex items-center gap-2 mb-8"

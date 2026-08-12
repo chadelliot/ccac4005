@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CCAC</string>
+    <string name="title_activity_main">CCAC</string>
+    <string name="package_name">org.ccacbaltimore.app</string>
+    <string name="custom_url_scheme">org.ccacbaltimore.app</string>
+</resources>
