@@ -26,7 +26,6 @@ env:
   SUPABASE_PROJECT_ID: epjkfkvisvcgytjjuqaq
   SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
   SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-  SUPABASE_PUBLISHABLE_KEY: sb_publishable_nD12aO9f5X-J2Cu5xEdndw_JBpietKH
 
 jobs:
   migrate:
@@ -51,14 +50,5 @@ jobs:
         run: supabase db push
 
       - name: Deploy Facebook livestream function
-        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.action == 'deploy-facebook-live') || github.event_name == 'push' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'deploy-facebook-live' }}
         run: supabase functions deploy facebook-live-status --project-ref "$SUPABASE_PROJECT_ID"
-
-      - name: Test Facebook livestream endpoint
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          response=$(curl --silent --show-error --fail-with-body \
-            --header "apikey: $SUPABASE_PUBLISHABLE_KEY" \
-            "https://$SUPABASE_PROJECT_ID.supabase.co/functions/v1/facebook-live-status")
-          echo "$response"
-          echo "$response" | grep -q '"configured":true'
