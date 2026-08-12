@@ -7,6 +7,11 @@ on:
     paths:
       - '.github/workflows/supabase-migrate.yml'
       - 'supabase/**'
+      - 'src/**'
+      - 'vite.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.env.mobile'
   workflow_dispatch:
     inputs:
       action:
@@ -44,6 +49,23 @@ jobs:
 
       - name: Preview database migrations
         run: supabase db push --dry-run
+
+      - name: Set up Node
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install frontend dependencies
+        if: ${{ github.event_name == 'push' }}
+        run: npm ci
+
+      - name: Build static site
+        if: ${{ github.event_name == 'push' }}
+        env:
+          VITE_GOOGLE_MAPS_BROWSER_KEY: ${{ secrets.VITE_GOOGLE_MAPS_BROWSER_KEY }}
+        run: npm run build:mobile
 
       - name: Apply database migrations
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'apply-schema' }}
