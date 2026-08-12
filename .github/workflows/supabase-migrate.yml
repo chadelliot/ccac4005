@@ -1,0 +1,48 @@
+name: Migrate owned Supabase project
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Choose how far to go"
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run
+          - apply-schema
+          - apply-schema-and-functions
+
+permissions:
+  contents: read
+
+env:
+  SUPABASE_PROJECT_ID: epjkfkvisvcgytjjuqaq
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link new Supabase project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Preview database migrations
+        run: supabase db push --dry-run
+
+      - name: Apply database migrations
+        if: ${{ inputs.action == 'apply-schema' || inputs.action == 'apply-schema-and-functions' }}
+        run: supabase db push
+
+      - name: Deploy Edge Functions
+        if: ${{ inputs.action == 'apply-schema-and-functions' }}
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
