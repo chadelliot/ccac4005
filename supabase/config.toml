@@ -1,9 +1,14 @@
 project_id = "xrphocnodeacddutulqe"
 
-# Both functions must reject anonymous callers — they spend metered third-party
-# quota (Google Maps, the AI gateway) on behalf of whoever calls them.
+# Authenticated functions spend metered third-party quota on behalf of members.
 [functions.geocode-address]
 verify_jwt = true
 
 [functions.program-ai]
 verify_jwt = true
+
+# Public read-only status endpoint used by ccacbmore.com/live. The Facebook Page
+# access token remains server-side in Supabase secrets; the function only returns
+# public video URLs and live/offline status.
+[functions.facebook-live-status]
+verify_jwt = false
