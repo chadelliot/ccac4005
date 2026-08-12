@@ -46,6 +46,9 @@
   --color-night-foreground: var(--night-foreground);
   --color-gold: var(--gold);
   --color-royal: var(--royal);
+  --color-night-deep: var(--night-deep);
+  --color-live: var(--live);
+  --color-live-bright: var(--live-bright);
   --color-gold-foreground: var(--gold-foreground);
   --color-cream: var(--cream);
 
@@ -104,6 +107,17 @@
   --cream: oklch(0.97 0.012 80);
   /* Royal purple, taken from the CCAC seal */
   --royal: oklch(0.42 0.17 303);
+  /* A recessed surface for media panels — deeper than --night but still the
+     same blue-black, so a video frame reads as inset rather than as a hole. */
+  --night-deep: oklch(0.1 0.03 265);
+
+  /* "Live" red. Red is the one convention worth breaking the palette for, so
+     it is pulled toward the gold's warmth (h 28/33, not a generic h 22 crimson)
+     to sit with the brand instead of fighting it. Two steps because one colour
+     cannot do both jobs: --live carries white text on it (5.1:1), --live-bright
+     is legible as text on --night (7.3:1). */
+  --live: oklch(0.55 0.2 28);
+  --live-bright: oklch(0.72 0.17 33);
 
   --sidebar: oklch(0.16 0.04 265);
   --sidebar-foreground: oklch(0.95 0.005 85);
@@ -195,6 +209,24 @@
       color-mix(in oklab, var(--night) 86%, transparent) 0%,
       color-mix(in oklab, var(--night) 92%, transparent) 55%,
       var(--night) 100%
+    );
+}
+
+/* The same royal bloom / gold spotlight pairing as .hero-overlay, but with no
+   midnight wash underneath — for sections that already sit on --night and just
+   need the brand's third colour present. Much fainter than the hero, since
+   there is no video here for it to compete with. */
+@utility brand-wash {
+  background:
+    radial-gradient(
+      75% 60% at 8% 92%,
+      color-mix(in oklab, var(--royal) 32%, transparent) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      55% 50% at 88% 0%,
+      color-mix(in oklab, var(--gold) 9%, transparent) 0%,
+      transparent 70%
     );
 }
 

@@ -33,12 +33,15 @@ function LivePage() {
       <SiteHeader />
 
       <main className="flex-1">
-        <section className="border-b border-white/10">
-          <div className="mx-auto max-w-7xl px-6 lg:px-10 pt-36 pb-14 lg:pt-40">
+        {/* The royal bloom is what ties this page to the homepage hero — without
+            it the page is only night + gold and reads as a different site. */}
+        <section className="relative border-b border-white/10">
+          <div aria-hidden="true" className="brand-wash pointer-events-none absolute inset-0" />
+          <div className="relative mx-auto max-w-7xl px-6 lg:px-10 pt-36 pb-14 lg:pt-40">
             <div className="flex flex-wrap items-center gap-3 mb-5">
               {status.isLive ? (
-                <div className="inline-flex items-center gap-2 bg-red-600 px-3 py-1.5 text-[11px] font-semibold tracking-[0.16em] uppercase text-white">
-                  <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+                <div className="inline-flex items-center gap-2 bg-live px-3 py-1.5 text-[11px] font-semibold tracking-[0.16em] uppercase text-night-foreground">
+                  <span className="h-2 w-2 rounded-full bg-night-foreground animate-pulse" />
                   Live Now
                 </div>
               ) : (
@@ -57,7 +60,7 @@ function LivePage() {
                 </p>
               </div>
 
-              <div className="border-l border-white/15 pl-6">
+              <div className="border-l border-white/10 pl-6">
                 <div className="eyebrow text-gold mb-2">Sunday Worship</div>
                 <div className="font-display text-3xl">2:27 PM</div>
                 <div className="text-sm text-night-foreground/60 mt-1">Baltimore, Maryland</div>
@@ -86,7 +89,7 @@ function LivePage() {
                     <div className="max-w-lg">
                       <Radio className="h-10 w-10 mx-auto text-gold" />
                       <h2 className="font-display text-3xl md:text-4xl mt-5">We’ll see you Sunday.</h2>
-                      <p className="mt-4 text-night-foreground/65 leading-relaxed">
+                      <p className="mt-4 text-night-foreground/70 leading-relaxed">
                         We’re not live right now. When service begins, the Facebook livestream will
                         appear here automatically.
                       </p>
@@ -103,7 +106,7 @@ function LivePage() {
               )}
 
               {!status.configured && !loading && (
-                <div className="mt-4 border border-gold/20 bg-gold/5 px-4 py-3 text-sm text-night-foreground/65">
+                <div className="mt-4 border border-gold/20 bg-gold/5 px-4 py-3 text-sm text-night-foreground/70">
                   The livestream page is ready. Facebook automation will activate after the church
                   Page is connected securely.
                 </div>
@@ -139,7 +142,7 @@ function LivePage() {
 
 function PlayerShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative w-full overflow-hidden border border-white/10 bg-black aspect-video">
+    <div className="relative w-full overflow-hidden border border-white/10 bg-night-deep aspect-video">
       {children}
     </div>
   );
@@ -160,7 +163,7 @@ function FacebookPlayer({ video, isLive }: { video: FacebookVideo; isLive: boole
 
       <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className={`eyebrow ${isLive ? "text-red-400" : "text-gold"}`}>
+          <div className={`eyebrow ${isLive ? "text-live-bright" : "text-gold"}`}>
             {isLive ? "Live Worship" : "Latest Service"}
           </div>
           <h2 className="font-display text-2xl md:text-3xl mt-1">
@@ -177,7 +180,7 @@ function FacebookPlayer({ video, isLive }: { video: FacebookVideo; isLive: boole
           href={video.permalinkUrl}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex shrink-0 items-center gap-2 border border-white/20 px-4 py-3 eyebrow text-night-foreground hover:border-gold hover:text-gold transition-colors"
+          className="inline-flex shrink-0 items-center gap-2 border border-white/30 px-4 py-3 eyebrow text-night-foreground hover:border-gold hover:bg-white/10 hover:text-gold transition-colors"
         >
           Open on Facebook <ExternalLink className="h-3.5 w-3.5" />
         </a>
@@ -206,7 +209,7 @@ function ActionCard({
       <div className="text-gold">{icon}</div>
       <div className="eyebrow text-gold mt-5">{eyebrow}</div>
       <h3 className="font-display text-2xl mt-2">{title}</h3>
-      <p className="mt-3 text-sm text-night-foreground/60 leading-relaxed">{body}</p>
+      <p className="mt-3 text-sm text-night-foreground/70 leading-relaxed">{body}</p>
       <Link to={to} className="inline-flex mt-6 eyebrow text-night-foreground hover:text-gold">
         {linkLabel} →
       </Link>
