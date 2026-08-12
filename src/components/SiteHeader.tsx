@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, X, Bell, LogOut, User as UserIcon } from "lucide-react";
+import { Menu, X, LogOut, User as UserIcon } from "lucide-react";
 import { useSession } from "@/lib/auth";
+import { useLiveStream } from "@/hooks/useLiveStream";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/NotificationsBell";
@@ -24,6 +25,7 @@ export function SiteHeader({ tone = "dark" }: { tone?: "dark" | "light" }) {
   const light = tone === "light";
   const [open, setOpen] = useState(false);
   const { user } = useSession();
+  const { status } = useLiveStream();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -49,13 +51,39 @@ export function SiteHeader({ tone = "dark" }: { tone?: "dark" | "light" }) {
         </Link>
 
         <nav className="hidden lg:flex items-center gap-10">
-          {navItems.map((item) => (
+          {navItems.slice(0, 2).map((item) => (
             <Link
               key={item.to}
               to={item.to}
               className={`eyebrow transition-colors ${light ? "text-foreground/70 hover:text-foreground" : "text-night-foreground/80 hover:text-gold"}`}
               activeProps={{ className: light ? "text-foreground" : "text-gold" }}
               activeOptions={{ exact: item.to === "/" }}
+            >
+              {item.label}
+            </Link>
+          ))}
+
+          <Link
+            to="/live"
+            className={`eyebrow inline-flex items-center gap-2 transition-colors ${
+              status.isLive
+                ? "text-red-500"
+                : light
+                  ? "text-foreground/70 hover:text-foreground"
+                  : "text-night-foreground/80 hover:text-gold"
+            }`}
+            activeProps={{ className: status.isLive ? "text-red-500" : light ? "text-foreground" : "text-gold" }}
+          >
+            {status.isLive && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />}
+            {status.isLive ? "Live Now" : "Watch Live"}
+          </Link>
+
+          {navItems.slice(2).map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`eyebrow transition-colors ${light ? "text-foreground/70 hover:text-foreground" : "text-night-foreground/80 hover:text-gold"}`}
+              activeProps={{ className: light ? "text-foreground" : "text-gold" }}
             >
               {item.label}
             </Link>
@@ -93,7 +121,29 @@ export function SiteHeader({ tone = "dark" }: { tone?: "dark" | "light" }) {
       {open && (
         <div className="lg:hidden bg-night text-night-foreground border-t border-white/10">
           <div className="flex flex-col gap-1 px-6 py-6">
-            {navItems.map((item) => (
+            {navItems.slice(0, 2).map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={() => setOpen(false)}
+                className="eyebrow py-3 border-b border-white/5"
+                activeProps={{ className: "text-gold" }}
+              >
+                {item.label}
+              </Link>
+            ))}
+
+            <Link
+              to="/live"
+              onClick={() => setOpen(false)}
+              className={`eyebrow py-3 border-b border-white/5 flex items-center gap-2 ${status.isLive ? "text-red-400" : ""}`}
+              activeProps={{ className: status.isLive ? "text-red-400" : "text-gold" }}
+            >
+              {status.isLive && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />}
+              {status.isLive ? "Live Now" : "Watch Live"}
+            </Link>
+
+            {navItems.slice(2).map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
