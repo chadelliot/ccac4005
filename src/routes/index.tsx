@@ -3,7 +3,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { HeroVideo } from "@/components/HeroVideo";
 import bibleImg from "@/assets/bible-light.jpg";
-import communityImg from "@/assets/community.jpg";
+import communityImg from "@/assets/community-group.webp";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -139,9 +139,19 @@ function HomePage() {
 
       {/* COMMUNITY */}
       <section className="py-24 lg:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-10 grid lg:grid-cols-2 gap-16 items-center">
-          <img src={communityImg} alt="The CCAC community" className="w-full h-[500px] object-cover order-2 lg:order-1" loading="lazy" width={1280} height={896} />
-          <div className="order-1 lg:order-2">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10 grid lg:grid-cols-5 gap-16 items-center">
+          {/* Wider column than the text, and a fixed 7:5 box that matches the
+              file's own aspect exactly — so object-cover never crops a side and
+              nobody in the group gets cut off at any breakpoint. */}
+          <img
+            src={communityImg}
+            alt="The Christ Cathedral Apostolic Church family"
+            className="w-full aspect-[7/5] object-cover order-2 lg:order-1 lg:col-span-3"
+            loading="lazy"
+            width={1600}
+            height={1143}
+          />
+          <div className="order-1 lg:order-2 lg:col-span-2">
             <div className="eyebrow text-accent mb-6">— Family</div>
             <h2 className="font-display text-5xl lg:text-6xl leading-[1.05]">You belong here.</h2>
             <p className="mt-8 text-lg text-muted-foreground leading-relaxed">
