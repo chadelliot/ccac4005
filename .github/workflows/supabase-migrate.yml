@@ -1,6 +1,12 @@
 name: Migrate owned Supabase project
 
 on:
+  push:
+    branches:
+      - agent/facebook-live-page
+    paths:
+      - '.github/workflows/supabase-migrate.yml'
+      - 'supabase/**'
   workflow_dispatch:
     inputs:
       action:
@@ -40,9 +46,9 @@ jobs:
         run: supabase db push --dry-run
 
       - name: Apply database migrations
-        if: ${{ inputs.action == 'apply-schema' || inputs.action == 'apply-schema-and-functions' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && (inputs.action == 'apply-schema' || inputs.action == 'apply-schema-and-functions') }}
         run: supabase db push
 
       - name: Deploy Edge Functions
-        if: ${{ inputs.action == 'apply-schema-and-functions' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'apply-schema-and-functions' }}
         run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
