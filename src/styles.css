@@ -47,6 +47,7 @@
   --color-gold: var(--gold);
   --color-royal: var(--royal);
   --color-night-deep: var(--night-deep);
+  --color-gold-deep: var(--gold-deep);
   --color-live: var(--live);
   --color-live-bright: var(--live-bright);
   --color-gold-foreground: var(--gold-foreground);
@@ -104,6 +105,11 @@
   --night-foreground: oklch(0.985 0.005 85);
   --gold: oklch(0.78 0.14 75);
   --gold-foreground: oklch(0.18 0.04 265);
+  /* The same gold darkened for light backgrounds. --gold is tuned for --night
+     (9.5:1) and collapses to 1.8:1 on a cream/tan band, which is unreadable at
+     eyebrow size; this reads as the same antique gold but clears AA (4.9:1 on
+     --secondary, 5.6:1 on white). */
+  --gold-deep: oklch(0.52 0.14 75);
   --cream: oklch(0.97 0.012 80);
   /* Royal purple, taken from the CCAC seal */
   --royal: oklch(0.42 0.17 303);

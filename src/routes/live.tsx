@@ -35,7 +35,8 @@ function LivePage() {
       <main className="flex-1">
         {/* The royal bloom is what ties this page to the homepage hero — without
             it the page is only night + gold and reads as a different site. */}
-        <section className="relative border-b border-white/10">
+        {/* No bottom border — the tan band below is the boundary now. */}
+        <section className="relative">
           <div aria-hidden="true" className="brand-wash pointer-events-none absolute inset-0" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-10 pt-36 pb-14 lg:pt-40">
             <div className="flex flex-wrap items-center gap-3 mb-5">
@@ -69,9 +70,12 @@ function LivePage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-6 lg:px-10 py-12 lg:py-16">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div>
+        {/* Tan band, same --secondary as the homepage pillars. The page reads
+            night → tan → night footer, so the player sits in the light. */}
+        <section className="bg-secondary text-foreground">
+          <div className="mx-auto max-w-7xl px-6 lg:px-10 py-16 lg:py-20">
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div>
               {loading ? (
                 <PlayerShell>
                   <div className="flex h-full items-center justify-center text-center px-6">
@@ -99,38 +103,41 @@ function LivePage() {
               )}
 
               {showingReplay && (
-                <div className="mt-4 flex items-center gap-2 text-sm text-night-foreground/60">
-                  <span className="h-2 w-2 rounded-full bg-gold" />
+                <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="h-2 w-2 rounded-full bg-gold-deep" />
                   Showing the most recent service while we’re offline.
                 </div>
               )}
 
               {!status.configured && !loading && (
-                <div className="mt-4 border border-gold/20 bg-gold/5 px-4 py-3 text-sm text-night-foreground/70">
+                <div className="mt-4 border border-gold-deep/30 bg-gold/10 px-4 py-3 text-sm text-foreground">
                   The livestream page is ready. Facebook automation will activate after the church
                   Page is connected securely.
                 </div>
               )}
-            </div>
+              </div>
 
-            <aside className="space-y-4">
-              <ActionCard
-                icon={<CalendarDays className="h-5 w-5" />}
-                eyebrow="In Person"
-                title="Plan your visit"
-                body="4005 Old York Road, Baltimore, MD. We’d love to worship with you in the room."
-                to="/plan-visit"
-                linkLabel="Plan a Visit"
-              />
-              <ActionCard
-                icon={<HeartHandshake className="h-5 w-5" />}
-                eyebrow="Partner"
-                title="Give online"
-                body="Support the ministry and help us continue reaching families throughout Baltimore."
-                to="/give"
-                linkLabel="Give Now"
-              />
-            </aside>
+              <aside className="space-y-4">
+                <ActionCard
+                  tone="night"
+                  icon={<CalendarDays className="h-5 w-5" />}
+                  eyebrow="In Person"
+                  title="Plan your visit"
+                  body="4005 Old York Road, Baltimore, MD. We’d love to worship with you in the room."
+                  to="/plan-visit"
+                  linkLabel="Plan a Visit"
+                />
+                <ActionCard
+                  tone="light"
+                  icon={<HeartHandshake className="h-5 w-5" />}
+                  eyebrow="Partner"
+                  title="Give online"
+                  body="Support the ministry and help us continue reaching families throughout Baltimore."
+                  to="/give"
+                  linkLabel="Give Now"
+                />
+              </aside>
+            </div>
           </div>
         </section>
       </main>
@@ -142,7 +149,10 @@ function LivePage() {
 
 function PlayerShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative w-full overflow-hidden border border-white/10 bg-night-deep aspect-video">
+    // text-night-foreground is set here, not inherited: the shell stays dark
+    // while the band around it is light, so its placeholder copy has to opt
+    // back out of the section's dark-on-tan default.
+    <div className="relative w-full overflow-hidden border border-foreground/10 bg-night-deep text-night-foreground aspect-video">
       {children}
     </div>
   );
@@ -163,14 +173,16 @@ function FacebookPlayer({ video, isLive }: { video: FacebookVideo; isLive: boole
 
       <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className={`eyebrow ${isLive ? "text-live-bright" : "text-gold"}`}>
+          {/* This caption block sits on the tan band, not on the player, so it
+              takes the light-background pair: --live / --gold-deep. */}
+          <div className={`eyebrow ${isLive ? "text-live" : "text-gold-deep"}`}>
             {isLive ? "Live Worship" : "Latest Service"}
           </div>
           <h2 className="font-display text-2xl md:text-3xl mt-1">
             {video.title || "Christ Cathedral Apostolic Church"}
           </h2>
           {video.description && (
-            <p className="mt-2 max-w-2xl text-sm text-night-foreground/60 leading-relaxed line-clamp-3">
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground leading-relaxed line-clamp-3">
               {video.description}
             </p>
           )}
@@ -180,7 +192,7 @@ function FacebookPlayer({ video, isLive }: { video: FacebookVideo; isLive: boole
           href={video.permalinkUrl}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex shrink-0 items-center gap-2 border border-white/30 px-4 py-3 eyebrow text-night-foreground hover:border-gold hover:bg-white/10 hover:text-gold transition-colors"
+          className="inline-flex shrink-0 items-center gap-2 border border-border px-4 py-3 eyebrow text-foreground hover:border-gold-deep hover:bg-foreground/5 hover:text-gold-deep transition-colors"
         >
           Open on Facebook <ExternalLink className="h-3.5 w-3.5" />
         </a>
@@ -189,7 +201,25 @@ function FacebookPlayer({ video, isLive }: { video: FacebookVideo; isLive: boole
   );
 }
 
+/** Both cards sit on the tan band, so each carries its own full colour set
+ *  rather than inheriting from the section: one deep-blue, one white. */
+const CARD_TONES = {
+  night: {
+    shell: "border-night bg-night text-night-foreground",
+    accent: "text-gold",
+    body: "text-night-foreground/70",
+    link: "text-night-foreground hover:text-gold",
+  },
+  light: {
+    shell: "border-border bg-card text-foreground",
+    accent: "text-gold-deep",
+    body: "text-muted-foreground",
+    link: "text-foreground hover:text-gold-deep",
+  },
+} as const;
+
 function ActionCard({
+  tone,
   icon,
   eyebrow,
   title,
@@ -197,6 +227,7 @@ function ActionCard({
   to,
   linkLabel,
 }: {
+  tone: keyof typeof CARD_TONES;
   icon: React.ReactNode;
   eyebrow: string;
   title: string;
@@ -204,13 +235,14 @@ function ActionCard({
   to: "/plan-visit" | "/give";
   linkLabel: string;
 }) {
+  const t = CARD_TONES[tone];
   return (
-    <div className="border border-white/10 p-6">
-      <div className="text-gold">{icon}</div>
-      <div className="eyebrow text-gold mt-5">{eyebrow}</div>
+    <div className={`border p-6 ${t.shell}`}>
+      <div className={t.accent}>{icon}</div>
+      <div className={`eyebrow mt-5 ${t.accent}`}>{eyebrow}</div>
       <h3 className="font-display text-2xl mt-2">{title}</h3>
-      <p className="mt-3 text-sm text-night-foreground/70 leading-relaxed">{body}</p>
-      <Link to={to} className="inline-flex mt-6 eyebrow text-night-foreground hover:text-gold">
+      <p className={`mt-3 text-sm leading-relaxed ${t.body}`}>{body}</p>
+      <Link to={to} className={`inline-flex mt-6 eyebrow transition-colors ${t.link}`}>
         {linkLabel} →
       </Link>
     </div>
