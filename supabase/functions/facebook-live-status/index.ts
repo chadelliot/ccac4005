@@ -7,6 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Christ Cathedral Apostolic Church Baltimore — https://facebook.com/CCACMD
+// A Page ID is public metadata, so it is safe to keep this value in source control.
+const CCAC_FACEBOOK_PAGE_ID = "2003862829873429";
+
 type GraphVideo = {
   id: string;
   title?: string;
@@ -95,11 +99,13 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
 
-  const pageId = Deno.env.get("FACEBOOK_PAGE_ID");
+  // FACEBOOK_PAGE_ID remains an optional override in case the ministry ever
+  // changes Pages. The current CCAC Page ID is safe to keep in source control.
+  const pageId = Deno.env.get("FACEBOOK_PAGE_ID") ?? CCAC_FACEBOOK_PAGE_ID;
   const accessToken = Deno.env.get("FACEBOOK_PAGE_ACCESS_TOKEN");
   const graphVersion = Deno.env.get("FACEBOOK_GRAPH_API_VERSION") ?? "v25.0";
 
-  if (!pageId || !accessToken) {
+  if (!accessToken) {
     return json({
       ok: true,
       configured: false,
