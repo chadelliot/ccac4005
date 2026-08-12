@@ -58,6 +58,16 @@ jobs:
         if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'Deploy Facebook livestream function' }}
         run: supabase functions deploy facebook-live-status --project-ref "$SUPABASE_PROJECT_ID"
 
+      - name: Check Facebook secret presence
+        if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'Check Facebook secret presence' }}
+        run: |
+          if supabase secrets list --project-ref "$SUPABASE_PROJECT_ID" | grep -q 'FACEBOOK_PAGE_ACCESS_TOKEN'; then
+            echo 'FACEBOOK_PAGE_ACCESS_TOKEN is present in the new Supabase project.'
+          else
+            echo 'FACEBOOK_PAGE_ACCESS_TOKEN is missing from the new Supabase project.'
+            exit 1
+          fi
+
       - name: Test Facebook livestream function
         if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'Deploy Facebook livestream function' }}
         run: |
