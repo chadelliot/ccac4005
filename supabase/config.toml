@@ -7,6 +7,22 @@ verify_jwt = true
 [functions.program-ai]
 verify_jwt = true
 
+# Public endpoints for the Bishop's engagement booking system. Neither exposes
+# anything private: availability answers busy/free without naming the engagement,
+# and submit is the only write path into bishop_booking_requests (the table
+# grants anon nothing, so this function's service role is the gate). Both do
+# their own validation and rate limiting.
+[functions.bishop-availability]
+verify_jwt = false
+
+[functions.bishop-booking-submit]
+verify_jwt = false
+
+# Desk action. verify_jwt only proves the caller is signed in, so the function
+# additionally checks bishop_booking_authorized_users before writing anything.
+[functions.bishop-booking-accept]
+verify_jwt = true
+
 # Public read-only status endpoint used by ccacbmore.com/live. The Facebook Page
 # access token remains server-side in Supabase secrets; the function only returns
 # public video URLs and live/offline status.
