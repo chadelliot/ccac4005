@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { SiteHeader } from "@/components/SiteHeader";
+import { PageHero } from "@/components/PageHero";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar, MapPin, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/events/$id")({
+export const Route = createFileRoute("/events_/$id")({
   component: PublicEventDetail,
 });
 
@@ -52,22 +52,25 @@ function PublicEventDetail() {
   }, [id]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <SiteHeader tone="light" />
-
-      <main className="flex-1 mx-auto max-w-7xl w-full px-6 lg:px-10 pt-32 pb-16">
+    <div className="min-h-screen sand-page flex flex-col">
+      <PageHero className="pt-32 pb-16">
         <Link
-          to="/events"
-          className="eyebrow text-muted-foreground hover:text-foreground inline-flex items-center gap-2 mb-8"
-        >
-          <ArrowLeft className="h-3 w-3" /> All events
-        </Link>
+        to="/events"
+        className="eyebrow text-gold/70 hover:text-gold transition-colors inline-flex items-center gap-2"
+      >
+        <ArrowLeft className="h-3 w-3" /> All events
+      </Link>
+      <div className="eyebrow text-gold mt-8 mb-4">— Event</div>
+      <h1 className="display-hero text-4xl md:text-6xl max-w-4xl">
+        {event ? event.title : loading ? "Loading…" : "Event not found"}
+      </h1>
+      </PageHero>
 
+      <main className="flex-1 mx-auto max-w-7xl w-full px-6 lg:px-10 py-16">
         {loading ? (
           <div className="eyebrow text-muted-foreground">Loading…</div>
         ) : missing || !event ? (
           <div className="border border-dashed border-border p-12 text-center">
-            <div className="font-display text-2xl mb-2">Event not found</div>
             <p className="text-sm text-muted-foreground">
               It may have been removed or is not shared publicly.
             </p>
@@ -94,10 +97,6 @@ function EventBody({ event }: { event: PublicEvent }) {
             <img src={event.flyer_url} alt={event.title} className="w-full h-full object-cover" />
           </div>
         )}
-        <div>
-          <div className="eyebrow text-accent mb-3">— Event</div>
-          <h1 className="font-display text-4xl md:text-5xl">{event.title}</h1>
-        </div>
         <div className="space-y-3 text-sm">
           <div className="flex items-start gap-3">
             <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />

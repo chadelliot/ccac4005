@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ExternalLink, Radio, CalendarDays, HeartHandshake } from "lucide-react";
-import { SiteHeader } from "@/components/SiteHeader";
+import { PageHero } from "@/components/PageHero";
 import { SiteFooter } from "@/components/SiteFooter";
 import { useLiveStream, type FacebookVideo } from "@/hooks/useLiveStream";
 
@@ -30,49 +30,41 @@ function LivePage() {
 
   return (
     <div className="min-h-screen bg-night text-night-foreground flex flex-col">
-      <SiteHeader />
+      <PageHero className="pt-36 pb-14 lg:pt-40">
+        <div className="flex flex-wrap items-center gap-3 mb-5">
+          {status.isLive ? (
+            <div className="inline-flex items-center gap-2 bg-live px-3 py-1.5 text-[11px] font-semibold tracking-[0.16em] uppercase text-night-foreground">
+              <span className="h-2 w-2 rounded-full bg-night-foreground animate-pulse" />
+              Live Now
+            </div>
+          ) : (
+            <div className="eyebrow text-gold">— Watch Online</div>
+          )}
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          <div>
+            <h1 className="font-display text-5xl md:text-7xl leading-[0.98] max-w-4xl">
+              Worship with us wherever you are.
+            </h1>
+            <p className="mt-6 text-lg text-night-foreground/70 leading-relaxed max-w-2xl">
+              Join Christ Cathedral Apostolic Church online each Sunday for worship, the Word,
+              and a life-changing encounter with Jesus Christ.
+            </p>
+          </div>
+
+          <div className="border-l border-white/10 pl-6">
+            <div className="eyebrow text-gold mb-2">Sunday Worship</div>
+            <div className="font-display text-3xl">2:27 PM</div>
+            <div className="text-sm text-night-foreground/60 mt-1">Baltimore, Maryland</div>
+          </div>
+        </div>
+      </PageHero>
 
       <main className="flex-1">
-        {/* The royal bloom is what ties this page to the homepage hero — without
-            it the page is only night + gold and reads as a different site. */}
-        {/* No bottom border — the tan band below is the boundary now. */}
-        <section className="relative">
-          <div aria-hidden="true" className="brand-wash pointer-events-none absolute inset-0" />
-          <div className="relative mx-auto max-w-7xl px-6 lg:px-10 pt-36 pb-14 lg:pt-40">
-            <div className="flex flex-wrap items-center gap-3 mb-5">
-              {status.isLive ? (
-                <div className="inline-flex items-center gap-2 bg-live px-3 py-1.5 text-[11px] font-semibold tracking-[0.16em] uppercase text-night-foreground">
-                  <span className="h-2 w-2 rounded-full bg-night-foreground animate-pulse" />
-                  Live Now
-                </div>
-              ) : (
-                <div className="eyebrow text-gold">— Watch Online</div>
-              )}
-            </div>
-
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-              <div>
-                <h1 className="font-display text-5xl md:text-7xl leading-[0.98] max-w-4xl">
-                  Worship with us wherever you are.
-                </h1>
-                <p className="mt-6 text-lg text-night-foreground/70 leading-relaxed max-w-2xl">
-                  Join Christ Cathedral Apostolic Church online each Sunday for worship, the Word,
-                  and a life-changing encounter with Jesus Christ.
-                </p>
-              </div>
-
-              <div className="border-l border-white/10 pl-6">
-                <div className="eyebrow text-gold mb-2">Sunday Worship</div>
-                <div className="font-display text-3xl">2:27 PM</div>
-                <div className="text-sm text-night-foreground/60 mt-1">Baltimore, Maryland</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Tan band, same --secondary as the homepage pillars. The page reads
             night → tan → night footer, so the player sits in the light. */}
-        <section className="bg-secondary text-foreground">
+        <section className="sand-page text-foreground">
           <div className="mx-auto max-w-7xl px-6 lg:px-10 py-16 lg:py-20">
             <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
               <div>

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { SiteHeader } from "@/components/SiteHeader";
+import { PageHero } from "@/components/PageHero";
 import { SiteFooter } from "@/components/SiteFooter";
 import { LEADERS } from "@/lib/leadership";
 import bishop from "@/assets/bishop-soft.webp";
@@ -67,15 +67,15 @@ function LeaderCard({
   return (
     <Link
       to={to}
-      className="group block border-l-2 border-accent pl-6 py-1 transition-colors hover:border-gold"
+      className="group block border-l-2 border-gold-deep pl-6 py-1 transition-colors hover:border-gold-deep/60"
     >
-      <div className="eyebrow text-accent mb-2">{role}</div>
-      <h3 className="font-display text-3xl lg:text-4xl group-hover:text-accent transition-colors">
+      <div className="eyebrow text-gold-deep mb-2">{role}</div>
+      <h3 className="font-display text-3xl lg:text-4xl group-hover:text-gold-deep transition-colors">
         {pageName}
       </h3>
       <div className="mt-1 text-muted-foreground">{name}</div>
       <p className="mt-3 text-muted-foreground leading-relaxed">{summary}</p>
-      <span className="mt-4 inline-block eyebrow text-gold">Read full bio →</span>
+      <span className="mt-4 inline-block eyebrow text-gold-deep">Read full bio →</span>
     </Link>
   );
 }
@@ -120,13 +120,10 @@ function LeadershipBackdrop() {
 function AboutPage() {
   return (
     <div className="bg-background text-foreground">
-      <div className="bg-night text-night-foreground pt-32 pb-24">
-        <SiteHeader />
-        <div className={CONTAINER}>
-          <div className="eyebrow text-gold mb-6">— About</div>
-          <h1 className="display-hero text-6xl lg:text-8xl">Our Story</h1>
-        </div>
-      </div>
+      <PageHero>
+        <div className="eyebrow text-gold mb-6">— About</div>
+        <h1 className="display-hero text-6xl lg:text-8xl">Our Story</h1>
+      </PageHero>
 
       {/* Leadership leads the page. The backdrop spans this whole block —
           cards and invitation both — so the portraits run all the way down to
@@ -135,7 +132,7 @@ function AboutPage() {
       <section className="relative overflow-hidden pt-24 pb-24 lg:pt-28 lg:pb-28">
         <LeadershipBackdrop />
         <div className={`relative ${CONTAINER}`}>
-          <div className="eyebrow text-accent mb-12">— Our Leadership</div>
+          <div className="eyebrow text-gold-deep mb-12">— Our Leadership</div>
           <div className="grid gap-12 md:grid-cols-2 md:gap-10 lg:gap-16">
             {LEADERS.map((l) => (
               <LeaderCard
@@ -157,7 +154,7 @@ function AboutPage() {
             transformed.{" "}
             <Link
               to="/plan-visit"
-              className="text-accent underline underline-offset-4 hover:text-gold transition-colors"
+              className="text-gold-deep underline underline-offset-4 hover:text-foreground transition-colors"
             >
               Plan your visit
             </Link>

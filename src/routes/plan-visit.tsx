@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SiteHeader } from "@/components/SiteHeader";
+import { PageHero } from "@/components/PageHero";
 import { SiteFooter } from "@/components/SiteFooter";
 import flyer from "@/assets/plan-your-visit-flyer.webp";
 
@@ -31,22 +31,19 @@ const EXPECT = [
 
 function PlanVisit() {
   return (
-    <div className="bg-background text-foreground">
-      <div className="bg-night text-night-foreground pt-32 pb-24">
-        <SiteHeader />
-        <div className="mx-auto max-w-7xl px-6 lg:px-10">
-          <div className="eyebrow text-gold mb-6">— Plan a Visit</div>
-          <h1 className="display-hero text-6xl lg:text-8xl">We can't wait<br />to meet you.</h1>
-          <p className="mt-8 max-w-2xl text-lg leading-relaxed text-night-foreground/70">
-            Whether you are visiting for the very first time or returning after some time away,
-            we want your experience to be warm, meaningful, and life-changing.
-          </p>
-        </div>
-      </div>
+    <div className="sand-page text-foreground">
+      <PageHero>
+        <div className="eyebrow text-gold mb-6">— Plan a Visit</div>
+        <h1 className="display-hero text-6xl lg:text-8xl">We can't wait<br />to meet you.</h1>
+        <p className="mt-8 max-w-2xl text-lg leading-relaxed text-night-foreground/70">
+          Whether you are visiting for the very first time or returning after some time away,
+          we want your experience to be warm, meaningful, and life-changing.
+        </p>
+      </PageHero>
 
       <section className="py-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
-          <div className="eyebrow text-accent mb-8">— Service Times</div>
+          <div className="eyebrow text-gold-deep mb-8">— Service Times</div>
           <div className="grid gap-8 md:grid-cols-3">
             {SERVICES.map((s) => (
               <div key={s.name} className="border-l-2 border-accent pl-6">

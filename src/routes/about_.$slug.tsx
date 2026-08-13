@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { SiteHeader } from "@/components/SiteHeader";
+import { PageHero } from "@/components/PageHero";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getLeader } from "@/lib/leadership";
 
@@ -29,21 +29,18 @@ function LeaderPage() {
   const leader = Route.useLoaderData();
 
   return (
-    <div className="bg-background text-foreground">
-      <div className="bg-night text-night-foreground pt-32 pb-24">
-        <SiteHeader />
-        <div className="mx-auto max-w-7xl px-6 lg:px-10">
-          <Link
-            to="/about"
-            className="eyebrow text-gold/70 hover:text-gold transition-colors"
-          >
-            ← Our Story
-          </Link>
-          <h1 className="display-hero text-5xl lg:text-7xl mt-6">
-            {leader.pageName}
-          </h1>
-        </div>
-      </div>
+    <div className="sand-page text-foreground">
+      <PageHero>
+        <Link
+          to="/about"
+          className="eyebrow text-gold/70 hover:text-gold transition-colors"
+        >
+          ← Our Story
+        </Link>
+        <h1 className="display-hero text-5xl lg:text-7xl mt-6">
+          {leader.pageName}
+        </h1>
+      </PageHero>
 
       <section className="py-20 lg:py-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
@@ -58,7 +55,7 @@ function LeaderPage() {
               />
             </div>
             <div className="lg:col-span-3">
-              <div className="eyebrow text-accent mb-3">{leader.role}</div>
+              <div className="eyebrow text-gold-deep mb-3">{leader.role}</div>
               <h2 className="font-display text-4xl mb-8">{leader.name}</h2>
               <div className="space-y-4">
                 {leader.bio.map((p, i) => (

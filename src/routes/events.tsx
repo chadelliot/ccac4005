@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { SiteHeader } from "@/components/SiteHeader";
+import { PageHero } from "@/components/PageHero";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, ImagePlus } from "lucide-react";
@@ -54,20 +54,17 @@ function PublicEventsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="bg-night text-night-foreground relative">
-        <SiteHeader />
-        <div className="mx-auto max-w-7xl px-6 lg:px-10 pt-32 pb-20">
-          <div className="eyebrow text-gold mb-4">— Gatherings</div>
-          <h1 className="font-display text-5xl md:text-6xl max-w-3xl">
-            Upcoming Events
-          </h1>
-          <p className="mt-5 max-w-2xl text-night-foreground/70">
-            Everyone is welcome. Browse our public events below and let us know you're
-            coming — no account required.
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen sand-page flex flex-col">
+      <PageHero className="pt-32 pb-20">
+        <div className="eyebrow text-gold mb-4">— Gatherings</div>
+        <h1 className="font-display text-5xl md:text-6xl max-w-3xl">
+          Upcoming Events
+        </h1>
+        <p className="mt-5 max-w-2xl text-night-foreground/70">
+          Everyone is welcome. Browse our public events below and let us know you're
+          coming — no account required.
+        </p>
+      </PageHero>
 
       <main className="flex-1 mx-auto max-w-7xl w-full px-6 lg:px-10 py-16">
         {loading ? (

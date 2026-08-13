@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { SiteHeader } from "@/components/SiteHeader";
+import { PageHero } from "@/components/PageHero";
 import { SiteFooter } from "@/components/SiteFooter";
 import { MapPin, Clock, Phone } from "lucide-react";
 
@@ -17,14 +17,11 @@ export const Route = createFileRoute("/find-us")({
 
 function FindUs() {
   return (
-    <div className="bg-background text-foreground">
-      <div className="bg-night text-night-foreground pt-32 pb-24">
-        <SiteHeader />
-        <div className="mx-auto max-w-7xl px-6 lg:px-10">
-          <div className="eyebrow text-gold mb-6">— Find Us</div>
-          <h1 className="display-hero text-6xl lg:text-8xl">Come visit.</h1>
-        </div>
-      </div>
+    <div className="sand-page text-foreground">
+      <PageHero>
+        <div className="eyebrow text-gold mb-6">— Find Us</div>
+        <h1 className="display-hero text-6xl lg:text-8xl">Come visit.</h1>
+      </PageHero>
 
       <section className="py-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-10 grid md:grid-cols-3 gap-8">
