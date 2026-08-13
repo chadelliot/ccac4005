@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PlanVisitRouteImport } from './routes/plan-visit'
+import { Route as LiveRouteImport } from './routes/live'
 import { Route as GiveRouteImport } from './routes/give'
 import { Route as FindUsRouteImport } from './routes/find-us'
 import { Route as EventsRouteImport } from './routes/events'
@@ -18,7 +19,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
-import { Route as EventsIdRouteImport } from './routes/events.$id'
+import { Route as EventsIdRouteImport } from './routes/events_.$id'
 import { Route as DashboardProgramsRouteImport } from './routes/dashboard.programs'
 import { Route as DashboardGroupsRouteImport } from './routes/dashboard.groups'
 import { Route as DashboardFollowUpsRouteImport } from './routes/dashboard.follow-ups'
@@ -38,6 +39,11 @@ import { Route as DashboardEvangelismIdRouteImport } from './routes/dashboard.ev
 const PlanVisitRoute = PlanVisitRouteImport.update({
   id: '/plan-visit',
   path: '/plan-visit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GiveRoute = GiveRouteImport.update({
@@ -81,9 +87,9 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   getParentRoute: () => DashboardRoute,
 } as any)
 const EventsIdRoute = EventsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => EventsRoute,
+  id: '/events_/$id',
+  path: '/events/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardProgramsRoute = DashboardProgramsRouteImport.update({
   id: '/programs',
@@ -168,9 +174,10 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
-  '/events': typeof EventsRouteWithChildren
+  '/events': typeof EventsRoute
   '/find-us': typeof FindUsRoute
   '/give': typeof GiveRoute
+  '/live': typeof LiveRoute
   '/plan-visit': typeof PlanVisitRoute
   '/about/$slug': typeof AboutSlugRoute
   '/dashboard/bible': typeof DashboardBibleRoute
@@ -194,9 +201,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
-  '/events': typeof EventsRouteWithChildren
+  '/events': typeof EventsRoute
   '/find-us': typeof FindUsRoute
   '/give': typeof GiveRoute
+  '/live': typeof LiveRoute
   '/plan-visit': typeof PlanVisitRoute
   '/about/$slug': typeof AboutSlugRoute
   '/dashboard/bible': typeof DashboardBibleRoute
@@ -219,9 +227,10 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRouteWithChildren
-  '/events': typeof EventsRouteWithChildren
+  '/events': typeof EventsRoute
   '/find-us': typeof FindUsRoute
   '/give': typeof GiveRoute
+  '/live': typeof LiveRoute
   '/plan-visit': typeof PlanVisitRoute
   '/about_/$slug': typeof AboutSlugRoute
   '/dashboard/bible': typeof DashboardBibleRoute
@@ -230,7 +239,7 @@ export interface FileRoutesById {
   '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/groups': typeof DashboardGroupsRouteWithChildren
   '/dashboard/programs': typeof DashboardProgramsRouteWithChildren
-  '/events/$id': typeof EventsIdRoute
+  '/events_/$id': typeof EventsIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
   '/dashboard/evangelism/admin': typeof DashboardEvangelismAdminRoute
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/find-us'
     | '/give'
+    | '/live'
     | '/plan-visit'
     | '/about/$slug'
     | '/dashboard/bible'
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/find-us'
     | '/give'
+    | '/live'
     | '/plan-visit'
     | '/about/$slug'
     | '/dashboard/bible'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/find-us'
     | '/give'
+    | '/live'
     | '/plan-visit'
     | '/about_/$slug'
     | '/dashboard/bible'
@@ -309,7 +321,7 @@ export interface FileRouteTypes {
     | '/dashboard/follow-ups'
     | '/dashboard/groups'
     | '/dashboard/programs'
-    | '/events/$id'
+    | '/events_/$id'
     | '/dashboard/'
     | '/dashboard/evangelism/$id'
     | '/dashboard/evangelism/admin'
@@ -326,11 +338,13 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRouteWithChildren
-  EventsRoute: typeof EventsRouteWithChildren
+  EventsRoute: typeof EventsRoute
   FindUsRoute: typeof FindUsRoute
   GiveRoute: typeof GiveRoute
+  LiveRoute: typeof LiveRoute
   PlanVisitRoute: typeof PlanVisitRoute
   AboutSlugRoute: typeof AboutSlugRoute
+  EventsIdRoute: typeof EventsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -340,6 +354,13 @@ declare module '@tanstack/react-router' {
       path: '/plan-visit'
       fullPath: '/plan-visit'
       preLoaderRoute: typeof PlanVisitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/give': {
@@ -398,12 +419,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/events/$id': {
-      id: '/events/$id'
-      path: '/$id'
+    '/events_/$id': {
+      id: '/events_/$id'
+      path: '/events/$id'
       fullPath: '/events/$id'
       preLoaderRoute: typeof EventsIdRouteImport
-      parentRoute: typeof EventsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/programs': {
       id: '/dashboard/programs'
@@ -591,27 +612,18 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
-interface EventsRouteChildren {
-  EventsIdRoute: typeof EventsIdRoute
-}
-
-const EventsRouteChildren: EventsRouteChildren = {
-  EventsIdRoute: EventsIdRoute,
-}
-
-const EventsRouteWithChildren =
-  EventsRoute._addFileChildren(EventsRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRouteWithChildren,
-  EventsRoute: EventsRouteWithChildren,
+  EventsRoute: EventsRoute,
   FindUsRoute: FindUsRoute,
   GiveRoute: GiveRoute,
+  LiveRoute: LiveRoute,
   PlanVisitRoute: PlanVisitRoute,
   AboutSlugRoute: AboutSlugRoute,
+  EventsIdRoute: EventsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
