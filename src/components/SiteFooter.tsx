@@ -30,7 +30,14 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-white/10">
         <div className="mx-auto max-w-7xl px-6 lg:px-10 py-6 flex flex-col md:flex-row items-center justify-between text-xs text-night-foreground/50">
-          <div>© {new Date().getFullYear()} Christ Cathedral Apostolic Church. All rights reserved.</div>
+          <div className="flex flex-col sm:flex-row items-center gap-x-4 gap-y-1 text-center sm:text-left">
+            <span>© {new Date().getFullYear()} Christ Cathedral Apostolic Church. All rights reserved.</span>
+            <span className="hidden sm:inline text-night-foreground/25">·</span>
+            <span className="flex gap-4">
+              <Link to="/privacy-policy" className="hover:text-gold">Privacy</Link>
+              <Link to="/terms" className="hover:text-gold">Terms</Link>
+            </span>
+          </div>
           <div className="eyebrow text-gold/60 mt-2 md:mt-0">Baltimore, Maryland · The Life Center</div>
         </div>
       </div>

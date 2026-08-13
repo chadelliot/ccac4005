@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PlanVisitRouteImport } from './routes/plan-visit'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as InviteBishopRouteImport } from './routes/invite-bishop'
@@ -42,6 +44,16 @@ import { Route as DashboardEvangelismAdminRouteImport } from './routes/dashboard
 import { Route as DashboardEvangelismIdRouteImport } from './routes/dashboard.evangelism.$id'
 import { Route as BishopEngagementsRequestIdRouteImport } from './routes/bishop.engagements.$requestId'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlanVisitRoute = PlanVisitRouteImport.update({
   id: '/plan-visit',
   path: '/plan-visit',
@@ -218,6 +230,8 @@ export interface FileRoutesByFullPath {
   '/invite-bishop': typeof InviteBishopRoute
   '/live': typeof LiveRoute
   '/plan-visit': typeof PlanVisitRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/terms': typeof TermsRoute
   '/about/$slug': typeof AboutSlugRoute
   '/bishop/engagements': typeof BishopEngagementsRouteWithChildren
   '/bishop/settings': typeof BishopSettingsRoute
@@ -251,6 +265,8 @@ export interface FileRoutesByTo {
   '/invite-bishop': typeof InviteBishopRoute
   '/live': typeof LiveRoute
   '/plan-visit': typeof PlanVisitRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/terms': typeof TermsRoute
   '/about/$slug': typeof AboutSlugRoute
   '/bishop/settings': typeof BishopSettingsRoute
   '/dashboard/bible': typeof DashboardBibleRoute
@@ -282,6 +298,8 @@ export interface FileRoutesById {
   '/invite-bishop': typeof InviteBishopRoute
   '/live': typeof LiveRoute
   '/plan-visit': typeof PlanVisitRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/terms': typeof TermsRoute
   '/about_/$slug': typeof AboutSlugRoute
   '/bishop/engagements': typeof BishopEngagementsRouteWithChildren
   '/bishop/settings': typeof BishopSettingsRoute
@@ -318,6 +336,8 @@ export interface FileRouteTypes {
     | '/invite-bishop'
     | '/live'
     | '/plan-visit'
+    | '/privacy-policy'
+    | '/terms'
     | '/about/$slug'
     | '/bishop/engagements'
     | '/bishop/settings'
@@ -351,6 +371,8 @@ export interface FileRouteTypes {
     | '/invite-bishop'
     | '/live'
     | '/plan-visit'
+    | '/privacy-policy'
+    | '/terms'
     | '/about/$slug'
     | '/bishop/settings'
     | '/dashboard/bible'
@@ -381,6 +403,8 @@ export interface FileRouteTypes {
     | '/invite-bishop'
     | '/live'
     | '/plan-visit'
+    | '/privacy-policy'
+    | '/terms'
     | '/about_/$slug'
     | '/bishop/engagements'
     | '/bishop/settings'
@@ -416,12 +440,28 @@ export interface RootRouteChildren {
   InviteBishopRoute: typeof InviteBishopRoute
   LiveRoute: typeof LiveRoute
   PlanVisitRoute: typeof PlanVisitRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  TermsRoute: typeof TermsRoute
   AboutSlugRoute: typeof AboutSlugRoute
   EventsIdRoute: typeof EventsIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/plan-visit': {
       id: '/plan-visit'
       path: '/plan-visit'
@@ -765,6 +805,8 @@ const rootRouteChildren: RootRouteChildren = {
   InviteBishopRoute: InviteBishopRoute,
   LiveRoute: LiveRoute,
   PlanVisitRoute: PlanVisitRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
+  TermsRoute: TermsRoute,
   AboutSlugRoute: AboutSlugRoute,
   EventsIdRoute: EventsIdRoute,
 }
