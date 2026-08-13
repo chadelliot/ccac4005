@@ -246,6 +246,57 @@
 }
 
 
+/* Prose defaults for the privacy policy and terms pages. Scoped rather than
+   global so it cannot leak into the app's dense, non-prose screens. */
+@utility legal-prose {
+  color: var(--foreground);
+  line-height: 1.75;
+
+  & p {
+    color: var(--muted-foreground);
+  }
+
+  & a {
+    color: var(--gold-deep);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  & a:hover {
+    color: var(--foreground);
+  }
+
+  & ul {
+    list-style: disc;
+    padding-left: 1.35rem;
+    color: var(--muted-foreground);
+  }
+
+  & li {
+    margin-top: 0.5rem;
+  }
+
+  & li::marker {
+    color: var(--gold-deep);
+  }
+
+  & strong {
+    color: var(--foreground);
+    font-weight: 600;
+  }
+
+  /* Definition lists carry the "what we collect / why" pairs. */
+  & dt {
+    color: var(--foreground);
+    font-weight: 600;
+    margin-top: 1rem;
+  }
+
+  & dd {
+    color: var(--muted-foreground);
+  }
+}
+
 /* Soft stone / sand page surface: the tan band plus two inlined noise layers —
    a fine tooth at 180px and a broad, low-frequency mottle at 700px that keeps
    the grain from reading as a uniform screen.

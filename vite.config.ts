@@ -17,6 +17,8 @@ const PUBLIC_PAGES = [
   "/give",
   "/live",
   "/invite-bishop",
+  "/privacy-policy",
+  "/terms",
 ];
 
 export default defineConfig(({ mode }) => {
