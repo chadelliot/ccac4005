@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import bishopProfilePhoto from "@/assets/bishop-justin-marcus-profile";
 import { PageHero } from "@/components/PageHero";
 import { SiteFooter } from "@/components/SiteFooter";
-import { getLeader } from "@/lib/leadership";
+import { getLeader, type Leader } from "@/lib/leadership";
 
 const BISHOP_SLUG = "bishop-justin-marcus";
 
@@ -71,7 +71,7 @@ function LeaderPage() {
   );
 }
 
-function BishopProfile({ leader }: { leader: ReturnType<typeof Route.useLoaderData> }) {
+function BishopProfile({ leader }: { leader: Leader }) {
   return (
     <section className="py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
@@ -141,7 +141,7 @@ function BishopProfile({ leader }: { leader: ReturnType<typeof Route.useLoaderDa
   );
 }
 
-function StandardLeaderProfile({ leader }: { leader: ReturnType<typeof Route.useLoaderData> }) {
+function StandardLeaderProfile({ leader }: { leader: Leader }) {
   return (
     <section className="py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
