@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { PageHero } from "@/components/PageHero";
 import { SiteFooter } from "@/components/SiteFooter";
 import { InviteBishopForm } from "@/components/bishop/InviteBishopForm";
-import { bishopDb } from "@/lib/bishopDb";
 import type { PublicSettings } from "@/lib/bishopBooking";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/invite-bishop")({
   head: () => ({
@@ -33,7 +33,7 @@ function InviteBishopPage() {
     let active = true;
     (async () => {
       try {
-        const { data } = await bishopDb
+        const { data } = await supabase
           .from("bishop_booking_public_settings")
           .select("*")
           .eq("id", 1)

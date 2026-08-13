@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { bishopDb } from "@/lib/bishopDb";
+import { supabase } from "@/integrations/supabase/client";
 
 export type DeskAccess = {
   loading: boolean;
@@ -47,7 +47,7 @@ export function useBishopDesk(user: User | null): DeskAccess {
 
     (async () => {
       try {
-        const { data: allowed, error } = await bishopDb.rpc("has_bishop_desk_access", {
+        const { data: allowed, error } = await supabase.rpc("has_bishop_desk_access", {
           _user_id: user.id,
         });
         if (!active) return;
@@ -57,7 +57,7 @@ export function useBishopDesk(user: User | null): DeskAccess {
         } else {
           // RLS on the roster already restricts this to desk members, so a
           // second permission check here would be redundant.
-          const { data: row } = await bishopDb
+          const { data: row } = await supabase
             .from("bishop_booking_authorized_users")
             .select("is_bishop, display_name, email")
             .eq("user_id", user.id)

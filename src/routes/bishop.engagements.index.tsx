@@ -2,8 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Search, Inbox } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { bishopDb } from "@/lib/bishopDb";
 import { StatusBadge } from "@/components/bishop/StatusBadge";
+import { supabase } from "@/integrations/supabase/client";
 import {
   BUCKET_LABELS,
   EVENT_TYPES,
@@ -45,7 +45,7 @@ function EngagementsIndex() {
 
   useEffect(() => {
     let active = true;
-    bishopDb
+    supabase
       .from("bishop_booking_requests")
       .select("*")
       .order("created_at", { ascending: false })

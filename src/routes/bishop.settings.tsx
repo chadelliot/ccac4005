@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { bishopDb } from "@/lib/bishopDb";
 import type { InternalSettings, PublicSettings } from "@/lib/bishopBooking";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/bishop/settings")({
   component: BishopSettings,
@@ -25,8 +25,8 @@ function BishopSettings() {
   useEffect(() => {
     let active = true;
     Promise.all([
-      bishopDb.from("bishop_booking_public_settings").select("*").eq("id", 1).maybeSingle(),
-      bishopDb.from("bishop_booking_internal_settings").select("*").eq("id", 1).maybeSingle(),
+      supabase.from("bishop_booking_public_settings").select("*").eq("id", 1).maybeSingle(),
+      supabase.from("bishop_booking_internal_settings").select("*").eq("id", 1).maybeSingle(),
     ]).then(([p, i]) => {
       if (!active) return;
       setPub(p.data ?? null);
@@ -42,7 +42,7 @@ function BishopSettings() {
     if (!pub) return;
     setSaving("public");
     const { id: _id, updated_at: _u, ...patch } = pub;
-    const { error } = await bishopDb
+    const { error } = await supabase
       .from("bishop_booking_public_settings")
       .update(patch)
       .eq("id", 1);
@@ -54,7 +54,7 @@ function BishopSettings() {
     if (!internal) return;
     setSaving("internal");
     const { id: _id, updated_at: _u, ...patch } = internal;
-    const { error } = await bishopDb
+    const { error } = await supabase
       .from("bishop_booking_internal_settings")
       .update(patch)
       .eq("id", 1);

@@ -1,24 +1,13 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
-
 /**
- * The generated `Database` type has no knowledge of the `bishop_booking_*`
- * tables, because `supabase gen types` cannot be run until the migration in
- * this branch has actually been applied to a database.
+ * Helpers for reaching the Bishop's booking edge functions from the browser.
  *
- * Casting once here confines that gap to a single line rather than scattering
- * `as any` through every query. Row shapes are still fully typed — see the
- * exported types in `bishopBooking.ts`, which the call sites annotate with — so
- * what is unchecked is the table and column *names*, not the data.
- *
- * TODO(after `supabase db push`): run
- *   supabase gen types typescript --project-id <ref> > src/integrations/supabase/types.ts
- * then delete this module and import `supabase` directly.
+ * This module used to also export a loosely-typed `bishopDb` client, because
+ * `supabase gen types` could not run until the migration existed on a real
+ * database. The migration is applied and the types regenerated, so callers now
+ * import `supabase` directly and everything is fully typed.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const bishopDb = supabase as unknown as SupabaseClient<any, "public", any>;
 
-/** Where the public form and the desk send their function calls. */
+/** Base URL for the booking edge functions. */
 export function functionsBase(): string {
   const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   return url ? `${url.replace(/\/$/, "")}/functions/v1` : "";

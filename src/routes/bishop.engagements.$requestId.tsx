@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/lib/auth";
 import { useBishopDesk } from "@/hooks/useBishopDesk";
-import { bishopDb, functionsBase, anonKey } from "@/lib/bishopDb";
 import { supabase } from "@/integrations/supabase/client";
 import { StatusBadge } from "@/components/bishop/StatusBadge";
+import { anonKey, functionsBase } from "@/lib/bishopDb";
 import {
   EVENT_TYPE_LABELS,
   SERVICE_ROLE_LABELS,
@@ -48,13 +48,13 @@ function EngagementDossier() {
 
   const load = useCallback(async () => {
     const [{ data: req }, { data: n }, { data: a }] = await Promise.all([
-      bishopDb.from("bishop_booking_requests").select("*").eq("id", requestId).maybeSingle(),
-      bishopDb
+      supabase.from("bishop_booking_requests").select("*").eq("id", requestId).maybeSingle(),
+      supabase
         .from("bishop_booking_notes")
         .select("*")
         .eq("request_id", requestId)
         .order("created_at", { ascending: false }),
-      bishopDb
+      supabase
         .from("bishop_booking_activity")
         .select("*")
         .eq("request_id", requestId)
@@ -73,7 +73,7 @@ function EngagementDossier() {
 
   const changeStatus = async (to: BookingStatus) => {
     setBusy(to);
-    const { error } = await bishopDb
+    const { error } = await supabase
       .from("bishop_booking_requests")
       .update({
         status: to,
@@ -128,7 +128,7 @@ function EngagementDossier() {
 
   const addNote = async (body: string, visibility: "secretary" | "bishop") => {
     if (!user) return;
-    const { error } = await bishopDb.from("bishop_booking_notes").insert({
+    const { error } = await supabase.from("bishop_booking_notes").insert({
       request_id: requestId,
       author_id: user.id,
       author_email: desk.email ?? user.email ?? null,
@@ -208,7 +208,7 @@ function EngagementDossier() {
               // nothing would be worse than making the follow-up explicit.
               await addNote(`Information requested from the church:\n\n${message}`, "secretary");
               if (user) {
-                await bishopDb.from("bishop_booking_activity").insert({
+                await supabase.from("bishop_booking_activity").insert({
                   request_id: requestId,
                   actor_id: user.id,
                   actor_email: desk.email ?? user.email ?? null,

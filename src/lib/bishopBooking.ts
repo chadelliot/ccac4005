@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Database } from "@/integrations/supabase/types";
 
 /**
  * Shared contracts for the Bishop's engagement booking system.
@@ -270,124 +271,21 @@ export const FORM_STEPS = [
 // Row types
 // ---------------------------------------------------------------------------
 //
-// These mirror the migration in this branch. They are hand-written rather than
-// generated because `supabase gen types` cannot run until the migration is
-// actually applied to a database — see the branch README note.
+// Derived from the generated schema rather than hand-written. These were
+// maintained by hand while the migration was unapplied and `supabase gen types`
+// could not run; the first regeneration immediately caught a mismatch
+// (request_number was nullable in the database but non-null here). Deriving them
+// makes that class of drift impossible.
 
-export type BookingRequest = {
-  id: string;
-  request_number: string;
-  status: BookingStatus;
+type Tables = Database["public"]["Tables"];
 
-  church_name: string;
-  pastor_name: string;
-  church_website: string | null;
-  church_address: string;
-  church_city: string;
-  church_state: string;
-  church_postal_code: string;
-  affiliation: string | null;
-
-  contact_name: string;
-  contact_role: string | null;
-  contact_email: string;
-  contact_phone: string;
-  preferred_contact_method: "email" | "phone" | "either";
-
-  event_type: (typeof EVENT_TYPES)[number];
-  event_type_other: string | null;
-  event_name: string;
-  service_role: (typeof SERVICE_ROLES)[number];
-  service_role_other: string | null;
-  event_date: string;
-  event_end_date: string | null;
-  start_time: string;
-  expected_attendance: number | null;
-  venue_name: string | null;
-  venue_address: string | null;
-  theme: string | null;
-
-  travel_arrangement: (typeof TRAVEL_ARRANGEMENTS)[number];
-  nearest_airport: string | null;
-  accommodation_notes: string | null;
-  armor_bearer_count: number;
-  honorarium_notes: string | null;
-  additional_notes: string | null;
-
-  calendar_event_id: string | null;
-  decided_at: string | null;
-  decided_by: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type BookingNote = {
-  id: string;
-  request_id: string;
-  author_id: string;
-  author_email: string | null;
-  body: string;
-  /** `bishop` notes are visible only to desk users flagged `is_bishop`. */
-  visibility: "secretary" | "bishop";
-  created_at: string;
-};
-
-export type BookingActivity = {
-  id: string;
-  request_id: string;
-  actor_id: string | null;
-  actor_email: string | null;
-  action: string;
-  from_status: BookingStatus | null;
-  to_status: BookingStatus | null;
-  detail: string | null;
-  created_at: string;
-};
-
-export type BookingAttachment = {
-  id: string;
-  request_id: string;
-  storage_path: string;
-  file_name: string;
-  content_type: string | null;
-  size_bytes: number | null;
-  uploaded_by: string | null;
-  created_at: string;
-};
-
-export type PublicSettings = {
-  id: number;
-  intro_heading: string;
-  intro_body: string;
-  lead_time_days: number;
-  accommodation_policy: string;
-  honorarium_policy: string;
-  travel_policy: string;
-  response_time_note: string;
-  blocked_weekdays: number[];
-  accepting_requests: boolean;
-  updated_at: string;
-};
-
-export type InternalSettings = {
-  id: number;
-  secretary_name: string;
-  secretary_email: string;
-  bishop_email: string;
-  notification_emails: string[];
-  calendar_id: string;
-  tentative_hold_days: number;
-  auto_acknowledge: boolean;
-  updated_at: string;
-};
-
-export type DeskUser = {
-  user_id: string;
-  email: string | null;
-  display_name: string | null;
-  is_bishop: boolean;
-  created_at: string;
-};
+export type BookingRequest = Tables["bishop_booking_requests"]["Row"];
+export type BookingNote = Tables["bishop_booking_notes"]["Row"];
+export type BookingActivity = Tables["bishop_booking_activity"]["Row"];
+export type BookingAttachment = Tables["bishop_booking_attachments"]["Row"];
+export type PublicSettings = Tables["bishop_booking_public_settings"]["Row"];
+export type InternalSettings = Tables["bishop_booking_internal_settings"]["Row"];
+export type DeskUser = Tables["bishop_booking_authorized_users"]["Row"];
 
 // ---------------------------------------------------------------------------
 // Derived helpers
