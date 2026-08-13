@@ -11,10 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PlanVisitRouteImport } from './routes/plan-visit'
 import { Route as LiveRouteImport } from './routes/live'
+import { Route as InviteBishopRouteImport } from './routes/invite-bishop'
 import { Route as GiveRouteImport } from './routes/give'
 import { Route as FindUsRouteImport } from './routes/find-us'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as BishopRouteImport } from './routes/bishop'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -26,15 +28,19 @@ import { Route as DashboardFollowUpsRouteImport } from './routes/dashboard.follo
 import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
 import { Route as DashboardEvangelismRouteImport } from './routes/dashboard.evangelism'
 import { Route as DashboardBibleRouteImport } from './routes/dashboard.bible'
+import { Route as BishopSettingsRouteImport } from './routes/bishop.settings'
+import { Route as BishopEngagementsRouteImport } from './routes/bishop.engagements'
 import { Route as AboutSlugRouteImport } from './routes/about_.$slug'
 import { Route as DashboardProgramsIndexRouteImport } from './routes/dashboard.programs.index'
 import { Route as DashboardEventsIndexRouteImport } from './routes/dashboard.events.index'
 import { Route as DashboardEvangelismIndexRouteImport } from './routes/dashboard.evangelism.index'
+import { Route as BishopEngagementsIndexRouteImport } from './routes/bishop.engagements.index'
 import { Route as DashboardProgramsIdRouteImport } from './routes/dashboard.programs.$id'
 import { Route as DashboardGroupsIdRouteImport } from './routes/dashboard.groups.$id'
 import { Route as DashboardEventsIdRouteImport } from './routes/dashboard.events.$id'
 import { Route as DashboardEvangelismAdminRouteImport } from './routes/dashboard.evangelism.admin'
 import { Route as DashboardEvangelismIdRouteImport } from './routes/dashboard.evangelism.$id'
+import { Route as BishopEngagementsRequestIdRouteImport } from './routes/bishop.engagements.$requestId'
 
 const PlanVisitRoute = PlanVisitRouteImport.update({
   id: '/plan-visit',
@@ -44,6 +50,11 @@ const PlanVisitRoute = PlanVisitRouteImport.update({
 const LiveRoute = LiveRouteImport.update({
   id: '/live',
   path: '/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteBishopRoute = InviteBishopRouteImport.update({
+  id: '/invite-bishop',
+  path: '/invite-bishop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GiveRoute = GiveRouteImport.update({
@@ -64,6 +75,11 @@ const EventsRoute = EventsRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BishopRoute = BishopRouteImport.update({
+  id: '/bishop',
+  path: '/bishop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -121,6 +137,16 @@ const DashboardBibleRoute = DashboardBibleRouteImport.update({
   path: '/bible',
   getParentRoute: () => DashboardRoute,
 } as any)
+const BishopSettingsRoute = BishopSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => BishopRoute,
+} as any)
+const BishopEngagementsRoute = BishopEngagementsRouteImport.update({
+  id: '/engagements',
+  path: '/engagements',
+  getParentRoute: () => BishopRoute,
+} as any)
 const AboutSlugRoute = AboutSlugRouteImport.update({
   id: '/about_/$slug',
   path: '/about/$slug',
@@ -142,6 +168,11 @@ const DashboardEvangelismIndexRoute =
     path: '/',
     getParentRoute: () => DashboardEvangelismRoute,
   } as any)
+const BishopEngagementsIndexRoute = BishopEngagementsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BishopEngagementsRoute,
+} as any)
 const DashboardProgramsIdRoute = DashboardProgramsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -168,18 +199,28 @@ const DashboardEvangelismIdRoute = DashboardEvangelismIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => DashboardEvangelismRoute,
 } as any)
+const BishopEngagementsRequestIdRoute =
+  BishopEngagementsRequestIdRouteImport.update({
+    id: '/$requestId',
+    path: '/$requestId',
+    getParentRoute: () => BishopEngagementsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/bishop': typeof BishopRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/events': typeof EventsRoute
   '/find-us': typeof FindUsRoute
   '/give': typeof GiveRoute
+  '/invite-bishop': typeof InviteBishopRoute
   '/live': typeof LiveRoute
   '/plan-visit': typeof PlanVisitRoute
   '/about/$slug': typeof AboutSlugRoute
+  '/bishop/engagements': typeof BishopEngagementsRouteWithChildren
+  '/bishop/settings': typeof BishopSettingsRoute
   '/dashboard/bible': typeof DashboardBibleRoute
   '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
   '/dashboard/events': typeof DashboardEventsRouteWithChildren
@@ -188,11 +229,13 @@ export interface FileRoutesByFullPath {
   '/dashboard/programs': typeof DashboardProgramsRouteWithChildren
   '/events/$id': typeof EventsIdRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/bishop/engagements/$requestId': typeof BishopEngagementsRequestIdRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
   '/dashboard/evangelism/admin': typeof DashboardEvangelismAdminRoute
   '/dashboard/events/$id': typeof DashboardEventsIdRoute
   '/dashboard/groups/$id': typeof DashboardGroupsIdRoute
   '/dashboard/programs/$id': typeof DashboardProgramsIdRoute
+  '/bishop/engagements/': typeof BishopEngagementsIndexRoute
   '/dashboard/evangelism/': typeof DashboardEvangelismIndexRoute
   '/dashboard/events/': typeof DashboardEventsIndexRoute
   '/dashboard/programs/': typeof DashboardProgramsIndexRoute
@@ -201,22 +244,27 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/bishop': typeof BishopRouteWithChildren
   '/events': typeof EventsRoute
   '/find-us': typeof FindUsRoute
   '/give': typeof GiveRoute
+  '/invite-bishop': typeof InviteBishopRoute
   '/live': typeof LiveRoute
   '/plan-visit': typeof PlanVisitRoute
   '/about/$slug': typeof AboutSlugRoute
+  '/bishop/settings': typeof BishopSettingsRoute
   '/dashboard/bible': typeof DashboardBibleRoute
   '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/groups': typeof DashboardGroupsRouteWithChildren
   '/events/$id': typeof EventsIdRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/bishop/engagements/$requestId': typeof BishopEngagementsRequestIdRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
   '/dashboard/evangelism/admin': typeof DashboardEvangelismAdminRoute
   '/dashboard/events/$id': typeof DashboardEventsIdRoute
   '/dashboard/groups/$id': typeof DashboardGroupsIdRoute
   '/dashboard/programs/$id': typeof DashboardProgramsIdRoute
+  '/bishop/engagements': typeof BishopEngagementsIndexRoute
   '/dashboard/evangelism': typeof DashboardEvangelismIndexRoute
   '/dashboard/events': typeof DashboardEventsIndexRoute
   '/dashboard/programs': typeof DashboardProgramsIndexRoute
@@ -226,13 +274,17 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/bishop': typeof BishopRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
   '/events': typeof EventsRoute
   '/find-us': typeof FindUsRoute
   '/give': typeof GiveRoute
+  '/invite-bishop': typeof InviteBishopRoute
   '/live': typeof LiveRoute
   '/plan-visit': typeof PlanVisitRoute
   '/about_/$slug': typeof AboutSlugRoute
+  '/bishop/engagements': typeof BishopEngagementsRouteWithChildren
+  '/bishop/settings': typeof BishopSettingsRoute
   '/dashboard/bible': typeof DashboardBibleRoute
   '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
   '/dashboard/events': typeof DashboardEventsRouteWithChildren
@@ -241,11 +293,13 @@ export interface FileRoutesById {
   '/dashboard/programs': typeof DashboardProgramsRouteWithChildren
   '/events_/$id': typeof EventsIdRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/bishop/engagements/$requestId': typeof BishopEngagementsRequestIdRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
   '/dashboard/evangelism/admin': typeof DashboardEvangelismAdminRoute
   '/dashboard/events/$id': typeof DashboardEventsIdRoute
   '/dashboard/groups/$id': typeof DashboardGroupsIdRoute
   '/dashboard/programs/$id': typeof DashboardProgramsIdRoute
+  '/bishop/engagements/': typeof BishopEngagementsIndexRoute
   '/dashboard/evangelism/': typeof DashboardEvangelismIndexRoute
   '/dashboard/events/': typeof DashboardEventsIndexRoute
   '/dashboard/programs/': typeof DashboardProgramsIndexRoute
@@ -256,13 +310,17 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/bishop'
     | '/dashboard'
     | '/events'
     | '/find-us'
     | '/give'
+    | '/invite-bishop'
     | '/live'
     | '/plan-visit'
     | '/about/$slug'
+    | '/bishop/engagements'
+    | '/bishop/settings'
     | '/dashboard/bible'
     | '/dashboard/evangelism'
     | '/dashboard/events'
@@ -271,11 +329,13 @@ export interface FileRouteTypes {
     | '/dashboard/programs'
     | '/events/$id'
     | '/dashboard/'
+    | '/bishop/engagements/$requestId'
     | '/dashboard/evangelism/$id'
     | '/dashboard/evangelism/admin'
     | '/dashboard/events/$id'
     | '/dashboard/groups/$id'
     | '/dashboard/programs/$id'
+    | '/bishop/engagements/'
     | '/dashboard/evangelism/'
     | '/dashboard/events/'
     | '/dashboard/programs/'
@@ -284,22 +344,27 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/bishop'
     | '/events'
     | '/find-us'
     | '/give'
+    | '/invite-bishop'
     | '/live'
     | '/plan-visit'
     | '/about/$slug'
+    | '/bishop/settings'
     | '/dashboard/bible'
     | '/dashboard/follow-ups'
     | '/dashboard/groups'
     | '/events/$id'
     | '/dashboard'
+    | '/bishop/engagements/$requestId'
     | '/dashboard/evangelism/$id'
     | '/dashboard/evangelism/admin'
     | '/dashboard/events/$id'
     | '/dashboard/groups/$id'
     | '/dashboard/programs/$id'
+    | '/bishop/engagements'
     | '/dashboard/evangelism'
     | '/dashboard/events'
     | '/dashboard/programs'
@@ -308,13 +373,17 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/bishop'
     | '/dashboard'
     | '/events'
     | '/find-us'
     | '/give'
+    | '/invite-bishop'
     | '/live'
     | '/plan-visit'
     | '/about_/$slug'
+    | '/bishop/engagements'
+    | '/bishop/settings'
     | '/dashboard/bible'
     | '/dashboard/evangelism'
     | '/dashboard/events'
@@ -323,11 +392,13 @@ export interface FileRouteTypes {
     | '/dashboard/programs'
     | '/events_/$id'
     | '/dashboard/'
+    | '/bishop/engagements/$requestId'
     | '/dashboard/evangelism/$id'
     | '/dashboard/evangelism/admin'
     | '/dashboard/events/$id'
     | '/dashboard/groups/$id'
     | '/dashboard/programs/$id'
+    | '/bishop/engagements/'
     | '/dashboard/evangelism/'
     | '/dashboard/events/'
     | '/dashboard/programs/'
@@ -337,10 +408,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
+  BishopRoute: typeof BishopRouteWithChildren
   DashboardRoute: typeof DashboardRouteWithChildren
   EventsRoute: typeof EventsRoute
   FindUsRoute: typeof FindUsRoute
   GiveRoute: typeof GiveRoute
+  InviteBishopRoute: typeof InviteBishopRoute
   LiveRoute: typeof LiveRoute
   PlanVisitRoute: typeof PlanVisitRoute
   AboutSlugRoute: typeof AboutSlugRoute
@@ -361,6 +434,13 @@ declare module '@tanstack/react-router' {
       path: '/live'
       fullPath: '/live'
       preLoaderRoute: typeof LiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite-bishop': {
+      id: '/invite-bishop'
+      path: '/invite-bishop'
+      fullPath: '/invite-bishop'
+      preLoaderRoute: typeof InviteBishopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/give': {
@@ -389,6 +469,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bishop': {
+      id: '/bishop'
+      path: '/bishop'
+      fullPath: '/bishop'
+      preLoaderRoute: typeof BishopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -468,6 +555,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBibleRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/bishop/settings': {
+      id: '/bishop/settings'
+      path: '/settings'
+      fullPath: '/bishop/settings'
+      preLoaderRoute: typeof BishopSettingsRouteImport
+      parentRoute: typeof BishopRoute
+    }
+    '/bishop/engagements': {
+      id: '/bishop/engagements'
+      path: '/engagements'
+      fullPath: '/bishop/engagements'
+      preLoaderRoute: typeof BishopEngagementsRouteImport
+      parentRoute: typeof BishopRoute
+    }
     '/about_/$slug': {
       id: '/about_/$slug'
       path: '/about/$slug'
@@ -495,6 +596,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/evangelism/'
       preLoaderRoute: typeof DashboardEvangelismIndexRouteImport
       parentRoute: typeof DashboardEvangelismRoute
+    }
+    '/bishop/engagements/': {
+      id: '/bishop/engagements/'
+      path: '/'
+      fullPath: '/bishop/engagements/'
+      preLoaderRoute: typeof BishopEngagementsIndexRouteImport
+      parentRoute: typeof BishopEngagementsRoute
     }
     '/dashboard/programs/$id': {
       id: '/dashboard/programs/$id'
@@ -531,8 +639,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardEvangelismIdRouteImport
       parentRoute: typeof DashboardEvangelismRoute
     }
+    '/bishop/engagements/$requestId': {
+      id: '/bishop/engagements/$requestId'
+      path: '/$requestId'
+      fullPath: '/bishop/engagements/$requestId'
+      preLoaderRoute: typeof BishopEngagementsRequestIdRouteImport
+      parentRoute: typeof BishopEngagementsRoute
+    }
   }
 }
+
+interface BishopEngagementsRouteChildren {
+  BishopEngagementsRequestIdRoute: typeof BishopEngagementsRequestIdRoute
+  BishopEngagementsIndexRoute: typeof BishopEngagementsIndexRoute
+}
+
+const BishopEngagementsRouteChildren: BishopEngagementsRouteChildren = {
+  BishopEngagementsRequestIdRoute: BishopEngagementsRequestIdRoute,
+  BishopEngagementsIndexRoute: BishopEngagementsIndexRoute,
+}
+
+const BishopEngagementsRouteWithChildren =
+  BishopEngagementsRoute._addFileChildren(BishopEngagementsRouteChildren)
+
+interface BishopRouteChildren {
+  BishopEngagementsRoute: typeof BishopEngagementsRouteWithChildren
+  BishopSettingsRoute: typeof BishopSettingsRoute
+}
+
+const BishopRouteChildren: BishopRouteChildren = {
+  BishopEngagementsRoute: BishopEngagementsRouteWithChildren,
+  BishopSettingsRoute: BishopSettingsRoute,
+}
+
+const BishopRouteWithChildren =
+  BishopRoute._addFileChildren(BishopRouteChildren)
 
 interface DashboardEvangelismRouteChildren {
   DashboardEvangelismIdRoute: typeof DashboardEvangelismIdRoute
@@ -616,10 +757,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
+  BishopRoute: BishopRouteWithChildren,
   DashboardRoute: DashboardRouteWithChildren,
   EventsRoute: EventsRoute,
   FindUsRoute: FindUsRoute,
   GiveRoute: GiveRoute,
+  InviteBishopRoute: InviteBishopRoute,
   LiveRoute: LiveRoute,
   PlanVisitRoute: PlanVisitRoute,
   AboutSlugRoute: AboutSlugRoute,

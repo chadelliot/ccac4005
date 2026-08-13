@@ -10,10 +10,423 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
+      bishop_booking_activity: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          detail: string | null
+          from_status:
+            | Database["public"]["Enums"]["bishop_booking_status"]
+            | null
+          id: string
+          request_id: string
+          to_status: Database["public"]["Enums"]["bishop_booking_status"] | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          detail?: string | null
+          from_status?:
+            | Database["public"]["Enums"]["bishop_booking_status"]
+            | null
+          id?: string
+          request_id: string
+          to_status?:
+            | Database["public"]["Enums"]["bishop_booking_status"]
+            | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          detail?: string | null
+          from_status?:
+            | Database["public"]["Enums"]["bishop_booking_status"]
+            | null
+          id?: string
+          request_id?: string
+          to_status?:
+            | Database["public"]["Enums"]["bishop_booking_status"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bishop_booking_activity_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "bishop_booking_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bishop_booking_attachments: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          file_name: string
+          id: string
+          request_id: string
+          size_bytes: number | null
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          file_name: string
+          id?: string
+          request_id: string
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          file_name?: string
+          id?: string
+          request_id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bishop_booking_attachments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "bishop_booking_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bishop_booking_authorized_users: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          is_bishop: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          is_bishop?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          is_bishop?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bishop_booking_internal_settings: {
+        Row: {
+          auto_acknowledge: boolean
+          bishop_email: string
+          calendar_id: string
+          id: number
+          notification_emails: string[]
+          secretary_email: string
+          secretary_name: string
+          tentative_hold_days: number
+          updated_at: string
+        }
+        Insert: {
+          auto_acknowledge?: boolean
+          bishop_email?: string
+          calendar_id?: string
+          id?: number
+          notification_emails?: string[]
+          secretary_email?: string
+          secretary_name?: string
+          tentative_hold_days?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_acknowledge?: boolean
+          bishop_email?: string
+          calendar_id?: string
+          id?: number
+          notification_emails?: string[]
+          secretary_email?: string
+          secretary_name?: string
+          tentative_hold_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bishop_booking_notes: {
+        Row: {
+          author_email: string | null
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          request_id: string
+          visibility: Database["public"]["Enums"]["bishop_note_visibility"]
+        }
+        Insert: {
+          author_email?: string | null
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          request_id: string
+          visibility?: Database["public"]["Enums"]["bishop_note_visibility"]
+        }
+        Update: {
+          author_email?: string | null
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          request_id?: string
+          visibility?: Database["public"]["Enums"]["bishop_note_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bishop_booking_notes_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "bishop_booking_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bishop_booking_public_settings: {
+        Row: {
+          accepting_requests: boolean
+          accommodation_policy: string
+          blocked_weekdays: number[]
+          honorarium_policy: string
+          id: number
+          intro_body: string
+          intro_heading: string
+          lead_time_days: number
+          response_time_note: string
+          travel_policy: string
+          updated_at: string
+        }
+        Insert: {
+          accepting_requests?: boolean
+          accommodation_policy?: string
+          blocked_weekdays?: number[]
+          honorarium_policy?: string
+          id?: number
+          intro_body?: string
+          intro_heading?: string
+          lead_time_days?: number
+          response_time_note?: string
+          travel_policy?: string
+          updated_at?: string
+        }
+        Update: {
+          accepting_requests?: boolean
+          accommodation_policy?: string
+          blocked_weekdays?: number[]
+          honorarium_policy?: string
+          id?: number
+          intro_body?: string
+          intro_heading?: string
+          lead_time_days?: number
+          response_time_note?: string
+          travel_policy?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bishop_booking_rate_limit: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip_hash?: string
+        }
+        Relationships: []
+      }
+      bishop_booking_requests: {
+        Row: {
+          accommodation_notes: string | null
+          additional_notes: string | null
+          affiliation: string | null
+          armor_bearer_count: number
+          calendar_event_id: string | null
+          church_address: string
+          church_city: string
+          church_name: string
+          church_postal_code: string
+          church_state: string
+          church_website: string | null
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          contact_role: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          event_date: string
+          event_end_date: string | null
+          event_name: string
+          event_type: Database["public"]["Enums"]["bishop_event_type"]
+          event_type_other: string | null
+          expected_attendance: number | null
+          honorarium_notes: string | null
+          id: string
+          nearest_airport: string | null
+          pastor_name: string
+          preferred_contact_method: string
+          request_number: string
+          service_role: Database["public"]["Enums"]["bishop_service_role"]
+          service_role_other: string | null
+          start_time: string
+          status: Database["public"]["Enums"]["bishop_booking_status"]
+          submitted_ip_hash: string | null
+          submitted_user_agent: string | null
+          theme: string | null
+          travel_arrangement: Database["public"]["Enums"]["bishop_travel_arrangement"]
+          updated_at: string
+          venue_address: string | null
+          venue_name: string | null
+        }
+        Insert: {
+          accommodation_notes?: string | null
+          additional_notes?: string | null
+          affiliation?: string | null
+          armor_bearer_count?: number
+          calendar_event_id?: string | null
+          church_address: string
+          church_city: string
+          church_name: string
+          church_postal_code: string
+          church_state: string
+          church_website?: string | null
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          contact_role?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          event_date: string
+          event_end_date?: string | null
+          event_name: string
+          event_type: Database["public"]["Enums"]["bishop_event_type"]
+          event_type_other?: string | null
+          expected_attendance?: number | null
+          honorarium_notes?: string | null
+          id?: string
+          nearest_airport?: string | null
+          pastor_name: string
+          preferred_contact_method?: string
+          request_number: string
+          service_role: Database["public"]["Enums"]["bishop_service_role"]
+          service_role_other?: string | null
+          start_time: string
+          status?: Database["public"]["Enums"]["bishop_booking_status"]
+          submitted_ip_hash?: string | null
+          submitted_user_agent?: string | null
+          theme?: string | null
+          travel_arrangement?: Database["public"]["Enums"]["bishop_travel_arrangement"]
+          updated_at?: string
+          venue_address?: string | null
+          venue_name?: string | null
+        }
+        Update: {
+          accommodation_notes?: string | null
+          additional_notes?: string | null
+          affiliation?: string | null
+          armor_bearer_count?: number
+          calendar_event_id?: string | null
+          church_address?: string
+          church_city?: string
+          church_name?: string
+          church_postal_code?: string
+          church_state?: string
+          church_website?: string | null
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string
+          contact_role?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          event_date?: string
+          event_end_date?: string | null
+          event_name?: string
+          event_type?: Database["public"]["Enums"]["bishop_event_type"]
+          event_type_other?: string | null
+          expected_attendance?: number | null
+          honorarium_notes?: string | null
+          id?: string
+          nearest_airport?: string | null
+          pastor_name?: string
+          preferred_contact_method?: string
+          request_number?: string
+          service_role?: Database["public"]["Enums"]["bishop_service_role"]
+          service_role_other?: string | null
+          start_time?: string
+          status?: Database["public"]["Enums"]["bishop_booking_status"]
+          submitted_ip_hash?: string | null
+          submitted_user_agent?: string | null
+          theme?: string | null
+          travel_arrangement?: Database["public"]["Enums"]["bishop_travel_arrangement"]
+          updated_at?: string
+          venue_address?: string | null
+          venue_name?: string | null
+        }
+        Relationships: []
+      }
       certificates: {
         Row: {
           certificate_subtitle: string | null
@@ -111,8 +524,8 @@ export type Database = {
           address: string | null
           baptized: boolean
           city: string | null
-          country: string | null
           co_witness: string | null
+          country: string | null
           created_at: string
           first_name: string
           follow_up_interval_days: number
@@ -142,8 +555,8 @@ export type Database = {
           address?: string | null
           baptized?: boolean
           city?: string | null
-          country?: string | null
           co_witness?: string | null
+          country?: string | null
           created_at?: string
           first_name: string
           follow_up_interval_days?: number
@@ -173,8 +586,8 @@ export type Database = {
           address?: string | null
           baptized?: boolean
           city?: string | null
-          country?: string | null
           co_witness?: string | null
+          country?: string | null
           created_at?: string
           first_name?: string
           follow_up_interval_days?: number
@@ -1019,6 +1432,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_bishop_desk_access: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1026,6 +1440,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_bishop: { Args: { _user_id: string }; Returns: boolean }
       is_group_leader: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
@@ -1034,9 +1449,48 @@ export type Database = {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
+      prune_bishop_rate_limit: {
+        Args: { _older_than?: string }
+        Returns: number
+      }
+      schedule_followups_for_contact: {
+        Args: { _contact_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "leader" | "member"
+      bishop_booking_status:
+        | "new"
+        | "under_review"
+        | "awaiting_bishop"
+        | "tentatively_held"
+        | "accepted"
+        | "declined"
+      bishop_event_type:
+        | "revival"
+        | "conference"
+        | "anniversary"
+        | "installation"
+        | "ordination"
+        | "musical"
+        | "banquet"
+        | "funeral"
+        | "wedding"
+        | "other"
+      bishop_note_visibility: "secretary" | "bishop"
+      bishop_service_role:
+        | "preach"
+        | "teach"
+        | "keynote"
+        | "officiate"
+        | "panel"
+        | "greetings"
+        | "other"
+      bishop_travel_arrangement:
+        | "host_arranges"
+        | "bishop_arranges"
+        | "not_required"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1162,9 +1616,47 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["admin", "leader", "member"],
+      bishop_booking_status: [
+        "new",
+        "under_review",
+        "awaiting_bishop",
+        "tentatively_held",
+        "accepted",
+        "declined",
+      ],
+      bishop_event_type: [
+        "revival",
+        "conference",
+        "anniversary",
+        "installation",
+        "ordination",
+        "musical",
+        "banquet",
+        "funeral",
+        "wedding",
+        "other",
+      ],
+      bishop_note_visibility: ["secretary", "bishop"],
+      bishop_service_role: [
+        "preach",
+        "teach",
+        "keynote",
+        "officiate",
+        "panel",
+        "greetings",
+        "other",
+      ],
+      bishop_travel_arrangement: [
+        "host_arranges",
+        "bishop_arranges",
+        "not_required",
+      ],
     },
   },
 } as const
