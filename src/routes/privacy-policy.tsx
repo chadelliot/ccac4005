@@ -137,10 +137,12 @@ function PrivacyPolicy() {
 
           <dt>YouTube and Facebook</dt>
           <dd>
-            The homepage background video is served by YouTube in its no-cookie mode, and the
-            Watch Live page embeds Facebook's video player when a service is streaming. Playing
-            embedded video means interacting with those companies under their own privacy
-            policies.
+            The homepage background video is served by YouTube in its no-cookie mode. The
+            homepage also shows our recent Facebook posts, and the Watch Live page embeds
+            Facebook's video player when a service is streaming. Post images load from
+            Facebook's servers; a Facebook video player is only loaded if you press play on one.
+            Playing embedded video means interacting with those companies under their own
+            privacy policies.
           </dd>
 
           <dt>Google Calendar</dt>

@@ -1,40 +1,46 @@
 import { useEffect, useState } from "react";
-import { Facebook, Instagram, Youtube, ArrowRight, Play } from "lucide-react";
+import { Facebook, Instagram, Youtube, ArrowRight, Play, Globe, ThumbsUp, MessageCircle, Share2 } from "lucide-react";
 import { functionsBase, anonKey } from "@/lib/bishopDb";
+import logo from "@/assets/ccac-logo.webp";
 
 /**
- * The church's recent Facebook posts, stacked like a handful of photographs
- * held at an angle.
+ * The church's recent Facebook posts, rendered as post cards and stacked like a
+ * handful of them held at an angle.
  *
- * On the rotation: the brief said 35–75°. Taken literally as an in-plane spin
- * that lands the images nearly sideways and unreadable, so this turns the stack
- * in 3D instead — the cards genuinely face away from the viewer by about 26°,
- * which reads as "turned" at a glance while the photographs stay legible. Both
- * numbers are in TILT below and are the first thing to change if it wants to be
- * more or less dramatic.
+ * The cards carry Facebook's furniture — avatar, page name, timestamp, caption
+ * above the media, a reaction row beneath — because a bare photograph in a
+ * frame reads as a stock image, while the same photograph under a page name and
+ * a timestamp reads as "this church posted this". That recognition is the whole
+ * point of putting it in the hero.
+ *
+ * On the rotation: the brief originally said 35–75°, which as an in-plane spin
+ * lands the cards unreadable. This turns them in 3D instead, and the angle came
+ * down from 26° to 18° once the cards carried text — chrome you cannot read is
+ * worse than no chrome.
  */
-const TILT = {
-  /** Degrees the stack faces away from the viewer. */
-  rotateY: -26,
-  /** In-plane lean, the bit that makes it look handled rather than mounted. */
-  rotateZ: -7,
-};
+const TILT = { rotateY: -18, rotateZ: -5 };
+
+/** Bump when the post response gains or renames a field. */
+const SHAPE = 2;
+
+const PAGE_NAME = "Christ Cathedral Apostolic Church";
+const PAGE_URL = "https://facebook.com/CCACMD";
 
 export type SocialPost = {
   id: string;
   image: string | null;
   caption: string | null;
   permalink: string | null;
+  videoUrl: string | null;
+  createdAt: string | null;
   kind: "reel" | "photo" | "post";
 };
 
-/**
- * Only links with a URL are rendered, so a missing handle shows nothing rather
- * than a dead icon pointing at the wrong account.
- */
+/** Only links with a URL render, so a missing handle shows nothing rather than
+ *  an icon pointing at an account that may not be the church's. */
 const SOCIALS: { name: string; url: string | null; Icon: typeof Facebook }[] = [
-  { name: "Facebook", url: "https://facebook.com/CCACMD", Icon: Facebook },
-  // TODO: fill these in once the church confirms the handles.
+  { name: "Facebook", url: PAGE_URL, Icon: Facebook },
+  // TODO: fill in once the church confirms the handles.
   { name: "Instagram", url: null, Icon: Instagram },
   { name: "YouTube", url: null, Icon: Youtube },
 ];
@@ -42,12 +48,20 @@ const SOCIALS: { name: string; url: string | null; Icon: typeof Facebook }[] = [
 export function SocialStack() {
   const [posts, setPosts] = useState<SocialPost[] | null>(null);
   const [index, setIndex] = useState(0);
+  /** Which post is playing, if any. Only ever one — five Facebook iframes in a
+   *  hero would cost more than the rest of the page put together. */
+  const [playingId, setPlayingId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const res = await fetch(`${functionsBase()}/facebook-recent-posts`, {
+        // The endpoint caches for 15 minutes, which is right for Graph's rate
+        // limits but means a change to the response *shape* stays invisible for
+        // that long after a deploy — exactly how `videoUrl` appeared to be
+        // missing when it was already being returned. Bump SHAPE when fields
+        // are added or renamed; it varies the cache key and nothing else.
+        const res = await fetch(`${functionsBase()}/facebook-recent-posts?shape=${SHAPE}`, {
           headers: { apikey: anonKey() },
         });
         const data = await res.json();
@@ -64,13 +78,16 @@ export function SocialStack() {
   const hasPosts = posts !== null && posts.length > 0;
   const links = SOCIALS.filter((s) => s.url);
 
-  // The frame is reserved whether or not posts arrive, so the hero does not
-  // reflow when the fetch lands.
+  const advance = () => {
+    setPlayingId(null); // never leave a video running behind the stack
+    setIndex((v) => (v + 1) % (posts?.length ?? 1));
+  };
+
   return (
-    <div className="flex flex-col items-center gap-8">
+    <div className="flex flex-col items-center gap-7">
       <div
-        className="relative h-[22rem] w-[16rem] sm:h-[26rem] sm:w-[19rem]"
-        style={{ perspective: "1400px" }}
+        className="relative h-[27rem] w-[19rem] sm:h-[30rem] sm:w-[21rem]"
+        style={{ perspective: "1600px" }}
       >
         <div
           className="relative h-full w-full transition-transform duration-500"
@@ -81,19 +98,18 @@ export function SocialStack() {
         >
           {hasPosts
             ? posts.map((post, i) => {
-                // Distance from the active card, wrapping, so cycling always
-                // moves the stack forward rather than jumping.
                 const offset = (i - index + posts.length) % posts.length;
                 return (
-                  <PhotoCard
+                  <PostCard
                     key={post.id}
                     post={post}
                     offset={offset}
-                    total={posts.length}
+                    playing={playingId === post.id}
+                    onPlay={() => setPlayingId(post.id)}
                   />
                 );
               })
-            : [0, 1, 2].map((i) => <PlaceholderCard key={i} offset={i} />)}
+            : [0, 1, 2].map((i) => <SkeletonCard key={i} offset={i} />)}
         </div>
       </div>
 
@@ -101,9 +117,8 @@ export function SocialStack() {
         {hasPosts && posts.length > 1 && (
           <button
             type="button"
-            onClick={() => setIndex((v) => (v + 1) % posts.length)}
+            onClick={advance}
             className="inline-flex items-center gap-2 border border-white/30 px-5 py-2.5 eyebrow text-night-foreground hover:bg-white/10 transition-colors"
-            aria-label="Show the next post"
           >
             Next post <ArrowRight className="h-3.5 w-3.5" />
             <span className="text-night-foreground/50">
@@ -136,75 +151,145 @@ export function SocialStack() {
 }
 
 function cardStyle(offset: number) {
-  // Each card behind the active one steps back, down and slightly rotated, so
-  // the stack reads as separate photographs rather than one thick card.
   return {
-    transform: `translateZ(${-offset * 26}px) translateY(${offset * 12}px) translateX(${offset * 8}px) rotateZ(${offset * 2.5}deg)`,
+    transform: `translateZ(${-offset * 30}px) translateY(${offset * 14}px) translateX(${offset * 10}px) rotateZ(${offset * 2}deg)`,
     zIndex: 50 - offset,
     opacity: offset > 3 ? 0 : 1,
   } as const;
 }
 
-function PhotoCard({
+function relativeTime(iso: string | null): string {
+  if (!iso) return "";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const mins = Math.round((Date.now() - then) / 60000);
+  if (mins < 60) return `${Math.max(1, mins)}m`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d`;
+  return new Date(then).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function PostCard({
   post,
   offset,
-  total,
+  playing,
+  onPlay,
 }: {
   post: SocialPost;
   offset: number;
-  total: number;
+  playing: boolean;
+  onPlay: () => void;
 }) {
-  const content = (
-    <>
-      {post.image && (
-        <img
-          src={post.image}
-          alt={post.caption ?? "Recent post from Christ Cathedral Apostolic Church"}
-          className="h-full w-full object-cover"
-          loading="lazy"
-        />
-      )}
-      {post.kind === "reel" && (
-        <span className="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-night/70 text-night-foreground">
-          <Play className="h-3.5 w-3.5" />
-        </span>
-      )}
-      {post.caption && offset === 0 && (
-        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-night/90 to-transparent p-4 text-xs text-night-foreground line-clamp-3">
-          {post.caption}
-        </span>
-      )}
-    </>
-  );
+  const front = offset === 0;
+  const canPlay = Boolean(post.videoUrl);
 
-  const shared =
-    "absolute inset-0 overflow-hidden border border-white/15 bg-night-deep shadow-elevated transition-all duration-500";
-
-  // Only the front card is a link — the ones behind it are decoration and
-  // should not be tab stops or click targets.
-  return offset === 0 && post.permalink ? (
-    <a
-      href={post.permalink}
-      target="_blank"
-      rel="noreferrer"
-      className={shared}
+  return (
+    <article
+      className="absolute inset-0 flex flex-col overflow-hidden bg-card text-foreground shadow-elevated transition-all duration-500"
       style={cardStyle(offset)}
+      aria-hidden={!front}
+      // Cards behind the front one are decoration; keep them out of the tab order.
+      {...(front ? {} : { inert: "" as unknown as boolean })}
     >
-      {content}
-    </a>
-  ) : (
-    <div className={shared} style={cardStyle(offset)} aria-hidden={offset !== 0} tabIndex={-1}>
-      {content}
-    </div>
+      <header className="flex items-center gap-2.5 px-3.5 pt-3.5 pb-2.5">
+        <img src={logo} alt="" width={40} height={40} className="h-9 w-9 rounded-full object-contain bg-secondary" />
+        <div className="min-w-0 leading-tight">
+          <div className="truncate text-[13px] font-semibold">{PAGE_NAME}</div>
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            {relativeTime(post.createdAt)}
+            <span aria-hidden="true">·</span>
+            <Globe className="h-3 w-3" aria-hidden="true" />
+          </div>
+        </div>
+      </header>
+
+      {post.caption && (
+        <p className="px-3.5 pb-2.5 text-[13px] leading-snug line-clamp-3">{post.caption}</p>
+      )}
+
+      <div className="relative flex-1 min-h-0 bg-night-deep">
+        {playing && post.videoUrl ? (
+          <iframe
+            title={post.caption ?? "Facebook video"}
+            src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(post.videoUrl)}&show_text=false&autoplay=true&width=560`}
+            className="absolute inset-0 h-full w-full border-0"
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        ) : (
+          <>
+            {post.image && (
+              <img
+                src={post.image}
+                alt={post.caption ?? "Recent post from Christ Cathedral Apostolic Church"}
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+              />
+            )}
+            {canPlay && front && (
+              // The iframe is only created when this is pressed. Autoloading
+              // five Facebook players would dominate the page's load.
+              <button
+                type="button"
+                onClick={onPlay}
+                aria-label="Play this video"
+                className="absolute inset-0 grid place-items-center bg-night/25 transition-colors hover:bg-night/10"
+              >
+                <span className="grid h-14 w-14 place-items-center rounded-full bg-night-foreground/95 text-night shadow-elevated">
+                  <Play className="h-6 w-6 translate-x-0.5 fill-current" />
+                </span>
+              </button>
+            )}
+            {canPlay && !front && (
+              <span className="absolute top-2.5 right-2.5 grid h-7 w-7 place-items-center rounded-full bg-night/60 text-night-foreground">
+                <Play className="h-3 w-3 fill-current" />
+              </span>
+            )}
+          </>
+        )}
+      </div>
+
+      <footer className="border-t border-border px-3.5 py-2 flex items-center justify-between text-muted-foreground">
+        <span className="flex items-center gap-4">
+          <ThumbsUp className="h-4 w-4" aria-hidden="true" />
+          <MessageCircle className="h-4 w-4" aria-hidden="true" />
+          <Share2 className="h-4 w-4" aria-hidden="true" />
+        </span>
+        {front && post.permalink && (
+          <a
+            href={post.permalink}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[11px] font-semibold text-gold-deep hover:text-foreground"
+          >
+            View on Facebook
+          </a>
+        )}
+      </footer>
+    </article>
   );
 }
 
-function PlaceholderCard({ offset }: { offset: number }) {
+function SkeletonCard({ offset }: { offset: number }) {
   return (
     <div
-      className="absolute inset-0 overflow-hidden border border-white/10 bg-white/[0.03] transition-all duration-500"
+      className="absolute inset-0 flex flex-col overflow-hidden bg-card/90 shadow-elevated"
       style={cardStyle(offset)}
       aria-hidden="true"
-    />
+    >
+      <div className="flex items-center gap-2.5 px-3.5 pt-3.5 pb-2.5">
+        <span className="h-9 w-9 rounded-full bg-secondary" />
+        <span className="flex-1 space-y-1.5">
+          <span className="block h-2.5 w-3/4 rounded bg-secondary" />
+          <span className="block h-2 w-1/4 rounded bg-secondary" />
+        </span>
+      </div>
+      <div className="flex-1 bg-secondary/70" />
+      <div className="border-t border-border px-3.5 py-3">
+        <span className="block h-2.5 w-1/3 rounded bg-secondary" />
+      </div>
+    </div>
   );
 }

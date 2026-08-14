@@ -33,6 +33,8 @@ type Post = {
   image: string | null;
   caption: string | null;
   permalink: string | null;
+  /** Present for video posts — the URL the Facebook video plugin embeds. */
+  videoUrl: string | null;
   createdAt: string | null;
   kind: "reel" | "photo" | "post";
 };
@@ -46,6 +48,25 @@ function pickImage(p: Record<string, unknown>): string | null {
   const sub = (att?.subattachments as { data?: Record<string, unknown>[] } | undefined)?.data?.[0];
   const subMedia = sub?.media as { image?: { src?: string } } | undefined;
   return subMedia?.image?.src ?? null;
+}
+
+/**
+ * The URL to hand the Facebook video plugin. Graph puts it in different places
+ * depending on the post, so try the attachment's own target first and fall back
+ * to the post permalink, which the plugin also accepts.
+ */
+function pickVideoUrl(p: Record<string, unknown>): string | null {
+  const att = (p.attachments as { data?: Record<string, unknown>[] } | undefined)?.data?.[0];
+  if (!att) return null;
+  const type = String(att.type ?? "");
+  if (!/video|reel/i.test(type)) return null;
+
+  const target = att.target as { url?: string } | undefined;
+  const candidates = [target?.url, att.unshimmed_url, att.url, p.permalink_url];
+  for (const c of candidates) {
+    if (typeof c === "string" && c.includes("facebook.com")) return c;
+  }
+  return null;
 }
 
 function classify(p: Record<string, unknown>): Post["kind"] {
@@ -71,7 +92,7 @@ serve(async (req) => {
       "created_time",
       "permalink_url",
       "full_picture",
-      "attachments{type,media,subattachments}",
+      "attachments{type,media,target,url,unshimmed_url,subattachments}",
     ].join(",");
 
     const url =
@@ -105,6 +126,7 @@ serve(async (req) => {
         image: pickImage(p),
         caption: typeof p.message === "string" ? p.message.slice(0, 180) : null,
         permalink: typeof p.permalink_url === "string" ? p.permalink_url : null,
+        videoUrl: pickVideoUrl(p),
         createdAt: typeof p.created_time === "string" ? p.created_time : null,
         kind: classify(p),
       }))
