@@ -45,21 +45,22 @@ export function InstagramRow() {
   if (!posts || posts.length === 0) return null;
 
   return (
-    // Top padding only: the grid is the last thing in the section, so its bottom
-    // edge meets the next band directly rather than leaving a strip of night
-    // blue beneath the photographs.
-    <section className="bg-night text-night-foreground pt-16 lg:pt-20">
+    // No background of its own: the row sits on whatever the page is behind it,
+    // so the photographs are the only block of colour. Text therefore takes the
+    // light-background pair — --gold is tuned for --night and drops to 1.8:1
+    // here, which is why the eyebrow and the handle use --gold-deep instead.
+    <section className="pt-16 lg:pt-20">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="eyebrow text-gold">— On Instagram</div>
-            <h2 className="font-display text-3xl lg:text-4xl mt-2">Life at Christ Cathedral</h2>
+            <div className="eyebrow text-gold-deep">— On Instagram</div>
+            <h2 className="font-display text-3xl lg:text-4xl mt-2 text-foreground">Life at Christ Cathedral</h2>
           </div>
           <a
             href={PROFILE_URL}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 eyebrow text-night-foreground/80 hover:text-gold transition-colors"
+            className="inline-flex items-center gap-2 eyebrow text-muted-foreground hover:text-gold-deep transition-colors"
           >
             <Instagram className="h-4 w-4" />@{HANDLE}
           </a>
@@ -75,7 +76,7 @@ export function InstagramRow() {
               href={post.permalink ?? PROFILE_URL}
               target="_blank"
               rel="noreferrer"
-              className="group block h-full w-full overflow-hidden bg-night-deep"
+              className="group block h-full w-full overflow-hidden bg-secondary"
             >
               {post.image && (
                 <img
