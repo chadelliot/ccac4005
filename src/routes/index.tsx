@@ -151,6 +151,10 @@ function HomePage() {
         </div>
       </section>
 
+      {/* Renders nothing until the token can read Instagram, so the homepage
+          never shows an empty grid where photographs should be. */}
+      <InstagramRow />
+
       {/* PILLARS */}
       <section className="py-24 bg-secondary">
         <div className="mx-auto max-w-7xl px-6 lg:px-10">
@@ -200,10 +204,6 @@ function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Renders nothing until the token can read Instagram, so the homepage
-          never shows an empty grid where photographs should be. */}
-      <InstagramRow />
 
       {/* GIVE CTA */}
       <section className="py-24 bg-night text-night-foreground">
