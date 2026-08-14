@@ -45,7 +45,10 @@ export function InstagramRow() {
   if (!posts || posts.length === 0) return null;
 
   return (
-    <section className="bg-night text-night-foreground py-16 lg:py-20">
+    // Top padding only: the grid is the last thing in the section, so its bottom
+    // edge meets the next band directly rather than leaving a strip of night
+    // blue beneath the photographs.
+    <section className="bg-night text-night-foreground pt-16 lg:pt-20">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -65,7 +68,7 @@ export function InstagramRow() {
 
       {/* Full-bleed: the grid runs edge to edge rather than sitting inside the
           7xl container, so a row of eight squares reads as a filmstrip. */}
-      <ul className="mt-10 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+      <ul className="mt-10 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 leading-none">
         {posts.map((post) => (
           <li key={post.id} className="relative aspect-square">
             <a
