@@ -13,12 +13,12 @@ import logo from "@/assets/ccac-logo.webp";
  * a timestamp reads as "this church posted this". That recognition is the whole
  * point of putting it in the hero.
  *
- * On the rotation: the brief originally said 35–75°, which as an in-plane spin
- * lands the cards unreadable. This turns them in 3D instead, and the angle came
- * down from 26° to 18° once the cards carried text — chrome you cannot read is
- * worse than no chrome.
+ * The stack leans as a group but stays flat. An earlier version rotated it in 3D
+ * with a perspective, which foreshortened one edge and made the cards look bent
+ * inward rather than laid on top of each other. Depth now comes from offset and
+ * a slight scale step, which keeps every card square to the viewer.
  */
-const TILT = { rotateY: -18, rotateZ: -5 };
+const LEAN = -6;
 
 /** Bump when the post response gains or renames a field. */
 const SHAPE = 2;
@@ -85,16 +85,10 @@ export function SocialStack() {
 
   return (
     <div className="flex flex-col items-center gap-7">
-      <div
-        className="relative h-[27rem] w-[19rem] sm:h-[30rem] sm:w-[21rem]"
-        style={{ perspective: "1600px" }}
-      >
+      <div className="relative h-[27rem] w-[19rem] sm:h-[30rem] sm:w-[21rem]">
         <div
           className="relative h-full w-full transition-transform duration-500"
-          style={{
-            transform: `rotateY(${TILT.rotateY}deg) rotateZ(${TILT.rotateZ}deg)`,
-            transformStyle: "preserve-3d",
-          }}
+          style={{ transform: `rotate(${LEAN}deg)` }}
         >
           {hasPosts
             ? posts.map((post, i) => {
@@ -151,8 +145,11 @@ export function SocialStack() {
 }
 
 function cardStyle(offset: number) {
+  // Flat: no translateZ, no perspective. Cards behind step right, down, rotate a
+  // touch and shrink very slightly — enough to read as a stack without any card
+  // turning away from the viewer.
   return {
-    transform: `translateZ(${-offset * 30}px) translateY(${offset * 14}px) translateX(${offset * 10}px) rotateZ(${offset * 2}deg)`,
+    transform: `translateX(${offset * 15}px) translateY(${offset * 11}px) rotate(${offset * 2.2}deg) scale(${1 - offset * 0.028})`,
     zIndex: 50 - offset,
     opacity: offset > 3 ? 0 : 1,
   } as const;
