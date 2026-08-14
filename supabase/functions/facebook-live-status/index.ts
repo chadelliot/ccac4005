@@ -18,6 +18,7 @@ type GraphVideo = {
   status?: string;
   permalink_url?: string;
   creation_time?: string;
+  video?: { id?: string; embeddable?: boolean };
 };
 
 type GraphResponse = {
@@ -55,6 +56,9 @@ function toPublicVideo(video?: GraphVideo) {
     status: video.status ?? "UNKNOWN",
     permalinkUrl,
     embedUrl: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(permalinkUrl)}&show_text=false&width=1280`,
+    // Absent is treated as embeddable: a missing field must never hide a video
+    // that would have played perfectly well.
+    embeddable: video.video?.embeddable !== false,
     createdTime: video.creation_time ?? null,
   };
 }
@@ -70,7 +74,13 @@ async function getVideos({
   accessToken: string;
   broadcastStatus: "LIVE" | "VOD";
 }) {
-  const fields = "id,title,description,status,permalink_url,creation_time";
+  // The live_videos edge returns LiveVideo objects; `embeddable` belongs to the
+  // Video they wrap, hence the nesting. It is what tells us Facebook's rights
+  // matching has blocked off-platform embedding — usually licensed worship
+  // music — so the page can offer a link instead of an iframe that will only
+  // ever render Facebook's own "Unavailable" panel.
+  const fields =
+    "id,title,description,status,permalink_url,creation_time,video{id,embeddable}";
   const params = new URLSearchParams({
     // Meta's current Graph API expects broadcast_status as an array.
     broadcast_status: JSON.stringify([broadcastStatus]),

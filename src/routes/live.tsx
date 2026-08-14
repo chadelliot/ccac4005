@@ -139,6 +139,42 @@ function LivePage() {
   );
 }
 
+/**
+ * Shown instead of the player when Facebook has blocked off-platform embedding.
+ *
+ * Embedding a blocked video renders Facebook's own grey "Unavailable — this
+ * video may contain content owned by someone else" panel, which reads as though
+ * this site is broken. It is not: rights matching flags the licensed worship
+ * music in a service, and the rights holder's policy usually permits playback
+ * on Facebook while blocking it everywhere else. So say that plainly and send
+ * people to the place it does play.
+ */
+function BlockedNotice({ isLive, permalinkUrl }: { isLive: boolean; permalinkUrl: string }) {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center px-6 text-center">
+      <div className="max-w-md">
+        <Radio className="h-9 w-9 mx-auto text-gold" />
+        <h3 className="font-display text-2xl md:text-3xl mt-5">
+          {isLive ? "We are live on Facebook." : "This service plays on Facebook."}
+        </h3>
+        <p className="mt-3 text-night-foreground/70 leading-relaxed text-sm">
+          Music licensing stops this one playing inside our site. It is free to watch on our
+          Facebook page, and you do not need an account.
+        </p>
+        <a
+          href={permalinkUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-6 inline-flex items-center gap-2 bg-gold px-6 py-3 eyebrow text-gold-foreground hover:bg-gold/90 transition-colors"
+        >
+          {isLive ? "Watch live on Facebook" : "Watch this service"}
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function PlayerShell({ children }: { children: React.ReactNode }) {
   return (
     // text-night-foreground is set here, not inherited: the shell stays dark
@@ -154,13 +190,17 @@ function FacebookPlayer({ video, isLive }: { video: FacebookVideo; isLive: boole
   return (
     <div>
       <PlayerShell>
-        <iframe
-          title={video.title || (isLive ? "CCAC live worship service" : "CCAC worship service")}
-          src={video.embedUrl}
-          className="absolute inset-0 h-full w-full border-0"
-          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-          allowFullScreen
-        />
+        {video.embeddable === false ? (
+          <BlockedNotice isLive={isLive} permalinkUrl={video.permalinkUrl} />
+        ) : (
+          <iframe
+            title={video.title || (isLive ? "CCAC live worship service" : "CCAC worship service")}
+            src={video.embedUrl}
+            className="absolute inset-0 h-full w-full border-0"
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        )}
       </PlayerShell>
 
       <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 
 export type FacebookVideo = {
+  /** False when Facebook's rights matching has blocked off-platform embedding.
+   *  Absent on older responses, so callers must treat undefined as embeddable. */
+  embeddable?: boolean;
   id: string;
   title: string | null;
   description: string | null;
