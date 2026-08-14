@@ -206,8 +206,8 @@ function PrivacyPolicy() {
           <br />
           4005 Old York Road, Baltimore, Maryland
           <br />
-          <a href="mailto:christcathedralapostoic@gmail.com">
-            christcathedralapostoic@gmail.com
+          <a href="mailto:christcathedralapostolic@gmail.com">
+            christcathedralapostolic@gmail.com
           </a>
         </p>
         <p>
