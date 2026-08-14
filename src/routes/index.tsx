@@ -135,6 +135,14 @@ function HomePage() {
               width={1024}
               height={1024}
             />
+            {/* Light rather than the original night card: the flyer behind it is
+                dark, and dark-on-dark lost the overlay entirely. Sits low-left
+                so it clears the flyer's own address block. */}
+            <div className="absolute -bottom-8 -left-8 hidden lg:block bg-card border border-border p-8 max-w-xs shadow-elevated">
+              <div className="eyebrow text-gold-deep mb-2">Sunday Worship</div>
+              <div className="font-display text-3xl">2:27 PM</div>
+              <div className="text-sm text-muted-foreground mt-1">4005 Old York Road, Baltimore</div>
+            </div>
           </div>
         </div>
       </section>
