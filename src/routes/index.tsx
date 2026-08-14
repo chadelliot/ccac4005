@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { HeroVideo } from "@/components/HeroVideo";
 import visitFlyer from "@/assets/plan-your-visit-flyer.webp";
 import { RoadLines } from "@/components/RoadLines";
+import { InstagramRow } from "@/components/InstagramRow";
 import communityImg from "@/assets/community-group.webp";
 
 export const Route = createFileRoute("/")({
@@ -199,6 +200,10 @@ function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Renders nothing until the token can read Instagram, so the homepage
+          never shows an empty grid where photographs should be. */}
+      <InstagramRow />
 
       {/* GIVE CTA */}
       <section className="py-24 bg-night text-night-foreground">

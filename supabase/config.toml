@@ -28,6 +28,11 @@ verify_jwt = true
 [functions.facebook-recent-posts]
 verify_jwt = false
 
+# Public, read-only Instagram feed for the homepage row. Reads through the
+# linked Facebook Page using the same token; no separate Instagram credential.
+[functions.instagram-recent-posts]
+verify_jwt = false
+
 # Public read-only status endpoint used by ccacbmore.com/live. The Facebook Page
 # access token remains server-side in Supabase secrets; the function only returns
 # public video URLs and live/offline status.
