@@ -300,9 +300,11 @@ export type Database = {
           accommodation_notes: string | null
           additional_notes: string | null
           affiliation: string | null
+          apparel: Database["public"]["Enums"]["bishop_apparel"] | null
+          apparel_notes: string | null
           armor_bearer_count: number
           calendar_event_id: string | null
-          church_address: string
+          church_address: string | null
           church_city: string
           church_name: string
           church_postal_code: string
@@ -343,9 +345,11 @@ export type Database = {
           accommodation_notes?: string | null
           additional_notes?: string | null
           affiliation?: string | null
+          apparel?: Database["public"]["Enums"]["bishop_apparel"] | null
+          apparel_notes?: string | null
           armor_bearer_count?: number
           calendar_event_id?: string | null
-          church_address: string
+          church_address?: string | null
           church_city: string
           church_name: string
           church_postal_code: string
@@ -386,9 +390,11 @@ export type Database = {
           accommodation_notes?: string | null
           additional_notes?: string | null
           affiliation?: string | null
+          apparel?: Database["public"]["Enums"]["bishop_apparel"] | null
+          apparel_notes?: string | null
           armor_bearer_count?: number
           calendar_event_id?: string | null
-          church_address?: string
+          church_address?: string | null
           church_city?: string
           church_name?: string
           church_postal_code?: string
@@ -1460,6 +1466,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "leader" | "member"
+      bishop_apparel: "vestments" | "civic" | "shirt_tie" | "casual" | "other"
       bishop_booking_status:
         | "new"
         | "under_review"
@@ -1622,6 +1629,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "leader", "member"],
+      bishop_apparel: ["vestments", "civic", "shirt_tie", "casual", "other"],
       bishop_booking_status: [
         "new",
         "under_review",

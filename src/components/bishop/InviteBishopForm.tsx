@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { functionsBase, anonKey } from "@/lib/bishopDb";
+import { HostCourtesies } from "@/components/bishop/HostCourtesies";
 import {
   FORM_STEPS,
   EVENT_TYPES,
@@ -15,6 +16,8 @@ import {
   SERVICE_ROLE_LABELS,
   TRAVEL_ARRANGEMENTS,
   TRAVEL_LABELS,
+  APPAREL,
+  APPAREL_LABELS,
   type PublicSettings,
 } from "@/lib/bishopBooking";
 
@@ -34,13 +37,29 @@ type Availability =
   | { state: "checking" }
   | { state: "result"; available: boolean | null; message: string };
 
-export function InviteBishopForm({ settings }: { settings: PublicSettings | null }) {
+/**
+ * Three steps, not five.
+ *
+ * Required fields are exactly those the paper "Host Ministry Information" sheet
+ * asked for — that sheet is what this replaces, and the office ran on it for
+ * years. Everything the web form added on top is optional, so a host can send a
+ * request in one sitting without hunting for a flight number they have not
+ * booked yet.
+ */
+export function InviteBishopForm({
+  settings,
+  onSubmitted,
+}: {
+  settings: PublicSettings | null;
+  /** Lets the page drop the pre-submission sidebar once the request is in. */
+  onSubmitted?: () => void;
+}) {
   const [step, setStep] = useState(1);
   const [values, setValues] = useState<Values>(INITIAL);
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [reference, setReference] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
   const [availability, setAvailability] = useState<Availability>({ state: "idle" });
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -117,7 +136,8 @@ export function InviteBishopForm({ settings }: { settings: PublicSettings | null
         setSubmitError(data?.error ?? "We could not send your request. Please try again.");
         return;
       }
-      setReference(data.request_number ?? "");
+      setSent(true);
+      onSubmitted?.();
     } catch {
       setSubmitError("We could not reach the church's server. Please check your connection and try again.");
     } finally {
@@ -125,23 +145,25 @@ export function InviteBishopForm({ settings }: { settings: PublicSettings | null
     }
   };
 
-  if (reference !== null) {
+  if (sent) {
     return (
-      <div className="border border-border bg-card p-8 lg:p-12 text-center">
-        <CheckCircle2 className="h-10 w-10 mx-auto text-gold-deep" />
-        <h2 className="font-display text-3xl lg:text-4xl mt-5">Your invitation is with us.</h2>
-        {reference && (
-          <p className="mt-4 text-muted-foreground">
-            Your reference number is{" "}
-            <strong className="text-foreground tracking-wide">{reference}</strong>. Please quote it
-            in any correspondence.
-          </p>
-        )}
-        <p className="mt-4 max-w-xl mx-auto text-muted-foreground leading-relaxed">
-          {settings?.response_time_note?.trim() ||
-            "The Bishop's office will review your request and be in touch."}{" "}
-          This is an acknowledgement of receipt, not a confirmation.
-        </p>
+      <div className="border border-border bg-card p-6 sm:p-10 lg:p-12">
+        <div className="flex items-start gap-4">
+          <CheckCircle2 className="h-9 w-9 shrink-0 text-gold-deep" />
+          <div className="min-w-0">
+            <h2 className="font-display text-3xl lg:text-4xl leading-tight">
+              Your invitation is with us.
+            </h2>
+            <p className="mt-3 text-muted-foreground leading-relaxed max-w-2xl">
+              {settings?.response_time_note?.trim() ||
+                "The Bishop's office will review your request and be in touch."}{" "}
+              This is an acknowledgement of receipt, not a confirmation — the engagement is
+              confirmed only when the office tells you so directly.
+            </p>
+          </div>
+        </div>
+
+        <HostCourtesies />
       </div>
     );
   }
@@ -151,11 +173,7 @@ export function InviteBishopForm({ settings }: { settings: PublicSettings | null
       <Stepper step={step} />
 
       <div className="p-6 lg:p-10">
-        <h2
-          ref={headingRef}
-          tabIndex={-1}
-          className="font-display text-2xl lg:text-3xl outline-none"
-        >
+        <h2 ref={headingRef} tabIndex={-1} className="font-display text-2xl lg:text-3xl outline-none">
           {current.title}
         </h2>
 
@@ -168,16 +186,6 @@ export function InviteBishopForm({ settings }: { settings: PublicSettings | null
               <Field label="Pastor's name" name="pastor_name" errors={errors} required>
                 <Input value={str(values.pastor_name)} onChange={(e) => set("pastor_name", e.target.value)} />
               </Field>
-              <Field label="Church website" name="church_website" errors={errors} hint="Optional">
-                <Input
-                  placeholder="https://"
-                  value={str(values.church_website)}
-                  onChange={(e) => set("church_website", e.target.value)}
-                />
-              </Field>
-              <Field label="Street address" name="church_address" errors={errors} required>
-                <Input value={str(values.church_address)} onChange={(e) => set("church_address", e.target.value)} />
-              </Field>
               <div className="grid gap-6 sm:grid-cols-3">
                 <Field label="City" name="church_city" errors={errors} required>
                   <Input value={str(values.church_city)} onChange={(e) => set("church_city", e.target.value)} />
@@ -189,62 +197,78 @@ export function InviteBishopForm({ settings }: { settings: PublicSettings | null
                   <Input value={str(values.church_postal_code)} onChange={(e) => set("church_postal_code", e.target.value)} />
                 </Field>
               </div>
-              <Field label="Organisation or fellowship" name="affiliation" errors={errors} hint="Optional">
-                <Input value={str(values.affiliation)} onChange={(e) => set("affiliation", e.target.value)} />
+              <Field label="Street address" name="church_address" errors={errors} hint="Optional">
+                <Input value={str(values.church_address)} onChange={(e) => set("church_address", e.target.value)} />
               </Field>
+              <div className="grid gap-6 sm:grid-cols-2">
+                <Field label="Church website" name="church_website" errors={errors} hint="Optional">
+                  <Input
+                    placeholder="https://"
+                    value={str(values.church_website)}
+                    onChange={(e) => set("church_website", e.target.value)}
+                  />
+                </Field>
+                <Field label="Organisation or fellowship" name="affiliation" errors={errors} hint="Optional">
+                  <Input value={str(values.affiliation)} onChange={(e) => set("affiliation", e.target.value)} />
+                </Field>
+              </div>
+
+              <div className="!mt-10 border-t border-border pt-8 space-y-6">
+                <div className="eyebrow text-[10px] text-gold-deep">Who should we speak to?</div>
+                <Field label="Your name" name="contact_name" errors={errors} required>
+                  <Input value={str(values.contact_name)} onChange={(e) => set("contact_name", e.target.value)} />
+                </Field>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <Field label="Email" name="contact_email" errors={errors} required>
+                    <Input type="email" value={str(values.contact_email)} onChange={(e) => set("contact_email", e.target.value)} />
+                  </Field>
+                  <Field label="Phone" name="contact_phone" errors={errors} required>
+                    <Input type="tel" value={str(values.contact_phone)} onChange={(e) => set("contact_phone", e.target.value)} />
+                  </Field>
+                </div>
+                <Field label="Your role" name="contact_role" errors={errors} hint="Optional">
+                  <Input
+                    placeholder="Armor bearer, secretary, event chair…"
+                    value={str(values.contact_role)}
+                    onChange={(e) => set("contact_role", e.target.value)}
+                  />
+                </Field>
+                <Field label="Best way to reach you" name="preferred_contact_method" errors={errors}>
+                  <Radios
+                    name="preferred_contact_method"
+                    value={str(values.preferred_contact_method)}
+                    onChange={(v) => set("preferred_contact_method", v)}
+                    options={[
+                      { value: "either", label: "Either is fine" },
+                      { value: "email", label: "Email" },
+                      { value: "phone", label: "Phone" },
+                    ]}
+                  />
+                </Field>
+              </div>
             </>
           )}
 
           {step === 2 && (
             <>
-              <Field label="Your name" name="contact_name" errors={errors} required>
-                <Input value={str(values.contact_name)} onChange={(e) => set("contact_name", e.target.value)} />
-              </Field>
-              <Field label="Your role" name="contact_role" errors={errors} hint="Optional">
-                <Input
-                  placeholder="Armor bearer, secretary, event chair…"
-                  value={str(values.contact_role)}
-                  onChange={(e) => set("contact_role", e.target.value)}
-                />
-              </Field>
               <div className="grid gap-6 sm:grid-cols-2">
-                <Field label="Email" name="contact_email" errors={errors} required>
-                  <Input type="email" value={str(values.contact_email)} onChange={(e) => set("contact_email", e.target.value)} />
+                <Field label="Kind of event" name="event_type" errors={errors} required>
+                  <Select value={str(values.event_type)} onChange={(v) => set("event_type", v)}>
+                    <option value="">Choose…</option>
+                    {EVENT_TYPES.map((t) => (
+                      <option key={t} value={t}>{EVENT_TYPE_LABELS[t]}</option>
+                    ))}
+                  </Select>
                 </Field>
-                <Field label="Phone" name="contact_phone" errors={errors} required>
-                  <Input type="tel" value={str(values.contact_phone)} onChange={(e) => set("contact_phone", e.target.value)} />
-                </Field>
+                {values.event_type === "other" ? (
+                  <Field label="Tell us what kind" name="event_type_other" errors={errors} required>
+                    <Input value={str(values.event_type_other)} onChange={(e) => set("event_type_other", e.target.value)} />
+                  </Field>
+                ) : (
+                  <div />
+                )}
               </div>
-              <Field label="Best way to reach you" name="preferred_contact_method" errors={errors}>
-                <Radios
-                  name="preferred_contact_method"
-                  value={str(values.preferred_contact_method)}
-                  onChange={(v) => set("preferred_contact_method", v)}
-                  options={[
-                    { value: "either", label: "Either is fine" },
-                    { value: "email", label: "Email" },
-                    { value: "phone", label: "Phone" },
-                  ]}
-                />
-              </Field>
-            </>
-          )}
 
-          {step === 3 && (
-            <>
-              <Field label="Kind of event" name="event_type" errors={errors} required>
-                <Select value={str(values.event_type)} onChange={(v) => set("event_type", v)}>
-                  <option value="">Choose…</option>
-                  {EVENT_TYPES.map((t) => (
-                    <option key={t} value={t}>{EVENT_TYPE_LABELS[t]}</option>
-                  ))}
-                </Select>
-              </Field>
-              {values.event_type === "other" && (
-                <Field label="Tell us what kind" name="event_type_other" errors={errors} required>
-                  <Input value={str(values.event_type_other)} onChange={(e) => set("event_type_other", e.target.value)} />
-                </Field>
-              )}
               <Field label="Event name" name="event_name" errors={errors} required>
                 <Input
                   placeholder="52nd Church Anniversary"
@@ -252,19 +276,45 @@ export function InviteBishopForm({ settings }: { settings: PublicSettings | null
                   onChange={(e) => set("event_name", e.target.value)}
                 />
               </Field>
-              <Field label="What are you asking the Bishop to do?" name="service_role" errors={errors} required>
-                <Select value={str(values.service_role)} onChange={(v) => set("service_role", v)}>
-                  <option value="">Choose…</option>
-                  {SERVICE_ROLES.map((r) => (
-                    <option key={r} value={r}>{SERVICE_ROLE_LABELS[r]}</option>
-                  ))}
-                </Select>
-              </Field>
-              {values.service_role === "other" && (
-                <Field label="Please describe" name="service_role_other" errors={errors} required>
-                  <Input value={str(values.service_role_other)} onChange={(e) => set("service_role_other", e.target.value)} />
+
+              <div className="grid gap-6 sm:grid-cols-2">
+                <Field label="What are you asking the Bishop to do?" name="service_role" errors={errors} required>
+                  <Select value={str(values.service_role)} onChange={(v) => set("service_role", v)}>
+                    <option value="">Choose…</option>
+                    {SERVICE_ROLES.map((r) => (
+                      <option key={r} value={r}>{SERVICE_ROLE_LABELS[r]}</option>
+                    ))}
+                  </Select>
                 </Field>
-              )}
+                {values.service_role === "other" ? (
+                  <Field label="Please describe" name="service_role_other" errors={errors} required>
+                    <Input value={str(values.service_role_other)} onChange={(e) => set("service_role_other", e.target.value)} />
+                  </Field>
+                ) : (
+                  <div />
+                )}
+              </div>
+
+              {/* On the paper sheet, and asked for in the courtesies — the Bishop
+                  requests a briefing on proper attire for ministry. */}
+              <div className="grid gap-6 sm:grid-cols-2">
+                <Field label="Expected attire" name="apparel" errors={errors} required>
+                  <Select value={str(values.apparel)} onChange={(v) => set("apparel", v)}>
+                    <option value="">Choose…</option>
+                    {APPAREL.map((a) => (
+                      <option key={a} value={a}>{APPAREL_LABELS[a]}</option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field
+                  label="Attire notes"
+                  name="apparel_notes"
+                  errors={errors}
+                  hint={values.apparel === "other" ? undefined : "Optional"}
+                >
+                  <Input value={str(values.apparel_notes)} onChange={(e) => set("apparel_notes", e.target.value)} />
+                </Field>
+              </div>
 
               <div className="grid gap-6 sm:grid-cols-3">
                 <Field label="Date" name="event_date" errors={errors} required>
@@ -301,17 +351,22 @@ export function InviteBishopForm({ settings }: { settings: PublicSettings | null
                   <Input value={str(values.theme)} onChange={(e) => set("theme", e.target.value)} />
                 </Field>
               </div>
-              <Field label="Venue name" name="venue_name" errors={errors} hint="If not at your church">
+              <Field label="Venue" name="venue_name" errors={errors} hint="Optional — if not at your church">
                 <Input value={str(values.venue_name)} onChange={(e) => set("venue_name", e.target.value)} />
               </Field>
-              <Field label="Venue address" name="venue_address" errors={errors} hint="If not at your church">
+              <Field label="Venue address" name="venue_address" errors={errors} hint="Optional">
                 <Input value={str(values.venue_address)} onChange={(e) => set("venue_address", e.target.value)} />
               </Field>
             </>
           )}
 
-          {step === 4 && (
+          {step === 3 && (
             <>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                None of this is required. If arrangements are not made yet, send the request and
+                the office will follow up.
+              </p>
+
               <Field label="Travel" name="travel_arrangement" errors={errors}>
                 <Radios
                   name="travel_arrangement"
@@ -320,9 +375,20 @@ export function InviteBishopForm({ settings }: { settings: PublicSettings | null
                   options={TRAVEL_ARRANGEMENTS.map((t) => ({ value: t, label: TRAVEL_LABELS[t] }))}
                 />
               </Field>
-              <Field label="Nearest airport" name="nearest_airport" errors={errors} hint="Optional">
-                <Input placeholder="BWI, DCA…" value={str(values.nearest_airport)} onChange={(e) => set("nearest_airport", e.target.value)} />
-              </Field>
+              <div className="grid gap-6 sm:grid-cols-2">
+                <Field label="Nearest airport" name="nearest_airport" errors={errors} hint="Optional">
+                  <Input placeholder="BWI, DCA…" value={str(values.nearest_airport)} onChange={(e) => set("nearest_airport", e.target.value)} />
+                </Field>
+                <Field label="Travelling party" name="armor_bearer_count" errors={errors} hint="Besides the Bishop">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={20}
+                    value={str(values.armor_bearer_count)}
+                    onChange={(e) => set("armor_bearer_count", e.target.value)}
+                  />
+                </Field>
+              </div>
               <Field
                 label="Accommodation"
                 name="accommodation_notes"
@@ -336,18 +402,9 @@ export function InviteBishopForm({ settings }: { settings: PublicSettings | null
                 )}
                 <Textarea
                   rows={3}
-                  placeholder="What you are able to provide"
+                  placeholder="Hotel, or what you are able to provide"
                   value={str(values.accommodation_notes)}
                   onChange={(e) => set("accommodation_notes", e.target.value)}
-                />
-              </Field>
-              <Field label="Travelling party" name="armor_bearer_count" errors={errors} hint="How many can you accommodate besides the Bishop?">
-                <Input
-                  type="number"
-                  min={0}
-                  max={20}
-                  value={str(values.armor_bearer_count)}
-                  onChange={(e) => set("armor_bearer_count", e.target.value)}
                 />
               </Field>
               <Field
@@ -367,15 +424,11 @@ export function InviteBishopForm({ settings }: { settings: PublicSettings | null
                   onChange={(e) => set("honorarium_notes", e.target.value)}
                 />
               </Field>
-            </>
-          )}
-
-          {step === 5 && (
-            <>
-              <Summary values={values} />
               <Field label="Anything else the Bishop should know?" name="additional_notes" errors={errors} hint="Optional">
                 <Textarea rows={4} value={str(values.additional_notes)} onChange={(e) => set("additional_notes", e.target.value)} />
               </Field>
+
+              <Summary values={values} />
 
               {/* Honeypot: off-screen rather than display:none, which some bots
                   now detect and skip. Never announced, never tab-reachable. */}
@@ -464,7 +517,7 @@ function Stepper({ step }: { step: number }) {
             }`}
           >
             <div className={`eyebrow text-[10px] ${active ? "text-gold" : "text-muted-foreground"}`}>
-              Step {s.id}
+              Step {s.id} of {FORM_STEPS.length}
             </div>
             <div className={`mt-1 text-sm ${active ? "" : done ? "text-foreground" : "text-muted-foreground"}`}>
               {s.title}
@@ -553,11 +606,7 @@ function AvailabilityNote({ availability }: { availability: Availability }) {
       : available === false
         ? "border-live/40 bg-live/5"
         : "border-border bg-secondary";
-  return (
-    <div className={`border px-4 py-3 text-sm text-foreground ${tone}`}>
-      {message}
-    </div>
-  );
+  return <div className={`border px-4 py-3 text-sm text-foreground ${tone}`}>{message}</div>;
 }
 
 function Summary({ values }: { values: Values }) {

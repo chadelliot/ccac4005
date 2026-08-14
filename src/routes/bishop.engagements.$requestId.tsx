@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { StatusBadge } from "@/components/bishop/StatusBadge";
 import { anonKey, functionsBase } from "@/lib/bishopDb";
 import {
+  APPAREL_LABELS,
   EVENT_TYPE_LABELS,
   SERVICE_ROLE_LABELS,
   STATUS_LABELS,
@@ -254,7 +255,9 @@ function EngagementDossier() {
             <Row label="Pastor">{r.pastor_name}</Row>
             {r.affiliation && <Row label="Affiliation">{r.affiliation}</Row>}
             <Row label="Address">
-              {r.church_address}, {r.church_city}, {r.church_state} {r.church_postal_code}
+              {[r.church_address, `${r.church_city}, ${r.church_state} ${r.church_postal_code}`]
+                .filter(Boolean)
+                .join(", ")}
             </Row>
             {r.church_website && (
               <Row label="Website">
@@ -298,6 +301,10 @@ function EngagementDossier() {
               {r.service_role_other ? ` — ${r.service_role_other}` : ""}
             </Row>
             <Row label="When">{formatEventWhen(r)}</Row>
+            <Row label="Attire">
+              {r.apparel ? APPAREL_LABELS[r.apparel] : "Not stated"}
+              {r.apparel_notes ? ` — ${r.apparel_notes}` : ""}
+            </Row>
             {r.theme && <Row label="Theme">{r.theme}</Row>}
             {r.expected_attendance !== null && (
               <Row label="Attendance">{r.expected_attendance}</Row>

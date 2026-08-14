@@ -31,6 +31,7 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const EVENT_TYPES = ["revival","conference","anniversary","installation","ordination","musical","banquet","funeral","wedding","other"];
 const SERVICE_ROLES = ["preach","teach","keynote","officiate","panel","greetings","other"];
 const TRAVEL = ["host_arranges","bishop_arranges","not_required"];
+const APPAREL = ["vestments","civic","shirt_tie","casual","other"];
 
 /** Trim, cap, and turn "" into null so empty optionals do not become empty strings. */
 const s = (v: unknown, max: number): string | null => {
@@ -61,7 +62,6 @@ serve(async (req) => {
     const required = {
       church_name: s(body.church_name, 200),
       pastor_name: s(body.pastor_name, 200),
-      church_address: s(body.church_address, 300),
       church_city: s(body.church_city, 120),
       church_state: s(body.church_state, 60),
       church_postal_code: s(body.church_postal_code, 20),
@@ -85,6 +85,9 @@ serve(async (req) => {
     const event_type = EVENT_TYPES.includes(body.event_type) ? body.event_type : null;
     const service_role = SERVICE_ROLES.includes(body.service_role) ? body.service_role : null;
     if (!event_type || !service_role) return json({ error: "Choose an event type and a role." }, 400);
+
+    const apparel = APPAREL.includes(body.apparel) ? body.apparel : null;
+    if (!apparel) return json({ error: "Choose the expected attire." }, 400);
 
     const db = serviceClient();
 
@@ -125,6 +128,7 @@ serve(async (req) => {
     const insert = {
       ...required,
       contact_email,
+      church_address: s(body.church_address, 300),
       church_website: s(body.church_website, 300),
       affiliation: s(body.affiliation, 200),
       contact_role: s(body.contact_role, 120),
@@ -135,6 +139,8 @@ serve(async (req) => {
       event_type_other: s(body.event_type_other, 160),
       service_role,
       service_role_other: s(body.service_role_other, 160),
+      apparel,
+      apparel_notes: s(body.apparel_notes, 200),
       event_date,
       event_end_date,
       start_time,

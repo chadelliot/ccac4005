@@ -246,6 +246,40 @@
 }
 
 
+/* Print: a host church needs to keep the courtesies — flights, a driver, a
+   hotel and an honorarium all have to be arranged from them. Printing the whole
+   confirmation screen would carry the site header, footer and buttons onto the
+   page, so everything but the document itself is dropped. */
+@media print {
+  .no-print,
+  header,
+  footer {
+    display: none !important;
+  }
+
+  /* The page's tan and the card chrome cost ink and add nothing on paper. */
+  .sand-page,
+  body {
+    background: #fff !important;
+  }
+
+  .courtesies {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  /* Keep a heading with the text it introduces. */
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  p,
+  li {
+    break-inside: avoid;
+  }
+}
+
 /* Prose defaults for the privacy policy and terms pages. Scoped rather than
    global so it cannot leak into the app's dense, non-prose screens. */
 @utility legal-prose {

@@ -129,9 +129,28 @@ export const TRAVEL_LABELS: Record<(typeof TRAVEL_ARRANGEMENTS)[number], string>
   not_required: "No travel required — this is local",
 };
 
+export const APPAREL = ["vestments", "civic", "shirt_tie", "casual", "other"] as const;
+
+export const APPAREL_LABELS: Record<(typeof APPAREL)[number], string> = {
+  vestments: "Vestments",
+  civic: "Civic attire",
+  shirt_tie: "Shirt and tie",
+  casual: "Casual",
+  other: "Something else",
+};
+
 // ---------------------------------------------------------------------------
-// Public submission schema (the 5-step form)
+// Public submission schema (three steps)
 // ---------------------------------------------------------------------------
+//
+// What is REQUIRED here is exactly what the paper "Host Ministry Information"
+// sheet asked for, because that sheet is what this form replaces and the office
+// ran on it for years. Anything the web form added on top of it — street
+// address, website, affiliation, attendance, theme, venue — is optional.
+//
+// The steps were five and are now three. Five made a fifteen-field form feel
+// like a process; the fields did not change, only how many times you press
+// Continue.
 
 const requiredText = (label: string, max = 200) =>
   z
@@ -163,8 +182,22 @@ export const isSunday = (isoDate: string) => {
 };
 
 export const step1ChurchSchema = z.object({
+  // Required — on the paper sheet.
   church_name: requiredText("Church name"),
   pastor_name: requiredText("Pastor's name"),
+  church_city: requiredText("City", 120),
+  church_state: requiredText("State", 60),
+  church_postal_code: requiredText("ZIP / postal code", 20),
+  contact_name: requiredText("Your name"),
+  contact_email: z
+    .string({ required_error: "An email address is required", invalid_type_error: "An email address is required" })
+    .trim()
+    .email("Enter a valid email address")
+    .max(255),
+  contact_phone: requiredText("Contact phone", 40),
+
+  // Optional — not on the paper sheet.
+  church_address: optionalText(300),
   church_website: z
     .string()
     .trim()
@@ -172,43 +205,34 @@ export const step1ChurchSchema = z.object({
     .optional()
     .transform((v) => (v === "" ? undefined : v))
     .refine((v) => v === undefined || /^https?:\/\/.+/i.test(v), "Enter a full URL, including https://"),
-  church_address: requiredText("Church address", 300),
-  church_city: requiredText("City", 120),
-  church_state: requiredText("State", 60),
-  church_postal_code: requiredText("ZIP / postal code", 20),
   affiliation: optionalText(200),
-});
-
-export const step2ContactSchema = z.object({
-  contact_name: requiredText("Contact name"),
   contact_role: optionalText(120),
-  contact_email: z
-    .string({ required_error: "An email address is required", invalid_type_error: "An email address is required" })
-    .trim()
-    .email("Enter a valid email address")
-    .max(255),
-  contact_phone: requiredText("Contact phone", 40),
   preferred_contact_method: z.enum(["email", "phone", "either"]).default("either"),
 });
 
-export const step3EventSchema = z
+export const step2EventSchema = z
   .object({
+    // Required — all on the paper sheet.
     event_type: z.enum(EVENT_TYPES, { required_error: "Choose an event type", invalid_type_error: "Choose an event type" }),
-    event_type_other: optionalText(160),
     event_name: requiredText("Event name", 250),
     service_role: z.enum(SERVICE_ROLES, { required_error: "Choose a role", invalid_type_error: "Choose a role" }),
-    service_role_other: optionalText(160),
     event_date: z
       .string({ required_error: "Choose a date", invalid_type_error: "Choose a date" })
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date"),
+    start_time: z
+      .string({ required_error: "Choose a start time", invalid_type_error: "Choose a start time" })
+      .regex(/^\d{2}:\d{2}$/, "Choose a start time"),
+    apparel: z.enum(APPAREL, { required_error: "Choose the expected attire", invalid_type_error: "Choose the expected attire" }),
+
+    // Optional.
+    event_type_other: optionalText(160),
+    service_role_other: optionalText(160),
+    apparel_notes: optionalText(200),
     event_end_date: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .optional()
       .or(z.literal("").transform(() => undefined)),
-    start_time: z
-      .string({ required_error: "Choose a start time", invalid_type_error: "Choose a start time" })
-      .regex(/^\d{2}:\d{2}$/, "Choose a start time"),
     expected_attendance: z.coerce.number().int().min(0).max(1000000).optional(),
     venue_name: optionalText(200),
     venue_address: optionalText(300),
@@ -227,21 +251,26 @@ export const step3EventSchema = z
     path: ["service_role_other"],
     message: "Tell us what you are asking the Bishop to do",
   })
+  .refine((v) => v.apparel !== "other" || !!v.apparel_notes, {
+    path: ["apparel_notes"],
+    message: "Tell us what to wear",
+  })
   .refine((v) => !v.event_end_date || v.event_end_date >= v.event_date, {
     path: ["event_end_date"],
     message: "The end date cannot be before the start date",
   });
 
-export const step4LogisticsSchema = z.object({
-  travel_arrangement: z.enum(TRAVEL_ARRANGEMENTS),
+export const step3DetailsSchema = z.object({
+  // Everything here is optional except consent. The paper sheet treated travel
+  // and lodging the same way — "if arrangements have not been made, when can we
+  // expect them?" — so a host who has not booked anything yet can still send.
+  travel_arrangement: z.enum(TRAVEL_ARRANGEMENTS).default("host_arranges"),
   nearest_airport: optionalText(120),
   accommodation_notes: optionalText(2000),
   armor_bearer_count: z.coerce.number().int().min(0).max(20).default(0),
   honorarium_notes: optionalText(2000),
-});
-
-export const step5ReviewSchema = z.object({
   additional_notes: optionalText(4000),
+
   /** Consent is recorded because the desk emails the contact about the request. */
   consent_to_contact: z.literal(true, {
     errorMap: () => ({ message: "Please confirm we may contact you about this request" }),
@@ -251,20 +280,16 @@ export const step5ReviewSchema = z.object({
 });
 
 export const bookingSubmissionSchema = step1ChurchSchema
-  .merge(step2ContactSchema)
-  .merge(step4LogisticsSchema)
-  .merge(step5ReviewSchema)
-  .and(step3EventSchema);
+  .merge(step3DetailsSchema)
+  .and(step2EventSchema);
 
 export type BookingSubmission = z.infer<typeof bookingSubmissionSchema>;
 
 /** The steps, in order, with the schema that gates leaving each one. */
 export const FORM_STEPS = [
   { id: 1, title: "Your Church", schema: step1ChurchSchema },
-  { id: 2, title: "Contact", schema: step2ContactSchema },
-  { id: 3, title: "The Event", schema: step3EventSchema },
-  { id: 4, title: "Travel & Logistics", schema: step4LogisticsSchema },
-  { id: 5, title: "Review & Send", schema: step5ReviewSchema },
+  { id: 2, title: "The Event", schema: step2EventSchema },
+  { id: 3, title: "Details & Send", schema: step3DetailsSchema },
 ] as const;
 
 // ---------------------------------------------------------------------------

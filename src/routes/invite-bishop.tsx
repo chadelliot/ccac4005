@@ -28,6 +28,10 @@ export const Route = createFileRoute("/invite-bishop")({
 function InviteBishopPage() {
   const [settings, setSettings] = useState<PublicSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  // Once the request is in, the sidebar is talking about a form that is no
+  // longer on screen — and the courtesies replace it, at more length and with
+  // the actual figures.
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -70,7 +74,7 @@ function InviteBishopPage() {
 
       <main className="flex-1">
         <div className="mx-auto max-w-7xl px-6 lg:px-10 py-16 lg:py-20">
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-14">
+          <div className={`grid gap-10 lg:gap-14 ${submitted ? "" : "lg:grid-cols-[minmax(0,1fr)_320px]"}`}>
             <div>
               {loading ? (
                 <div className="border border-border bg-card p-12">
@@ -85,10 +89,11 @@ function InviteBishopPage() {
                   </p>
                 </div>
               ) : (
-                <InviteBishopForm settings={settings} />
+                <InviteBishopForm settings={settings} onSubmitted={() => setSubmitted(true)} />
               )}
             </div>
 
+            {!submitted && (
             <aside className="space-y-4">
               <PolicyCard
                 title="Before you begin"
@@ -117,6 +122,7 @@ function InviteBishopPage() {
                 <PolicyCard title="Honorarium" body={settings.honorarium_policy} />
               )}
             </aside>
+            )}
           </div>
         </div>
       </main>
