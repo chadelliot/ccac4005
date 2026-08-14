@@ -40,8 +40,8 @@ export type SocialPost = {
  *  an icon pointing at an account that may not be the church's. */
 const SOCIALS: { name: string; url: string | null; Icon: typeof Facebook }[] = [
   { name: "Facebook", url: PAGE_URL, Icon: Facebook },
-  // TODO: fill in once the church confirms the handles.
-  { name: "Instagram", url: null, Icon: Instagram },
+  { name: "Instagram", url: "https://instagram.com/ccacbaltimore", Icon: Instagram },
+  // TODO: fill in once the church confirms the YouTube channel.
   { name: "YouTube", url: null, Icon: Youtube },
 ];
 

@@ -1,57 +1,26 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { PageHero } from "@/components/PageHero";
-import { SiteFooter } from "@/components/SiteFooter";
-import { MapPin, Clock, Phone } from "lucide-react";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+/**
+ * Find Us was folded into Plan a Visit — they answered the same question, and a
+ * visitor had to read both to assemble one answer.
+ *
+ * Kept as a redirect rather than deleted. The address has been on this URL long
+ * enough to be linked from elsewhere and printed on things nobody can recall,
+ * and a 404 for someone trying to find the building on a Sunday morning is the
+ * worst possible failure for this particular page.
+ */
 export const Route = createFileRoute("/find-us")({
+  beforeLoad: () => {
+    throw redirect({ to: "/plan-visit", replace: true });
+  },
+  // Prerendering renders the component, so it needs to stand alone if a crawler
+  // or a JS-less client ever lands here.
+  component: () => null,
   head: () => ({
     meta: [
       { title: "Find Us — Christ Cathedral Apostolic Church" },
-      { name: "description", content: "Directions and contact info for Christ Cathedral Apostolic Church in Baltimore, MD." },
-      { property: "og:title", content: "Find Us — CCAC" },
-      { property: "og:description", content: "4005 Old York Road, Baltimore, MD." },
+      { name: "description", content: "4005 Old York Road, Baltimore. Sunday worship at 2:27 PM." },
     ],
+    links: [{ rel: "canonical", href: "https://ccacbmore.com/plan-visit" }],
   }),
-  component: FindUs,
 });
-
-function FindUs() {
-  return (
-    <div className="sand-page text-foreground">
-      <PageHero>
-        <div className="eyebrow text-gold mb-6">— Find Us</div>
-        <h1 className="display-hero text-6xl lg:text-8xl">Come visit.</h1>
-      </PageHero>
-
-      <section className="py-24">
-        <div className="mx-auto max-w-7xl px-6 lg:px-10 grid md:grid-cols-3 gap-8">
-          <div className="border border-border p-8">
-            <MapPin className="h-6 w-6 text-accent mb-4" />
-            <div className="eyebrow text-muted-foreground mb-2">Address</div>
-            <div className="font-display text-xl">4005 Old York Road<br />Baltimore, MD</div>
-          </div>
-          <div className="border border-border p-8">
-            <Clock className="h-6 w-6 text-accent mb-4" />
-            <div className="eyebrow text-muted-foreground mb-2">Service</div>
-            <div className="font-display text-xl">Sundays<br />2:27 PM</div>
-          </div>
-          <div className="border border-border p-8">
-            <Phone className="h-6 w-6 text-accent mb-4" />
-            <div className="eyebrow text-muted-foreground mb-2">Contact</div>
-            <Link to="/give" className="font-display text-xl hover:text-accent">Give Online →</Link>
-          </div>
-        </div>
-        <div className="mx-auto max-w-7xl px-6 lg:px-10 mt-12">
-          <iframe
-            title="Map"
-            src="https://www.google.com/maps?q=4005+Old+York+Road+Baltimore+MD&output=embed"
-            className="w-full h-96 border border-border"
-            loading="lazy"
-          />
-        </div>
-      </section>
-
-      <SiteFooter />
-    </div>
-  );
-}

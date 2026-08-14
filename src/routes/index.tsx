@@ -3,7 +3,8 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SocialStack } from "@/components/SocialStack";
 import { SiteFooter } from "@/components/SiteFooter";
 import { HeroVideo } from "@/components/HeroVideo";
-import bibleImg from "@/assets/bible-light.jpg";
+import visitFlyer from "@/assets/plan-your-visit-flyer.webp";
+import { RoadLines } from "@/components/RoadLines";
 import communityImg from "@/assets/community-group.webp";
 
 export const Route = createFileRoute("/")({
@@ -96,7 +97,10 @@ function HomePage() {
       </section>
 
       {/* WELCOME */}
-      <section className="py-24 lg:py-32">
+      {/* overflow-hidden: the road art is deliberately wider than its column so
+          it bleeds past the graphic, and without clipping here that widened the
+          whole page. */}
+      <section className="py-24 lg:py-32 overflow-hidden">
         <div className="mx-auto max-w-7xl px-6 lg:px-10 grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <div className="eyebrow text-accent mb-6">— Who We Are</div>
@@ -119,12 +123,18 @@ function HomePage() {
             </div>
           </div>
           <div className="relative">
-            <img src={bibleImg} alt="Open Bible by warm lamplight" className="w-full h-[500px] object-cover" loading="lazy" width={1280} height={896} />
-            <div className="absolute -bottom-8 -left-8 bg-night text-night-foreground p-8 max-w-xs hidden lg:block">
-              <div className="eyebrow text-gold mb-2">Sunday Worship</div>
-              <div className="font-display text-3xl">2:27 PM</div>
-              <div className="text-sm text-night-foreground/70 mt-1">4005 Old York Road, Baltimore</div>
-            </div>
+            {/* Roads sweeping in behind the graphic. Decorative, and deliberately
+                sized larger than the image so it fills the surrounding white
+                space rather than sitting in a neat box. */}
+            <RoadLines className="absolute -inset-x-16 -inset-y-10 h-[calc(100%+5rem)] w-[calc(100%+8rem)] hidden md:block" />
+            <img
+              src={visitFlyer}
+              alt="Plan your visit — Christ Cathedral Apostolic Church, 4005 Old York Rd, Baltimore, MD 21218"
+              className="relative w-full max-w-md mx-auto border border-border shadow-elevated"
+              loading="lazy"
+              width={1024}
+              height={1024}
+            />
           </div>
         </div>
       </section>

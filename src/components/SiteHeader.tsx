@@ -50,20 +50,6 @@ function EventsLinks({ className, activeClassName, onNavigate }: GroupLinkProps)
   );
 }
 
-function VisitLinks({ className, activeClassName, onNavigate }: GroupLinkProps) {
-  const shared = { className, onClick: onNavigate, activeProps: { className: activeClassName } };
-  return (
-    <>
-      <Link to="/plan-visit" activeOptions={{ exact: true }} {...shared}>
-        Plan a Visit
-      </Link>
-      <Link to="/find-us" {...shared}>
-        Find Us
-      </Link>
-    </>
-  );
-}
-
 /**
  * `tone` matches the header to what sits behind it. The header is absolutely
  * positioned, so on pages whose hero is light (Give, event detail) the cream
@@ -112,9 +98,13 @@ export function SiteHeader({ tone = "dark" }: { tone?: "dark" | "light" }) {
             {(p) => <EventsLinks {...p} />}
           </NavMenu>
 
-          <NavMenu label="Plan a Visit" light={light}>
-            {(p) => <VisitLinks {...p} />}
-          </NavMenu>
+          <Link
+            to="/plan-visit"
+            className={`eyebrow transition-colors ${linkTone}`}
+            activeProps={{ className: activeTone }}
+          >
+            Plan a Visit
+          </Link>
 
           <Link to="/give" className={`eyebrow transition-colors ${linkTone}`} activeProps={{ className: activeTone }}>
             Give
@@ -207,9 +197,14 @@ export function SiteHeader({ tone = "dark" }: { tone?: "dark" | "light" }) {
               <EventsLinks {...mobileGroupProps(() => setOpen(false))} />
             </MobileGroup>
 
-            <MobileGroup label="Plan a Visit">
-              <VisitLinks {...mobileGroupProps(() => setOpen(false))} />
-            </MobileGroup>
+            <Link
+              to="/plan-visit"
+              onClick={() => setOpen(false)}
+              className="eyebrow py-3 border-b border-white/5"
+              activeProps={{ className: "text-gold" }}
+            >
+              Plan a Visit
+            </Link>
 
             <Link
               to="/give"
