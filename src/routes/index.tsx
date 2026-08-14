@@ -100,8 +100,12 @@ function HomePage() {
       {/* overflow-hidden: the road art is deliberately wider than its column so
           it bleeds past the graphic, and without clipping here that widened the
           whole page. */}
-      <section className="py-24 lg:py-32 overflow-hidden">
-        <div className="mx-auto max-w-7xl px-6 lg:px-10 grid lg:grid-cols-2 gap-16 items-center">
+      <section className="relative py-24 lg:py-32 overflow-hidden">
+        {/* Spans the whole section so the road meets the hero above and the band
+            below. overflow-hidden on the section is what crops it cleanly at the
+            sides. */}
+        <RoadLines className="absolute inset-0 h-full w-full hidden md:block" />
+        <div className="relative mx-auto max-w-7xl px-6 lg:px-10 grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <div className="eyebrow text-accent mb-6">— Who We Are</div>
             <h2 className="font-display text-5xl lg:text-6xl leading-[1.05] text-foreground">
@@ -126,7 +130,6 @@ function HomePage() {
             {/* Roads sweeping in behind the graphic. Decorative, and deliberately
                 sized larger than the image so it fills the surrounding white
                 space rather than sitting in a neat box. */}
-            <RoadLines className="absolute -inset-x-16 -inset-y-10 h-[calc(100%+5rem)] w-[calc(100%+8rem)] hidden md:block" />
             <img
               src={visitFlyer}
               alt="Plan your visit — Christ Cathedral Apostolic Church, 4005 Old York Rd, Baltimore, MD 21218"
