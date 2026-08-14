@@ -11,6 +11,10 @@
  *   --top      where the crop starts, as a fraction of image height
  *   --height   how tall the crop is, as a fraction of image height
  *   --center   horizontal centre of the face, as a fraction of image width
+ *   --pad-top  add canvas above first, as a fraction of image height, filled
+ *              with the photograph's own top-left colour. For a portrait shot
+ *              tight to the top edge there is no headroom to crop into, and a
+ *              head pressed against the rim of a circle looks like a mistake.
  *
  * The crop is forced square from --height, so the circular mask never distorts
  * the face. It is also clamped to the image bounds: a crop that would run off
@@ -35,8 +39,26 @@ const heightFrac = arg("height", 0.34);
 const centerFrac = arg("center", 0.5);
 /** Output edge length. 900 is comfortably past 2x the 288-360px frame. */
 const SIZE = arg("size", 900);
+const padTopFrac = arg("pad-top", 0);
 
-const image = sharp(src);
+let working = src;
+
+if (padTopFrac > 0) {
+  const src0 = sharp(src);
+  const m0 = await src0.metadata();
+  const pad = Math.round(m0.height * padTopFrac);
+  // Replicate the top row of pixels upward rather than filling with one sampled
+  // colour. A studio backdrop is rarely flat — this one is lighter behind the
+  // head than at the corners — so a single colour leaves a visible band, while
+  // copying the edge continues whatever gradient is actually there.
+  working = await sharp(src)
+    .extend({ top: pad, extendWith: "copy" })
+    .png()
+    .toBuffer();
+  console.log(`  padded     ${pad}px above by replicating the top edge`);
+}
+
+const image = sharp(working);
 const meta = await image.metadata();
 const { width: W, height: H } = meta;
 
@@ -53,7 +75,7 @@ const clamp = (v, max) => Math.max(0, Math.min(v, max));
 top = clamp(top, H - side);
 left = clamp(left, W - side);
 
-await sharp(src)
+await sharp(working)
   .extract({ left, top, width: side, height: side })
   .resize(SIZE, SIZE, { fit: "cover" })
   .webp({ quality: 88 })
