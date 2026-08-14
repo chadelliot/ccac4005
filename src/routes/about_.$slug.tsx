@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import bishopProfilePhoto from "@/assets/bishop-justin-marcus-profile";
+import bishopProfilePhoto from "@/assets/bishop-profile.webp";
 import { PageHero } from "@/components/PageHero";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getLeader, type Leader } from "@/lib/leadership";
@@ -78,13 +78,17 @@ function BishopProfile({ leader }: { leader: Leader }) {
         <div className="grid items-center gap-10 lg:grid-cols-[360px_1fr] lg:gap-20">
           <div className="flex justify-center lg:justify-start">
             <div className="relative">
-              <div className="absolute -inset-3 rounded-full border border-gold/30" aria-hidden="true" />
-              <div className="relative h-72 w-72 overflow-hidden rounded-full border border-gold/20 bg-background shadow-sm sm:h-80 sm:w-80">
+              <div
+                className="absolute -inset-6 rounded-full bg-gold/10 blur-2xl"
+                aria-hidden="true"
+              />
+              <div className="absolute -inset-3 rounded-full border border-gold-deep/25" aria-hidden="true" />
+              <div className="relative h-72 w-72 overflow-hidden rounded-full border border-gold-deep/20 bg-card shadow-elevated sm:h-80 sm:w-80 lg:h-[22rem] lg:w-[22rem]">
                 <img
                   src={bishopProfilePhoto}
                   alt={`${leader.name}, ${leader.role} of Christ Cathedral Apostolic Church`}
-                  width={560}
-                  height={560}
+                  width={900}
+                  height={900}
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -108,9 +112,12 @@ function BishopProfile({ leader }: { leader: Leader }) {
             <h3 className="font-display text-3xl sm:text-4xl">At a Glance</h3>
           </div>
 
-          <dl className="grid gap-x-10 sm:grid-cols-2 lg:grid-cols-4">
+          <dl className="grid sm:grid-cols-2 lg:grid-cols-4 border-t border-border/70">
             {BISHOP_HIGHLIGHTS.map((highlight) => (
-              <div key={highlight.label} className="border-t border-border/70 py-5">
+              <div
+                key={highlight.label}
+                className="border-b border-border/70 py-5 pr-8 last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 lg:[&:nth-last-child(-n+4)]:border-b-0"
+              >
                 <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-gold-deep">
                   {highlight.label}
                 </dt>
@@ -128,9 +135,16 @@ function BishopProfile({ leader }: { leader: Leader }) {
             <h3 className="font-display text-3xl sm:text-4xl">His Ministry Story</h3>
           </div>
 
-          <div className="max-w-3xl space-y-5">
+          <div className="max-w-2xl space-y-5">
             {leader.bio.map((paragraph, index) => (
-              <p key={index} className="text-muted-foreground leading-relaxed">
+              <p
+                key={index}
+                className={
+                  index === 0
+                    ? "text-lg leading-relaxed text-foreground"
+                    : "text-muted-foreground leading-relaxed"
+                }
+              >
                 {paragraph}
               </p>
             ))}
