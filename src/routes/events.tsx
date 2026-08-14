@@ -5,6 +5,7 @@ import { PageHero } from "@/components/PageHero";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, ImagePlus } from "lucide-react";
+import { functionsBase, anonKey } from "@/lib/bishopDb";
 
 export const Route = createFileRoute("/events")({
   head: () => ({
@@ -33,6 +34,9 @@ type PublicEvent = {
   start_at: string;
   end_at: string | null;
   flyer_url: string | null;
+  /** Facebook events are read live and have no row here, so they link out
+   *  rather than to an internal detail page. */
+  facebookUrl?: string;
 };
 
 function PublicEventsPage() {
@@ -41,14 +45,44 @@ function PublicEventsPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("events")
-        .select("id,title,description,location,start_at,end_at,flyer_url")
-        .eq("status", "approved")
-        .eq("is_public", true)
-        .gte("start_at", new Date().toISOString())
-        .order("start_at", { ascending: true });
-      setEvents((data ?? []) as PublicEvent[]);
+      // Two sources, one list. Member-submitted events live in the database and
+      // keep their approval flow; Facebook events are read live and appear
+      // automatically, so nothing has to be re-entered by hand.
+      const [dbResult, fbResult] = await Promise.allSettled([
+        supabase
+          .from("events")
+          .select("id,title,description,location,start_at,end_at,flyer_url")
+          .eq("status", "approved")
+          .eq("is_public", true)
+          .gte("start_at", new Date().toISOString())
+          .order("start_at", { ascending: true }),
+        fetch(`${functionsBase()}/facebook-events`, { headers: { apikey: anonKey() } }).then((r) =>
+          r.json(),
+        ),
+      ]);
+
+      const fromDb: PublicEvent[] =
+        dbResult.status === "fulfilled" ? ((dbResult.value.data ?? []) as PublicEvent[]) : [];
+
+      const fromFacebook: PublicEvent[] =
+        fbResult.status === "fulfilled" && Array.isArray(fbResult.value?.events)
+          ? fbResult.value.events.map((e: Record<string, string | null>) => ({
+              id: `fb-${e.id}`,
+              title: String(e.name),
+              description: e.description ?? null,
+              location: e.location ?? null,
+              start_at: String(e.startAt),
+              end_at: e.endAt ?? null,
+              flyer_url: e.cover ?? null,
+              facebookUrl: String(e.permalink),
+            }))
+          : [];
+
+      // Merged and re-sorted so the two sources interleave by date rather than
+      // sitting in separate blocks.
+      setEvents(
+        [...fromDb, ...fromFacebook].sort((a, b) => a.start_at.localeCompare(b.start_at)),
+      );
       setLoading(false);
     })();
   }, []);
@@ -97,12 +131,25 @@ function PublicEventsPage() {
 
 function PublicEventCard({ event }: { event: PublicEvent }) {
   const start = new Date(event.start_at);
+  const cardClass =
+    "group flex flex-col border border-border bg-card hover:border-foreground/30 transition-colors overflow-hidden";
+
+  // A Facebook event has no row in our database, so there is no internal detail
+  // page to send anyone to — it links to the event on Facebook instead, where
+  // the full details and RSVP already live.
+  const Wrapper = ({ children }: { children: React.ReactNode }) =>
+    event.facebookUrl ? (
+      <a href={event.facebookUrl} target="_blank" rel="noreferrer" className={cardClass}>
+        {children}
+      </a>
+    ) : (
+      <Link to="/events/$id" params={{ id: event.id }} className={cardClass}>
+        {children}
+      </Link>
+    );
+
   return (
-    <Link
-      to="/events/$id"
-      params={{ id: event.id }}
-      className="group flex flex-col border border-border bg-card hover:border-foreground/30 transition-colors overflow-hidden"
-    >
+    <Wrapper>
       <div className="aspect-[4/3] bg-muted relative overflow-hidden">
         {event.flyer_url ? (
           <img
@@ -116,7 +163,9 @@ function PublicEventCard({ event }: { event: PublicEvent }) {
           </div>
         )}
         <div className="absolute top-3 left-3">
-          <Badge className="bg-gold text-gold-foreground hover:bg-gold">Public</Badge>
+          <Badge className="bg-gold text-gold-foreground hover:bg-gold">
+            {event.facebookUrl ? "On Facebook" : "Public"}
+          </Badge>
         </div>
       </div>
       <div className="p-5 space-y-2 flex-1">
@@ -137,6 +186,6 @@ function PublicEventCard({ event }: { event: PublicEvent }) {
           </div>
         )}
       </div>
-    </Link>
+    </Wrapper>
   );
 }

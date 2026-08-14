@@ -33,6 +33,12 @@ verify_jwt = false
 [functions.instagram-recent-posts]
 verify_jwt = false
 
+# Public, read-only. Facebook Page events, read live rather than imported, so
+# there is no sync job to fall behind and nothing to reconcile when an event is
+# edited or deleted on Facebook.
+[functions.facebook-events]
+verify_jwt = false
+
 # Public read-only status endpoint used by ccacbmore.com/live. The Facebook Page
 # access token remains server-side in Supabase secrets; the function only returns
 # public video URLs and live/offline status.
