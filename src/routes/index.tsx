@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SocialStack } from "@/components/SocialStack";
 import { SiteFooter } from "@/components/SiteFooter";
 import { HeroVideo } from "@/components/HeroVideo";
 import bibleImg from "@/assets/bible-light.jpg";
@@ -36,35 +37,48 @@ function HomePage() {
         <SiteHeader />
 
         <div className="relative mx-auto max-w-7xl px-6 lg:px-10 pt-40 pb-32 lg:pt-48">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="h-px w-10 bg-gold" />
-            <div className="eyebrow text-gold">Baltimore, Maryland · The Life Center</div>
-          </div>
+          {/* Two columns from lg up: the headline keeps the left, the social
+              stack takes the right. Below that the stack drops under the
+              buttons — at phone width a tilted card beside an 18vw headline
+              leaves room for neither. */}
+          <div className="grid gap-16 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-12">
+            <div>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="h-px w-10 bg-gold" />
+                <div className="eyebrow text-gold">Baltimore, Maryland · The Life Center</div>
+              </div>
 
-          <p className="max-w-md text-night-foreground/80 leading-relaxed mb-12">
-            A thriving ministry in the heart of Baltimore — where lives are
-            transformed by the power of Jesus Christ.
-          </p>
+              <p className="max-w-md text-night-foreground/80 leading-relaxed mb-12">
+                A thriving ministry in the heart of Baltimore — where lives are
+                transformed by the power of Jesus Christ.
+              </p>
 
-          <h1 className="display-hero text-[18vw] md:text-[12vw] lg:text-[11rem] text-night-foreground">
-            Life
-            <br />
-            Changing
-          </h1>
+              {/* Down from 11rem: the headline now shares the row. */}
+              <h1 className="display-hero text-[18vw] md:text-[12vw] lg:text-[8.5rem] xl:text-[9.5rem] leading-[0.85] text-night-foreground">
+                Life
+                <br />
+                Changing
+              </h1>
 
-          <div className="mt-12 flex flex-wrap gap-3">
-            <Link
-              to="/plan-visit"
-              className="inline-flex items-center bg-night-foreground text-night px-8 py-4 eyebrow hover:bg-white/90"
-            >
-              Plan Your Visit
-            </Link>
-            <Link
-              to="/about"
-              className="inline-flex items-center border border-white/30 text-night-foreground px-8 py-4 eyebrow hover:bg-white/10"
-            >
-              Our Story
-            </Link>
+              <div className="mt-12 flex flex-wrap gap-3">
+                <Link
+                  to="/plan-visit"
+                  className="inline-flex items-center bg-night-foreground text-night px-8 py-4 eyebrow hover:bg-white/90"
+                >
+                  Plan Your Visit
+                </Link>
+                <Link
+                  to="/about"
+                  className="inline-flex items-center border border-white/30 text-night-foreground px-8 py-4 eyebrow hover:bg-white/10"
+                >
+                  Our Story
+                </Link>
+              </div>
+            </div>
+
+            <div className="flex justify-center lg:justify-end lg:pl-8">
+              <SocialStack />
+            </div>
           </div>
         </div>
 

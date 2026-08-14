@@ -23,6 +23,11 @@ verify_jwt = false
 [functions.bishop-booking-accept]
 verify_jwt = true
 
+# Public, read-only feed of the Page's recent posts for the homepage hero.
+# Returns only what is already public on the Page; the token stays server-side.
+[functions.facebook-recent-posts]
+verify_jwt = false
+
 # Public read-only status endpoint used by ccacbmore.com/live. The Facebook Page
 # access token remains server-side in Supabase secrets; the function only returns
 # public video URLs and live/offline status.
