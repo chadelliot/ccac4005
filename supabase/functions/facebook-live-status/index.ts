@@ -90,7 +90,11 @@ async function getVideos({
       type: body.error?.type,
       message: body.error?.message,
     });
-    throw new Error("Facebook livestream status is temporarily unavailable");
+    // Carry Graph's own words up. Swallowing them made an expired token, a
+    // missing permission and a rate limit all look like the same outage.
+    throw new Error(
+      `graph_${body.error?.code ?? response.status}: ${body.error?.message ?? "unknown"}`,
+    );
   }
 
   return body.data ?? [];
@@ -159,6 +163,7 @@ serve(async (req) => {
         latestVideo: null,
         checkedAt: new Date().toISOString(),
         error: "Livestream status is temporarily unavailable",
+        detail: error instanceof Error ? error.message : String(error),
       },
       502,
     );
