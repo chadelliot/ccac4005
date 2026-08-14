@@ -257,11 +257,27 @@ const mobileGroupProps = (close: () => void): GroupLinkProps => ({
   onNavigate: close,
 });
 
+/**
+ * Collapsed by default on mobile. Showing every sub-item at once made the menu
+ * a wall of eleven links; the top level is five, which is scannable.
+ */
 function MobileGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-white/5 py-3">
-      <div className="eyebrow text-night-foreground/50 text-[10px]">{label}</div>
-      <div className="mt-2 flex flex-col">{children}</div>
+    <div className="border-b border-white/5">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between py-3 eyebrow text-night-foreground"
+      >
+        {label}
+        <ChevronDown
+          className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+      {open && <div className="pb-2 flex flex-col">{children}</div>}
     </div>
   );
 }

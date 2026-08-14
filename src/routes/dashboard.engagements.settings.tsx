@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { InternalSettings, PublicSettings } from "@/lib/bishopBooking";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/bishop/settings")({
+export const Route = createFileRoute("/dashboard/engagements/settings")({
   component: BishopSettings,
 });
 

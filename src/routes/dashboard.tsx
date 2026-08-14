@@ -1,7 +1,8 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSession, useRoles } from "@/lib/auth";
-import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar, UsersRound, BookOpen, BookMarked } from "lucide-react";
+import { useBishopDesk } from "@/hooks/useBishopDesk";
+import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar, UsersRound, BookOpen, BookMarked, CalendarCheck } from "lucide-react";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,8 @@ export const Route = createFileRoute("/dashboard")({
 function DashboardLayout() {
   const { user, loading } = useSession();
   const { isAdmin } = useRoles(user);
+  // The engagements tab only appears for the Bishop and his office.
+  const desk = useBishopDesk(user);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,6 +57,9 @@ function DashboardLayout() {
             <DashLink to="/dashboard/follow-ups" icon={<Bell className="h-4 w-4" />}>Follow-ups</DashLink>
             <DashLink to="/dashboard/bible" icon={<BookOpen className="h-4 w-4" />}>Bible</DashLink>
             <DashLink to="/dashboard/programs" icon={<BookMarked className="h-4 w-4" />}>Reading Programs</DashLink>
+            {desk.hasAccess && (
+              <DashLink to="/dashboard/engagements" icon={<CalendarCheck className="h-4 w-4" />}>Engagements</DashLink>
+            )}
           </nav>
         </div>
         <div className="hidden lg:block space-y-3">
@@ -78,6 +84,7 @@ function DashboardLayout() {
             <DashLinkPill to="/dashboard/follow-ups">Follow-ups</DashLinkPill>
             <DashLinkPill to="/dashboard/bible">Bible</DashLinkPill>
             <DashLinkPill to="/dashboard/programs">Programs</DashLinkPill>
+            {desk.hasAccess && <DashLinkPill to="/dashboard/engagements">Engagements</DashLinkPill>}
           </div>
           <div className="hidden lg:block" />
           <NotificationsBell />

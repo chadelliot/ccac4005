@@ -14,7 +14,7 @@ import {
   EVENT_TYPE_LABELS,
   SERVICE_ROLE_LABELS,
   STATUS_LABELS,
-  TRAVEL_LABELS,
+  travelLabel,
   formatEventWhen,
   type BookingActivity,
   type BookingNote,
@@ -22,7 +22,7 @@ import {
   type BookingStatus,
 } from "@/lib/bishopBooking";
 
-export const Route = createFileRoute("/bishop/engagements/$requestId")({
+export const Route = createFileRoute("/dashboard/engagements/$requestId")({
   component: EngagementDossier,
 });
 
@@ -315,7 +315,7 @@ function EngagementDossier() {
           </Section>
 
           <Section title="Travel & Accommodation">
-            <Row label="Travel">{TRAVEL_LABELS[r.travel_arrangement]}</Row>
+            <Row label="Travel">{travelLabel(r.travel_arrangement)}</Row>
             {r.nearest_airport && <Row label="Airport">{r.nearest_airport}</Row>}
             <Row label="Party">{r.armor_bearer_count} besides the Bishop</Row>
             {r.accommodation_notes && <Row label="Accommodation">{r.accommodation_notes}</Row>}
@@ -339,7 +339,7 @@ function EngagementDossier() {
   function BackLink() {
     return (
       <Link
-        to="/bishop/engagements"
+        to="/dashboard/engagements"
         className="eyebrow text-muted-foreground hover:text-foreground inline-flex items-center gap-2"
       >
         <ArrowLeft className="h-3 w-3" /> All engagements

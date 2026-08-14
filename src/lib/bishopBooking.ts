@@ -121,13 +121,23 @@ export const SERVICE_ROLE_LABELS: Record<(typeof SERVICE_ROLES)[number], string>
   other: "Other",
 };
 
-export const TRAVEL_ARRANGEMENTS = ["host_arranges", "bishop_arranges", "not_required"] as const;
+/**
+ * The host covers travel. `bishop_arranges` was removed as an option — the
+ * value remains in the database enum, because Postgres cannot drop one without
+ * rewriting the type and old rows may still carry it, but nothing offers it and
+ * the submit function rejects it.
+ */
+export const TRAVEL_ARRANGEMENTS = ["host_arranges", "not_required"] as const;
 
 export const TRAVEL_LABELS: Record<(typeof TRAVEL_ARRANGEMENTS)[number], string> = {
-  host_arranges: "The inviting church will arrange and cover travel",
-  bishop_arranges: "Please have the Bishop's office arrange travel (invoiced to us)",
-  not_required: "No travel required — this is local",
+  host_arranges:
+    "Our church will arrange and cover travel — two tickets, for the Bishop and his travel assistant",
+  not_required: "No travel required — this is a local engagement",
 };
+
+/** Shown under the travel choice so the two-ticket expectation is not a surprise. */
+export const TRAVEL_NOTE =
+  "Travel is always for two: Bishop Marcus and his ministry travel assistant. The sponsoring ministry is responsible for both, along with ground transportation for the duration of the visit.";
 
 export const APPAREL = ["vestments", "civic", "shirt_tie", "casual", "other"] as const;
 
@@ -260,15 +270,15 @@ export const step2EventSchema = z
     message: "The end date cannot be before the start date",
   });
 
-export const step3DetailsSchema = z.object({
+/** The plain object, kept separate so the combined schema can still merge it —
+ *  .refine() returns a ZodEffects, which has no .merge(). */
+const step3Base = z.object({
   // Everything here is optional except consent. The paper sheet treated travel
   // and lodging the same way — "if arrangements have not been made, when can we
   // expect them?" — so a host who has not booked anything yet can still send.
   travel_arrangement: z.enum(TRAVEL_ARRANGEMENTS).default("host_arranges"),
   nearest_airport: optionalText(120),
-  accommodation_notes: optionalText(2000),
-  armor_bearer_count: z.coerce.number().int().min(0).max(20).default(0),
-  honorarium_notes: optionalText(2000),
+  armor_bearer_count: z.coerce.number().int().min(0).max(20).optional(),
   additional_notes: optionalText(4000),
 
   /** Consent is recorded because the desk emails the contact about the request. */
@@ -279,9 +289,30 @@ export const step3DetailsSchema = z.object({
   website_url: z.string().max(0).optional().or(z.literal("")),
 });
 
+export const step3DetailsSchema = step3Base.refine(
+  (v) => v.travel_arrangement !== "host_arranges" || v.armor_bearer_count !== undefined,
+  {
+    path: ["armor_bearer_count"],
+    message: "Tell us how many you are accommodating besides the Bishop",
+  },
+);
+
 export const bookingSubmissionSchema = step1ChurchSchema
-  .merge(step3DetailsSchema)
+  .merge(step3Base)
   .and(step2EventSchema);
+
+/**
+ * Safe label for a stored travel value. `bishop_arranges` is retired but may
+ * still sit on old rows, and the desk should show what was actually chosen
+ * rather than crash or render "undefined".
+ */
+export function travelLabel(value: string | null): string {
+  if (!value) return "Not stated";
+  const known = (TRAVEL_LABELS as Record<string, string>)[value];
+  if (known) return known;
+  if (value === "bishop_arranges") return "Bishop's office to arrange (option since withdrawn)";
+  return value;
+}
 
 export type BookingSubmission = z.infer<typeof bookingSubmissionSchema>;
 

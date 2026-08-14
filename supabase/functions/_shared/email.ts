@@ -114,27 +114,84 @@ export function deskNotificationEmail(v: {
   requestNumber: string;
   churchName: string;
   pastorName: string;
-  eventName: string;
-  when: string;
+  affiliation?: string | null;
   city: string;
   state: string;
+  postalCode?: string | null;
+  address?: string | null;
+  website?: string | null;
   contactName: string;
+  contactRole?: string | null;
   contactEmail: string;
   contactPhone: string;
+  preferred?: string | null;
+  eventName: string;
+  eventType: string;
+  serviceRole: string;
+  apparel?: string | null;
+  when: string;
+  attendance?: number | null;
+  theme?: string | null;
+  venue?: string | null;
+  travel: string;
+  airport?: string | null;
+  party?: number | null;
+  notes?: string | null;
   deskUrl: string;
 }) {
+  // The office asked for the full picture in the email itself. A summary meant
+  // opening the desk to answer a phone call about a request that had just
+  // arrived.
+  const row = (label: string, value: unknown) =>
+    value === null || value === undefined || value === ""
+      ? ""
+      : `<tr><td style="padding:5px 14px 5px 0;color:#6b6b78;vertical-align:top;white-space:nowrap">${esc(label)}</td><td style="padding:5px 0">${esc(value)}</td></tr>`;
+
+  const group = (title: string, rows: string) =>
+    rows.trim()
+      ? `<h3 style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#965900;margin:24px 0 4px">${esc(title)}</h3><table style="font-size:14px;width:100%">${rows}</table>`
+      : "";
+
   return SHELL(
     "New engagement request",
     `<p><strong>${esc(v.churchName)}</strong> (${esc(v.city)}, ${esc(v.state)}) has submitted an
-        invitation.</p>
-     <table style="margin:18px 0;font-size:14px">
-       <tr><td style="padding:4px 12px 4px 0;color:#6b6b78">Reference</td><td>${esc(v.requestNumber)}</td></tr>
-       <tr><td style="padding:4px 12px 4px 0;color:#6b6b78">Pastor</td><td>${esc(v.pastorName)}</td></tr>
-       <tr><td style="padding:4px 12px 4px 0;color:#6b6b78">Event</td><td>${esc(v.eventName)}</td></tr>
-       <tr><td style="padding:4px 12px 4px 0;color:#6b6b78">Date</td><td>${esc(v.when)}</td></tr>
-       <tr><td style="padding:4px 12px 4px 0;color:#6b6b78">Contact</td><td>${esc(v.contactName)} · ${esc(v.contactEmail)} · ${esc(v.contactPhone)}</td></tr>
-     </table>
-     <p><a href="${esc(v.deskUrl)}" style="background:#050c1e;color:#fbf9f4;padding:12px 20px;
+        invitation. Reference <strong>${esc(v.requestNumber)}</strong>.</p>
+
+     ${group("The church", [
+       row("Church", v.churchName),
+       row("Pastor", v.pastorName),
+       row("Affiliation", v.affiliation),
+       row("Address", [v.address, `${v.city}, ${v.state} ${v.postalCode ?? ""}`.trim()].filter(Boolean).join(", ")),
+       row("Website", v.website),
+     ].join(""))}
+
+     ${group("Contact", [
+       row("Name", v.contactName + (v.contactRole ? ` (${v.contactRole})` : "")),
+       row("Email", v.contactEmail),
+       row("Phone", v.contactPhone),
+       row("Prefers", v.preferred),
+     ].join(""))}
+
+     ${group("The event", [
+       row("Event", v.eventName),
+       row("Type", v.eventType),
+       row("Asking", v.serviceRole),
+       row("When", v.when),
+       row("Attire", v.apparel),
+       row("Theme", v.theme),
+       row("Attendance", v.attendance),
+       row("Venue", v.venue),
+     ].join(""))}
+
+     ${group("Travel", [
+       row("Arrangement", v.travel),
+       row("Airport", v.airport),
+       row("Party besides the Bishop", v.party),
+     ].join(""))}
+
+     ${v.notes ? `${group("Anything else", row("Notes", v.notes))}` : ""}
+
+     <p style="margin-top:26px"><a href="${esc(v.deskUrl)}" style="background:#050c1e;color:#fbf9f4;padding:12px 20px;
         text-decoration:none;letter-spacing:.14em;text-transform:uppercase;font-size:12px">
         Open in the Bishop's Desk</a></p>`,
   );

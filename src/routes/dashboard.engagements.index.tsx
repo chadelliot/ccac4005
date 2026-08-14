@@ -16,7 +16,7 @@ import {
   type SummaryBucket,
 } from "@/lib/bishopBooking";
 
-export const Route = createFileRoute("/bishop/engagements/")({
+export const Route = createFileRoute("/dashboard/engagements/")({
   component: EngagementsIndex,
 });
 
@@ -196,7 +196,7 @@ function EngagementsIndex() {
             {filtered.map((r) => (
               <li key={r.id}>
                 <Link
-                  to="/bishop/engagements/$requestId"
+                  to="/dashboard/engagements/$requestId"
                   params={{ requestId: r.id }}
                   className="block border border-border bg-card p-5 hover:border-foreground/30 transition-colors"
                 >

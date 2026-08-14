@@ -30,7 +30,8 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const EVENT_TYPES = ["revival","conference","anniversary","installation","ordination","musical","banquet","funeral","wedding","other"];
 const SERVICE_ROLES = ["preach","teach","keynote","officiate","panel","greetings","other"];
-const TRAVEL = ["host_arranges","bishop_arranges","not_required"];
+// bishop_arranges is retired: the host covers travel.
+const TRAVEL = ["host_arranges","not_required"];
 const APPAREL = ["vestments","civic","shirt_tie","casual","other"];
 
 /** Trim, cap, and turn "" into null so empty optionals do not become empty strings. */
@@ -222,14 +223,34 @@ serve(async (req) => {
             requestNumber: created.request_number,
             churchName: required.church_name!,
             pastorName: required.pastor_name!,
-            eventName: created.event_name,
-            when,
+            affiliation: insert.affiliation,
             city: required.church_city!,
             state: required.church_state!,
+            postalCode: required.church_postal_code,
+            address: insert.church_address,
+            website: insert.church_website,
             contactName: required.contact_name!,
+            contactRole: insert.contact_role,
             contactEmail: contact_email,
             contactPhone: required.contact_phone!,
-            deskUrl: `${site}/bishop/engagements/${created.id}`,
+            preferred: insert.preferred_contact_method,
+            eventName: created.event_name,
+            eventType: insert.event_type_other
+              ? `${event_type} — ${insert.event_type_other}`
+              : event_type,
+            serviceRole: insert.service_role_other
+              ? `${service_role} — ${insert.service_role_other}`
+              : service_role,
+            apparel: insert.apparel_notes ? `${apparel} — ${insert.apparel_notes}` : apparel,
+            when,
+            attendance: insert.expected_attendance,
+            theme: insert.theme,
+            venue: [insert.venue_name, insert.venue_address].filter(Boolean).join(", ") || null,
+            travel: insert.travel_arrangement,
+            airport: insert.nearest_airport,
+            party: insert.armor_bearer_count,
+            notes: insert.additional_notes,
+            deskUrl: `${site}/dashboard/engagements/${created.id}`,
           }),
         });
       }

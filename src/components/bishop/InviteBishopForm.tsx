@@ -16,6 +16,7 @@ import {
   SERVICE_ROLE_LABELS,
   TRAVEL_ARRANGEMENTS,
   TRAVEL_LABELS,
+  TRAVEL_NOTE,
   APPAREL,
   APPAREL_LABELS,
   type PublicSettings,
@@ -27,7 +28,6 @@ type Errors = Record<string, string>;
 const INITIAL: Values = {
   preferred_contact_method: "either",
   travel_arrangement: "host_arranges",
-  armor_bearer_count: 0,
   consent_to_contact: false,
   website_url: "",
 };
@@ -362,11 +362,6 @@ export function InviteBishopForm({
 
           {step === 3 && (
             <>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                None of this is required. If arrangements are not made yet, send the request and
-                the office will follow up.
-              </p>
-
               <Field label="Travel" name="travel_arrangement" errors={errors}>
                 <Radios
                   name="travel_arrangement"
@@ -374,59 +369,44 @@ export function InviteBishopForm({
                   onChange={(v) => set("travel_arrangement", v)}
                   options={TRAVEL_ARRANGEMENTS.map((t) => ({ value: t, label: TRAVEL_LABELS[t] }))}
                 />
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{TRAVEL_NOTE}</p>
               </Field>
-              <div className="grid gap-6 sm:grid-cols-2">
-                <Field label="Nearest airport" name="nearest_airport" errors={errors} hint="Optional">
-                  <Input placeholder="BWI, DCA…" value={str(values.nearest_airport)} onChange={(e) => set("nearest_airport", e.target.value)} />
-                </Field>
-                <Field label="Travelling party" name="armor_bearer_count" errors={errors} hint="Besides the Bishop">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={20}
-                    value={str(values.armor_bearer_count)}
-                    onChange={(e) => set("armor_bearer_count", e.target.value)}
-                  />
-                </Field>
-              </div>
-              <Field
-                label="Accommodation"
-                name="accommodation_notes"
-                errors={errors}
-                hint={settings?.accommodation_policy?.trim() ? undefined : "Optional"}
-              >
-                {settings?.accommodation_policy?.trim() && (
-                  <p className="mb-3 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                    {settings.accommodation_policy}
-                  </p>
-                )}
-                <Textarea
-                  rows={3}
-                  placeholder="Hotel, or what you are able to provide"
-                  value={str(values.accommodation_notes)}
-                  onChange={(e) => set("accommodation_notes", e.target.value)}
-                />
-              </Field>
-              <Field
-                label="Honorarium"
-                name="honorarium_notes"
-                errors={errors}
-                hint={settings?.honorarium_policy?.trim() ? undefined : "Optional"}
-              >
-                {settings?.honorarium_policy?.trim() && (
-                  <p className="mb-3 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                    {settings.honorarium_policy}
-                  </p>
-                )}
-                <Textarea
-                  rows={3}
-                  value={str(values.honorarium_notes)}
-                  onChange={(e) => set("honorarium_notes", e.target.value)}
-                />
-              </Field>
+
+              {values.travel_arrangement === "host_arranges" && (
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <Field label="Nearest airport" name="nearest_airport" errors={errors} hint="Optional">
+                    <Input
+                      placeholder="BWI, DCA…"
+                      value={str(values.nearest_airport)}
+                      onChange={(e) => set("nearest_airport", e.target.value)}
+                    />
+                  </Field>
+                  <Field
+                    label="Travelling party"
+                    name="armor_bearer_count"
+                    errors={errors}
+                    required
+                    hint="How many besides the Bishop"
+                  >
+                    <Input
+                      type="number"
+                      min={0}
+                      max={20}
+                      value={str(values.armor_bearer_count)}
+                      onChange={(e) => set("armor_bearer_count", e.target.value)}
+                    />
+                  </Field>
+                </div>
+              )}
+
               <Field label="Anything else the Bishop should know?" name="additional_notes" errors={errors} hint="Optional">
                 <Textarea rows={4} value={str(values.additional_notes)} onChange={(e) => set("additional_notes", e.target.value)} />
               </Field>
+
+              <p className="text-sm text-muted-foreground leading-relaxed border-l-2 border-gold-deep pl-4">
+                Accommodation and honorarium are set out in the Host Ministry Courtesies, which you
+                will see as soon as this is sent. Nothing to fill in here.
+              </p>
 
               <Summary values={values} />
 
