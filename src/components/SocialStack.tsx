@@ -190,7 +190,7 @@ function PostCard({
       // Cards behind the front one are decoration; keep them out of the tab order.
       {...(front ? {} : { inert: "" as unknown as boolean })}
     >
-      <header className="flex items-center gap-2.5 px-3.5 pt-3.5 pb-2.5">
+      <header className="shrink-0 flex items-center gap-2.5 px-3.5 pt-3.5 pb-2.5">
         <img src={logo} alt="" width={40} height={40} className="h-9 w-9 rounded-full object-contain bg-secondary" />
         <div className="min-w-0 leading-tight">
           <div className="truncate text-[13px] font-semibold">{PAGE_NAME}</div>
@@ -203,7 +203,24 @@ function PostCard({
       </header>
 
       {post.caption && (
-        <p className="px-3.5 pb-2.5 text-[13px] leading-snug line-clamp-3">{post.caption}</p>
+        // The clamp lives on the inner <p>, not on this wrapper, and that nesting
+        // is the whole point. The card is a flex column, so a caption placed
+        // directly in it is a flex item — and flex items are blockified, which
+        // Chrome resolves to display:flow-root. -webkit-line-clamp does nothing
+        // without display:-webkit-box, so the clamp was silently dead: it read as
+        // applied in the class list, computed to flow-root, and let the caption
+        // run five lines deep over the photograph below. Specificity could not
+        // fix it — an inline style lost to blockification too. Only a parent that
+        // is not a flex container can. This wrapper takes the flex-item role and
+        // the padding, leaving the <p> free to actually be a -webkit-box.
+        <div className="shrink-0 px-3.5 pb-3">
+          <p
+            className="overflow-hidden text-[13px] leading-snug"
+            style={{ display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 3 }}
+          >
+            {post.caption}
+          </p>
+        </div>
       )}
 
       <div className="relative flex-1 min-h-0 bg-night-deep">
@@ -248,7 +265,7 @@ function PostCard({
         )}
       </div>
 
-      <footer className="border-t border-border px-3.5 py-2 flex items-center justify-between text-muted-foreground">
+      <footer className="shrink-0 border-t border-border px-3.5 py-2 flex items-center justify-between text-muted-foreground">
         <span className="flex items-center gap-4">
           <ThumbsUp className="h-4 w-4" aria-hidden="true" />
           <MessageCircle className="h-4 w-4" aria-hidden="true" />
