@@ -39,7 +39,7 @@ function AdminPermissionsPage() {
     setLoading(true);
     const { data, error } = await supabase.functions.invoke("admin-manage-permissions", { body: { action: "list" } });
     if (error || data?.error) {
-      toast.error(data?.error || "Couldn't load admins.");
+      toast.error(await serverMessage(error, data, "Couldn't load admins."));
     } else {
       setAdmins(data.admins);
     }
@@ -64,10 +64,37 @@ function AdminPermissionsPage() {
       body: { action: "set_capability", targetUserId, capability, enabled },
     });
     if (error || data?.error) {
-      toast.error(data?.error || "Couldn't update that permission.");
+      toast.error(await serverMessage(error, data, "Couldn't update that permission."));
       load(); // revert by reloading truth from the server
     }
     setPendingKey(null);
+  };
+
+  /**
+   * The server's own words, when it has any.
+   *
+   * supabase-js only fills `data` on a 2xx. Anything else becomes a
+   * FunctionsHttpError with `data` null and the JSON body left unparsed on
+   * `error.context`, so reading `data.error` alone silently discards precise,
+   * actionable messages — "No member account found with that email" arrives as
+   * a flat "Couldn't add that admin."
+   */
+  const serverMessage = async (
+    error: unknown,
+    data: { error?: string } | null,
+    fallback: string,
+  ): Promise<string> => {
+    if (data?.error) return data.error;
+    const context = (error as { context?: Response } | null)?.context;
+    if (context && typeof context.json === "function") {
+      try {
+        const body = await context.json();
+        if (body?.error) return String(body.error);
+      } catch {
+        // Body already consumed or not JSON — fall back below.
+      }
+    }
+    return fallback;
   };
 
   const addAdmin = async () => {
@@ -77,7 +104,7 @@ function AdminPermissionsPage() {
       body: { action: "add_admin", email: addEmail.trim() },
     });
     if (error || data?.error) {
-      toast.error(data?.error || "Couldn't add that admin.");
+      toast.error(await serverMessage(error, data, "Couldn't add that admin."));
     } else {
       toast.success("Admin added. Choose which areas they can manage below.");
       setAddOpen(false);
