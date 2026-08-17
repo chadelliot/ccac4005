@@ -39,6 +39,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_capability_grants: {
+        Row: {
+          capability: Database["public"]["Enums"]["admin_capability"]
+          granted_at: string
+          granted_by: string | null
+          user_id: string
+        }
+        Insert: {
+          capability: Database["public"]["Enums"]["admin_capability"]
+          granted_at?: string
+          granted_by?: string | null
+          user_id: string
+        }
+        Update: {
+          capability?: Database["public"]["Enums"]["admin_capability"]
+          granted_at?: string
+          granted_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bishop_booking_activity: {
         Row: {
           action: string
@@ -1439,6 +1460,13 @@ export type Database = {
     }
     Functions: {
       has_bishop_desk_access: { Args: { _user_id: string }; Returns: boolean }
+      has_capability: {
+        Args: {
+          _capability: Database["public"]["Enums"]["admin_capability"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1465,6 +1493,13 @@ export type Database = {
       }
     }
     Enums: {
+      admin_capability:
+        | "events_review"
+        | "groups_management"
+        | "evangelism_management"
+        | "programs_management"
+        | "bishop_desk"
+        | "admin_management"
       app_role: "admin" | "leader" | "member"
       bishop_apparel: "vestments" | "civic" | "shirt_tie" | "casual" | "other"
       bishop_booking_status:
@@ -1628,6 +1663,14 @@ export const Constants = {
   },
   public: {
     Enums: {
+      admin_capability: [
+        "events_review",
+        "groups_management",
+        "evangelism_management",
+        "programs_management",
+        "bishop_desk",
+        "admin_management",
+      ],
       app_role: ["admin", "leader", "member"],
       bishop_apparel: ["vestments", "civic", "shirt_tie", "casual", "other"],
       bishop_booking_status: [

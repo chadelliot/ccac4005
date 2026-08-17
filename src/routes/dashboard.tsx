@@ -2,7 +2,8 @@ import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-rout
 import { useEffect } from "react";
 import { useSession, useRoles } from "@/lib/auth";
 import { useBishopDesk } from "@/hooks/useBishopDesk";
-import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar, UsersRound, BookOpen, BookMarked, CalendarCheck } from "lucide-react";
+import { useCapabilities } from "@/lib/adminCapabilities";
+import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar, UsersRound, BookOpen, BookMarked, CalendarCheck, ShieldCheck } from "lucide-react";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,8 +18,12 @@ export const Route = createFileRoute("/dashboard")({
 function DashboardLayout() {
   const { user, loading } = useSession();
   const { isAdmin } = useRoles(user);
-  // The engagements tab only appears for the Bishop and his office.
+  // The engagements tab only appears for the Bishop and his office. Left on
+  // useBishopDesk rather than the bishop_desk capability: capabilities can only
+  // be held by admins, and Bishop is not necessarily one. has_bishop_desk_access
+  // ORs the roster and the capability, so both routes in are honoured.
   const desk = useBishopDesk(user);
+  const { has: hasCapability } = useCapabilities(user);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,6 +65,9 @@ function DashboardLayout() {
             {desk.hasAccess && (
               <DashLink to="/dashboard/engagements" icon={<CalendarCheck className="h-4 w-4" />}>Engagements</DashLink>
             )}
+            {hasCapability("admin_management") && (
+              <DashLink to="/dashboard/admin/permissions" icon={<ShieldCheck className="h-4 w-4" />}>Admin Settings</DashLink>
+            )}
           </nav>
         </div>
         <div className="hidden lg:block space-y-3">
@@ -85,6 +93,7 @@ function DashboardLayout() {
             <DashLinkPill to="/dashboard/bible">Bible</DashLinkPill>
             <DashLinkPill to="/dashboard/programs">Programs</DashLinkPill>
             {desk.hasAccess && <DashLinkPill to="/dashboard/engagements">Engagements</DashLinkPill>}
+            {hasCapability("admin_management") && <DashLinkPill to="/dashboard/admin/permissions">Admin</DashLinkPill>}
           </div>
           <div className="hidden lg:block" />
           <NotificationsBell />

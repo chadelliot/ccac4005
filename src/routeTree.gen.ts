@@ -30,6 +30,7 @@ import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
 import { Route as DashboardEvangelismRouteImport } from './routes/dashboard.evangelism'
 import { Route as DashboardEngagementsRouteImport } from './routes/dashboard.engagements'
 import { Route as DashboardBibleRouteImport } from './routes/dashboard.bible'
+import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as AboutSlugRouteImport } from './routes/about_.$slug'
 import { Route as DashboardProgramsIndexRouteImport } from './routes/dashboard.programs.index'
 import { Route as DashboardEventsIndexRouteImport } from './routes/dashboard.events.index'
@@ -42,6 +43,7 @@ import { Route as DashboardEvangelismAdminRouteImport } from './routes/dashboard
 import { Route as DashboardEvangelismIdRouteImport } from './routes/dashboard.evangelism.$id'
 import { Route as DashboardEngagementsSettingsRouteImport } from './routes/dashboard.engagements.settings'
 import { Route as DashboardEngagementsRequestIdRouteImport } from './routes/dashboard.engagements.$requestId'
+import { Route as DashboardAdminPermissionsRouteImport } from './routes/dashboard.admin.permissions'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -148,6 +150,11 @@ const DashboardBibleRoute = DashboardBibleRouteImport.update({
   path: '/bible',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAdminRoute = DashboardAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const AboutSlugRoute = AboutSlugRouteImport.update({
   id: '/about_/$slug',
   path: '/about/$slug',
@@ -213,6 +220,12 @@ const DashboardEngagementsRequestIdRoute =
     path: '/$requestId',
     getParentRoute: () => DashboardEngagementsRoute,
   } as any)
+const DashboardAdminPermissionsRoute =
+  DashboardAdminPermissionsRouteImport.update({
+    id: '/permissions',
+    path: '/permissions',
+    getParentRoute: () => DashboardAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -228,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms': typeof TermsRoute
   '/about/$slug': typeof AboutSlugRoute
+  '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/bible': typeof DashboardBibleRoute
   '/dashboard/engagements': typeof DashboardEngagementsRouteWithChildren
   '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
@@ -237,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/programs': typeof DashboardProgramsRouteWithChildren
   '/events/$id': typeof EventsIdRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/admin/permissions': typeof DashboardAdminPermissionsRoute
   '/dashboard/engagements/$requestId': typeof DashboardEngagementsRequestIdRoute
   '/dashboard/engagements/settings': typeof DashboardEngagementsSettingsRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
@@ -262,11 +277,13 @@ export interface FileRoutesByTo {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms': typeof TermsRoute
   '/about/$slug': typeof AboutSlugRoute
+  '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/bible': typeof DashboardBibleRoute
   '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/groups': typeof DashboardGroupsRouteWithChildren
   '/events/$id': typeof EventsIdRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/admin/permissions': typeof DashboardAdminPermissionsRoute
   '/dashboard/engagements/$requestId': typeof DashboardEngagementsRequestIdRoute
   '/dashboard/engagements/settings': typeof DashboardEngagementsSettingsRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
@@ -294,6 +311,7 @@ export interface FileRoutesById {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms': typeof TermsRoute
   '/about_/$slug': typeof AboutSlugRoute
+  '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/bible': typeof DashboardBibleRoute
   '/dashboard/engagements': typeof DashboardEngagementsRouteWithChildren
   '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
@@ -303,6 +321,7 @@ export interface FileRoutesById {
   '/dashboard/programs': typeof DashboardProgramsRouteWithChildren
   '/events_/$id': typeof EventsIdRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/admin/permissions': typeof DashboardAdminPermissionsRoute
   '/dashboard/engagements/$requestId': typeof DashboardEngagementsRequestIdRoute
   '/dashboard/engagements/settings': typeof DashboardEngagementsSettingsRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
@@ -331,6 +350,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/terms'
     | '/about/$slug'
+    | '/dashboard/admin'
     | '/dashboard/bible'
     | '/dashboard/engagements'
     | '/dashboard/evangelism'
@@ -340,6 +360,7 @@ export interface FileRouteTypes {
     | '/dashboard/programs'
     | '/events/$id'
     | '/dashboard/'
+    | '/dashboard/admin/permissions'
     | '/dashboard/engagements/$requestId'
     | '/dashboard/engagements/settings'
     | '/dashboard/evangelism/$id'
@@ -365,11 +386,13 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/terms'
     | '/about/$slug'
+    | '/dashboard/admin'
     | '/dashboard/bible'
     | '/dashboard/follow-ups'
     | '/dashboard/groups'
     | '/events/$id'
     | '/dashboard'
+    | '/dashboard/admin/permissions'
     | '/dashboard/engagements/$requestId'
     | '/dashboard/engagements/settings'
     | '/dashboard/evangelism/$id'
@@ -396,6 +419,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/terms'
     | '/about_/$slug'
+    | '/dashboard/admin'
     | '/dashboard/bible'
     | '/dashboard/engagements'
     | '/dashboard/evangelism'
@@ -405,6 +429,7 @@ export interface FileRouteTypes {
     | '/dashboard/programs'
     | '/events_/$id'
     | '/dashboard/'
+    | '/dashboard/admin/permissions'
     | '/dashboard/engagements/$requestId'
     | '/dashboard/engagements/settings'
     | '/dashboard/evangelism/$id'
@@ -584,6 +609,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBibleRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/admin': {
+      id: '/dashboard/admin'
+      path: '/admin'
+      fullPath: '/dashboard/admin'
+      preLoaderRoute: typeof DashboardAdminRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/about_/$slug': {
       id: '/about_/$slug'
       path: '/about/$slug'
@@ -668,8 +700,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardEngagementsRequestIdRouteImport
       parentRoute: typeof DashboardEngagementsRoute
     }
+    '/dashboard/admin/permissions': {
+      id: '/dashboard/admin/permissions'
+      path: '/permissions'
+      fullPath: '/dashboard/admin/permissions'
+      preLoaderRoute: typeof DashboardAdminPermissionsRouteImport
+      parentRoute: typeof DashboardAdminRoute
+    }
   }
 }
+
+interface DashboardAdminRouteChildren {
+  DashboardAdminPermissionsRoute: typeof DashboardAdminPermissionsRoute
+}
+
+const DashboardAdminRouteChildren: DashboardAdminRouteChildren = {
+  DashboardAdminPermissionsRoute: DashboardAdminPermissionsRoute,
+}
+
+const DashboardAdminRouteWithChildren = DashboardAdminRoute._addFileChildren(
+  DashboardAdminRouteChildren,
+)
 
 interface DashboardEngagementsRouteChildren {
   DashboardEngagementsRequestIdRoute: typeof DashboardEngagementsRequestIdRoute
@@ -741,6 +792,7 @@ const DashboardProgramsRouteWithChildren =
   DashboardProgramsRoute._addFileChildren(DashboardProgramsRouteChildren)
 
 interface DashboardRouteChildren {
+  DashboardAdminRoute: typeof DashboardAdminRouteWithChildren
   DashboardBibleRoute: typeof DashboardBibleRoute
   DashboardEngagementsRoute: typeof DashboardEngagementsRouteWithChildren
   DashboardEvangelismRoute: typeof DashboardEvangelismRouteWithChildren
@@ -752,6 +804,7 @@ interface DashboardRouteChildren {
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAdminRoute: DashboardAdminRouteWithChildren,
   DashboardBibleRoute: DashboardBibleRoute,
   DashboardEngagementsRoute: DashboardEngagementsRouteWithChildren,
   DashboardEvangelismRoute: DashboardEvangelismRouteWithChildren,

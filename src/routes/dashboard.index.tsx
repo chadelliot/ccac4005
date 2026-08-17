@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/auth";
+import { AdminActionItems } from "@/components/dashboard/AdminActionItems";
 import { Users, Bell, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/")({
@@ -35,6 +36,13 @@ function DashboardOverview() {
         <h1 className="font-display text-5xl">{name || "Member"}</h1>
         <p className="text-muted-foreground mt-3">Here's what's happening in your ministry today.</p>
       </div>
+
+      {/* Above the personal stats on purpose: what is waiting on this admin
+          should be the first thing they see, and it renders nothing at all for
+          members, or for an admin whose queues happen to be empty. Each row is
+          gated on the capability that governs it, so nobody is shown a queue
+          they cannot act on. */}
+      <AdminActionItems user={user} />
 
       <div className="grid sm:grid-cols-3 gap-4">
         <StatCard icon={<Users />} label="Contacts You've Added" value={stats.contacts} link="/dashboard/evangelism" />

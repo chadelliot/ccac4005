@@ -44,3 +44,10 @@ verify_jwt = false
 # public video URLs and live/offline status.
 [functions.facebook-live-status]
 verify_jwt = false
+
+# Private — the Admin Settings screen. verify_jwt proves the caller is signed
+# in; the function additionally requires the 'admin_management' capability
+# before it will list admins or change anyone's grants. It needs the service
+# role because auth.users (and therefore email) is not exposed to PostgREST.
+[functions.admin-manage-permissions]
+verify_jwt = true
