@@ -39,3 +39,10 @@ dist-ssr
 
 # Supabase CLI link state — machine-local, and it records the project ref.
 supabase/.temp/
+
+# Source flyers live in Supabase storage, not the repo. Dropping the
+# originals here keeps print-resolution artwork out of a public repo and out
+# of every clone.
+/*.jpg
+/*.jpeg
+/*.png
