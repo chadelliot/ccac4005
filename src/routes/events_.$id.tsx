@@ -10,7 +10,67 @@ import { Label } from "@/components/ui/label";
 import { Calendar, MapPin, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
+const SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL || "https://ccacbmore.com";
+
 export const Route = createFileRoute("/events_/$id")({
+  // The loader exists for the crawlers, not the browser.
+  //
+  // Social previews are built from the HTML as served. Facebook, iMessage,
+  // WhatsApp and X do not run JavaScript, so an og:image assigned in a
+  // useEffect is invisible to every one of them. This route is prerendered
+  // per event (see PUBLIC_PAGES in vite.config.ts), and the loader is what
+  // gives head() the flyer URL to bake into that static HTML.
+  loader: async ({ params }) => {
+    const { data } = await supabase
+      .from("events")
+      .select("id,title,description,location,start_at,end_at,flyer_url")
+      .eq("id", params.id)
+      .eq("status", "approved")
+      .eq("is_public", true)
+      .maybeSingle();
+    return { event: (data as PublicEvent | null) ?? null };
+  },
+
+  head: ({ loaderData }) => {
+    const event = loaderData?.event;
+    if (!event) {
+      return { meta: [{ title: "Event — Christ Cathedral Apostolic" }] };
+    }
+
+    const when = new Date(event.start_at).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "America/New_York",
+    });
+    const description =
+      event.description?.replace(/\s+/g, " ").trim().slice(0, 200) ||
+      [when, event.location].filter(Boolean).join(" · ");
+
+    // Absolute, because a relative og:image is ignored by most scrapers.
+    const image = event.flyer_url || `${SITE_URL}/og-image.jpg`;
+
+    return {
+      meta: [
+        { title: `${event.title} — Christ Cathedral Apostolic` },
+        { name: "description", content: description },
+        { property: "og:type", content: "article" },
+        { property: "og:title", content: event.title },
+        { property: "og:description", content: description },
+        { property: "og:image", content: image },
+        { property: "og:url", content: `${SITE_URL}/events/${event.id}` },
+        { property: "og:site_name", content: "Christ Cathedral Apostolic Church" },
+        // summary_large_image is what makes the flyer render full-width in a
+        // share card rather than as a thumbnail beside the text.
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: event.title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: image },
+      ],
+    };
+  },
+
   component: PublicEventDetail,
 });
 
@@ -32,11 +92,14 @@ const rsvpSchema = z.object({
 
 function PublicEventDetail() {
   const { id } = Route.useParams();
-  const [event, setEvent] = useState<PublicEvent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { event: preloaded } = Route.useLoaderData();
+  const [event, setEvent] = useState<PublicEvent | null>(preloaded);
+  const [loading, setLoading] = useState(!preloaded);
   const [missing, setMissing] = useState(false);
 
   useEffect(() => {
+    // Already resolved at prerender time; no need to ask again on load.
+    if (preloaded) return;
     (async () => {
       const { data } = await supabase
         .from("events")
@@ -49,7 +112,7 @@ function PublicEventDetail() {
       else setEvent(data as PublicEvent);
       setLoading(false);
     })();
-  }, [id]);
+  }, [id, preloaded]);
 
   return (
     <div className="min-h-screen sand-page flex flex-col">
@@ -92,9 +155,13 @@ function EventBody({ event }: { event: PublicEvent }) {
   return (
     <div className="grid lg:grid-cols-[1.2fr_1fr] gap-10">
       <div className="space-y-6">
+        {/* No fixed aspect here, unlike the grid. This is the page someone opens
+            to read the flyer, and a flyer is only useful whole — the date and
+            address live at the bottom edge, which any crop removes first. The
+            grid keeps its crop so the cards stay a tidy row. */}
         {event.flyer_url && (
-          <div className="aspect-[4/3] bg-muted overflow-hidden border border-border">
-            <img src={event.flyer_url} alt={event.title} className="w-full h-full object-cover" />
+          <div className="bg-muted overflow-hidden border border-border">
+            <img src={event.flyer_url} alt={event.title} className="w-full h-auto" />
           </div>
         )}
         <div className="space-y-3 text-sm">

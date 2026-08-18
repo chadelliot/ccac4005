@@ -159,7 +159,11 @@ function PublicEventCard({ event }: { event: PublicEvent }) {
 
   return (
     <Wrapper>
-      <div className="aspect-[4/3] bg-muted relative overflow-hidden">
+      {/* 4:5, not 4:3. Event flyers are portrait almost without exception —
+          both of the church's own are exactly 1400x1750 — and a landscape crop
+          cut off the church name at the top and the date and address at the
+          bottom, which is the part people actually came to read. */}
+      <div className="aspect-[4/5] bg-muted relative overflow-hidden">
         {event.flyer_url ? (
           <img
             src={event.flyer_url}
