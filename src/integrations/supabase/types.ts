@@ -721,6 +721,7 @@ export type Database = {
           flyer_url: string | null
           group_id: string | null
           id: string
+          is_featured: boolean
           is_public: boolean
           location: string | null
           rejection_reason: string | null
@@ -739,6 +740,7 @@ export type Database = {
           flyer_url?: string | null
           group_id?: string | null
           id?: string
+          is_featured?: boolean
           is_public?: boolean
           location?: string | null
           rejection_reason?: string | null
@@ -757,6 +759,7 @@ export type Database = {
           flyer_url?: string | null
           group_id?: string | null
           id?: string
+          is_featured?: boolean
           is_public?: boolean
           location?: string | null
           rejection_reason?: string | null

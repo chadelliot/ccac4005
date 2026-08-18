@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
+import { useCapabilities } from "@/lib/adminCapabilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,6 +47,7 @@ const eventSchema = z.object({
   start_at: z.string().min(1, "Start date/time is required"),
   end_at: z.string().optional().or(z.literal("")),
   is_public: z.boolean(),
+  is_featured: z.boolean(),
 });
 
 function EventsPage() {
@@ -231,12 +233,19 @@ export function StatusBadge({ status }: { status: EventRow["status"] }) {
 
 function SubmitEventDialog({ onSubmitted }: { onSubmitted: () => void }) {
   const { user } = useSession();
+  // Featuring puts an event across the top of the public homepage, so it is
+  // offered only to admins who already review events. The database enforces
+  // the same rule with a trigger; this just avoids showing a switch whose use
+  // would be rejected on submit.
+  const { has: hasCapability } = useCapabilities(user);
+  const canFeature = hasCapability("events_review");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
   const [isPublic, setIsPublic] = useState(false);
+  const [isFeatured, setIsFeatured] = useState(false);
   const [flyer, setFlyer] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -251,6 +260,7 @@ function SubmitEventDialog({ onSubmitted }: { onSubmitted: () => void }) {
       start_at: startAt,
       end_at: endAt,
       is_public: isPublic,
+      is_featured: isFeatured,
     });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
@@ -283,6 +293,10 @@ function SubmitEventDialog({ onSubmitted }: { onSubmitted: () => void }) {
         start_at: new Date(parsed.data.start_at).toISOString(),
         end_at: parsed.data.end_at ? new Date(parsed.data.end_at).toISOString() : null,
         is_public: parsed.data.is_public,
+        // Re-checked here because capabilities could have changed mid-session;
+        // a quietly unfeatured event a reviewer can flip on beats a rejected
+        // insert that loses everything they typed.
+        is_featured: canFeature ? parsed.data.is_featured : false,
         flyer_url,
         submitted_by: user.id,
       });
@@ -362,6 +376,23 @@ function SubmitEventDialog({ onSubmitted }: { onSubmitted: () => void }) {
           />
           Share publicly on the website once approved
         </label>
+        {canFeature && (
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={isFeatured}
+              onChange={(e) => setIsFeatured(e.target.checked)}
+              className="h-4 w-4 mt-0.5"
+            />
+            <span>
+              Feature with a countdown
+              <span className="block text-xs text-muted-foreground">
+                Adds a countdown to the top of the events page and a bar across the homepage.
+                If more than one event is featured, the soonest one shows.
+              </span>
+            </span>
+          </label>
+        )}
         <DialogFooter>
           <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
             {submitting ? "Submitting…" : "Submit for approval"}

@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, ImagePlus } from "lucide-react";
 import { functionsBase, anonKey } from "@/lib/bishopDb";
+import { FeaturedEventCountdown } from "@/components/FeaturedEventCountdown";
 
 export const Route = createFileRoute("/events")({
   head: () => ({
@@ -100,7 +101,9 @@ function PublicEventsPage() {
         </p>
       </PageHero>
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-6 lg:px-10 py-16">
+      <main className="flex-1 mx-auto max-w-7xl w-full px-6 lg:px-10 py-16 space-y-12">
+        <FeaturedEventCountdown />
+
         {loading ? (
           <div className="eyebrow text-muted-foreground">Loading…</div>
         ) : events.length === 0 ? (
