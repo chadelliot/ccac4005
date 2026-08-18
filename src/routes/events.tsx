@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, ImagePlus } from "lucide-react";
 import { functionsBase, anonKey } from "@/lib/bishopDb";
-import { FeaturedEventCountdown } from "@/components/FeaturedEventCountdown";
+import { EventsHeroCountdown } from "@/components/EventsHeroCountdown";
 
 export const Route = createFileRoute("/events")({
   head: () => ({
@@ -91,19 +91,25 @@ function PublicEventsPage() {
   return (
     <div className="min-h-screen sand-page flex flex-col">
       <PageHero className="pt-32 pb-20">
-        <div className="eyebrow text-gold mb-4">— Gatherings</div>
-        <h1 className="font-display text-5xl md:text-6xl max-w-3xl">
-          Upcoming Events
-        </h1>
-        <p className="mt-5 max-w-2xl text-night-foreground/70">
-          Everyone is welcome. Browse our public events below and let us know you're
-          coming — no account required.
-        </p>
+        {/* Heading and countdown share one row from lg up, so the counter reads
+            as part of the hero rather than a banner stacked beneath it. Below
+            lg it wraps under the copy, where four large cells still fit. */}
+        <div className="flex flex-wrap items-end justify-between gap-x-12 gap-y-10">
+          <div>
+            <div className="eyebrow text-gold mb-4">— Gatherings</div>
+            <h1 className="font-display text-5xl md:text-6xl max-w-3xl">
+              Upcoming Events
+            </h1>
+            <p className="mt-5 max-w-2xl text-night-foreground/70">
+              Everyone is welcome. Browse our public events below and let us know you're
+              coming — no account required.
+            </p>
+          </div>
+          <EventsHeroCountdown />
+        </div>
       </PageHero>
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-6 lg:px-10 py-16 space-y-12">
-        <FeaturedEventCountdown />
-
+      <main className="flex-1 mx-auto max-w-7xl w-full px-6 lg:px-10 py-16">
         {loading ? (
           <div className="eyebrow text-muted-foreground">Loading…</div>
         ) : events.length === 0 ? (

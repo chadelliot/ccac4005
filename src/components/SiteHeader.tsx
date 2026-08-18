@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, LogOut, User as UserIcon, ChevronDown } from "lucide-react";
+import { HeaderCountdown } from "@/components/HeaderCountdown";
 import { useSession } from "@/lib/auth";
 import { useLiveStream } from "@/hooks/useLiveStream";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,7 +56,14 @@ function EventsLinks({ className, activeClassName, onNavigate }: GroupLinkProps)
  * positioned, so on pages whose hero is light (Give, event detail) the cream
  * text would otherwise land on a cream background and vanish.
  */
-export function SiteHeader({ tone = "dark" }: { tone?: "dark" | "light" }) {
+export function SiteHeader({
+  tone = "dark",
+  showCountdown = false,
+}: {
+  tone?: "dark" | "light";
+  /** Opt-in: the countdown chip is a homepage nudge, not site-wide chrome. */
+  showCountdown?: boolean;
+}) {
   const light = tone === "light";
   const [open, setOpen] = useState(false);
   const { user } = useSession();
@@ -110,6 +118,12 @@ export function SiteHeader({ tone = "dark" }: { tone?: "dark" | "light" }) {
             Give
           </Link>
         </nav>
+
+        {showCountdown && (
+          <div className="flex items-center gap-3">
+            <HeaderCountdown />
+          </div>
+        )}
 
         <div className="hidden lg:flex items-center gap-3">
           {user && <NotificationsBell />}

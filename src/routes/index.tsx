@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
-import { FeaturedEventBar } from "@/components/FeaturedEventBar";
 import { SocialStack } from "@/components/SocialStack";
 import { SiteFooter } from "@/components/SiteFooter";
 import { HeroVideo } from "@/components/HeroVideo";
@@ -34,16 +33,11 @@ const marquee = [
 function HomePage() {
   return (
     <div className="bg-background text-foreground">
-      {/* Before the hero, not inside it: SiteHeader is absolute against the
-          hero section, so a bar placed here pushes the header down on its own
-          and there is no offset to keep in sync. Renders nothing when no
-          featured event is upcoming. */}
-      <FeaturedEventBar />
 
       {/* HERO */}
       <section className="relative min-h-screen overflow-hidden bg-night text-night-foreground">
         <HeroVideo />
-        <SiteHeader />
+        <SiteHeader showCountdown />
 
         <div className="relative mx-auto max-w-7xl px-6 lg:px-10 pt-40 pb-32 lg:pt-48">
           {/* Two columns from lg up: the headline keeps the left, the social
