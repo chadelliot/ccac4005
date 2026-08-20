@@ -1433,6 +1433,57 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_services: {
+        Row: {
+          day_of_week: number
+          description: string | null
+          id: string
+          is_active: boolean
+          is_virtual: boolean
+          location: string | null
+          sort_order: number
+          start_time: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          virtual_link: string | null
+          virtual_note: string | null
+          virtual_until: string | null
+        }
+        Insert: {
+          day_of_week: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_virtual?: boolean
+          location?: string | null
+          sort_order?: number
+          start_time: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          virtual_link?: string | null
+          virtual_note?: string | null
+          virtual_until?: string | null
+        }
+        Update: {
+          day_of_week?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_virtual?: boolean
+          location?: string | null
+          sort_order?: number
+          start_time?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          virtual_link?: string | null
+          virtual_note?: string | null
+          virtual_until?: string | null
+        }
+        Relationships: []
+      }
       witnesses: {
         Row: {
           created_at: string

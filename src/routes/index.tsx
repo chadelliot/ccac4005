@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { FeaturedEventBar } from "@/components/FeaturedEventBar";
+import { WeeklyServiceInvite } from "@/components/WeeklyServiceInvite";
 import { SocialStack } from "@/components/SocialStack";
 import { SiteFooter } from "@/components/SiteFooter";
 import { HeroVideo } from "@/components/HeroVideo";
@@ -39,6 +40,11 @@ function HomePage() {
           and there is no offset to keep in sync. Renders nothing outside the
           fortnight before a featured event. */}
       <FeaturedEventBar />
+
+      {/* Fixed to the corner rather than in the flow: it is an invitation, not
+          a section, and it must not push the hero down. Dismissal lasts until
+          that service has passed, so it returns of its own accord next week. */}
+      <WeeklyServiceInvite />
 
       {/* HERO */}
       <section className="relative min-h-screen overflow-hidden bg-night text-night-foreground">
