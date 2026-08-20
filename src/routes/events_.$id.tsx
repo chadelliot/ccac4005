@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHero } from "@/components/PageHero";
+import { EventGuestList } from "@/components/EventGuestList";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -196,8 +197,12 @@ function EventBody({ event }: { event: PublicEvent }) {
         )}
       </div>
 
-      <aside className="lg:sticky lg:top-8 self-start">
+      <aside className="lg:sticky lg:top-8 self-start space-y-6">
         <GuestRsvpForm eventId={event.id} eventTitle={event.title} />
+        {/* Under the form, not above it: the point of showing who's coming is
+            to encourage an RSVP, so a visitor should meet the form first. It
+            renders nothing until somebody has actually replied. */}
+        <EventGuestList eventId={event.id} />
       </aside>
     </div>
   );

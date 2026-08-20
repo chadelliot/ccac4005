@@ -1448,6 +1448,7 @@ export type Database = {
           updated_by: string | null
           virtual_link: string | null
           virtual_note: string | null
+          virtual_platform: string | null
           virtual_until: string | null
         }
         Insert: {
@@ -1464,6 +1465,7 @@ export type Database = {
           updated_by?: string | null
           virtual_link?: string | null
           virtual_note?: string | null
+          virtual_platform?: string | null
           virtual_until?: string | null
         }
         Update: {
@@ -1480,6 +1482,7 @@ export type Database = {
           updated_by?: string | null
           virtual_link?: string | null
           virtual_note?: string | null
+          virtual_platform?: string | null
           virtual_until?: string | null
         }
         Relationships: []
@@ -1513,6 +1516,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      event_guest_list: {
+        Args: { _event_id: string }
+        Returns: {
+          first_name: string
+          is_member: boolean
+          response: string
+        }[]
+      }
       has_bishop_desk_access: { Args: { _user_id: string }; Returns: boolean }
       has_capability: {
         Args: {
