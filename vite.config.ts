@@ -13,6 +13,7 @@ const PUBLIC_PAGES = [
   "/about/brandi-marcus",
   "/plan-visit",
   "/events",
+  "/bible-study",
   "/find-us",
   "/give",
   "/live",

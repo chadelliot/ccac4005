@@ -18,11 +18,13 @@ import { Route as GiveRouteImport } from './routes/give'
 import { Route as FindUsRouteImport } from './routes/find-us'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as BibleStudyRouteImport } from './routes/bible-study'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as EventsIdRouteImport } from './routes/events_.$id'
+import { Route as DashboardServicesRouteImport } from './routes/dashboard.services'
 import { Route as DashboardProgramsRouteImport } from './routes/dashboard.programs'
 import { Route as DashboardGroupsRouteImport } from './routes/dashboard.groups'
 import { Route as DashboardFollowUpsRouteImport } from './routes/dashboard.follow-ups'
@@ -90,6 +92,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BibleStudyRoute = BibleStudyRouteImport.update({
+  id: '/bible-study',
+  path: '/bible-study',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -114,6 +121,11 @@ const EventsIdRoute = EventsIdRouteImport.update({
   id: '/events_/$id',
   path: '/events/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardServicesRoute = DashboardServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardProgramsRoute = DashboardProgramsRouteImport.update({
   id: '/programs',
@@ -231,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/bible-study': typeof BibleStudyRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/events': typeof EventsRoute
   '/find-us': typeof FindUsRoute
@@ -249,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/groups': typeof DashboardGroupsRouteWithChildren
   '/dashboard/programs': typeof DashboardProgramsRouteWithChildren
+  '/dashboard/services': typeof DashboardServicesRoute
   '/events/$id': typeof EventsIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/admin/permissions': typeof DashboardAdminPermissionsRoute
@@ -268,6 +282,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/bible-study': typeof BibleStudyRoute
   '/events': typeof EventsRoute
   '/find-us': typeof FindUsRoute
   '/give': typeof GiveRoute
@@ -281,6 +296,7 @@ export interface FileRoutesByTo {
   '/dashboard/bible': typeof DashboardBibleRoute
   '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/groups': typeof DashboardGroupsRouteWithChildren
+  '/dashboard/services': typeof DashboardServicesRoute
   '/events/$id': typeof EventsIdRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/admin/permissions': typeof DashboardAdminPermissionsRoute
@@ -301,6 +317,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/bible-study': typeof BibleStudyRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/events': typeof EventsRoute
   '/find-us': typeof FindUsRoute
@@ -319,6 +336,7 @@ export interface FileRoutesById {
   '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/groups': typeof DashboardGroupsRouteWithChildren
   '/dashboard/programs': typeof DashboardProgramsRouteWithChildren
+  '/dashboard/services': typeof DashboardServicesRoute
   '/events_/$id': typeof EventsIdRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/admin/permissions': typeof DashboardAdminPermissionsRoute
@@ -340,6 +358,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/bible-study'
     | '/dashboard'
     | '/events'
     | '/find-us'
@@ -358,6 +377,7 @@ export interface FileRouteTypes {
     | '/dashboard/follow-ups'
     | '/dashboard/groups'
     | '/dashboard/programs'
+    | '/dashboard/services'
     | '/events/$id'
     | '/dashboard/'
     | '/dashboard/admin/permissions'
@@ -377,6 +397,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/bible-study'
     | '/events'
     | '/find-us'
     | '/give'
@@ -390,6 +411,7 @@ export interface FileRouteTypes {
     | '/dashboard/bible'
     | '/dashboard/follow-ups'
     | '/dashboard/groups'
+    | '/dashboard/services'
     | '/events/$id'
     | '/dashboard'
     | '/dashboard/admin/permissions'
@@ -409,6 +431,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/bible-study'
     | '/dashboard'
     | '/events'
     | '/find-us'
@@ -427,6 +450,7 @@ export interface FileRouteTypes {
     | '/dashboard/follow-ups'
     | '/dashboard/groups'
     | '/dashboard/programs'
+    | '/dashboard/services'
     | '/events_/$id'
     | '/dashboard/'
     | '/dashboard/admin/permissions'
@@ -447,6 +471,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
+  BibleStudyRoute: typeof BibleStudyRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   EventsRoute: typeof EventsRoute
   FindUsRoute: typeof FindUsRoute
@@ -525,6 +550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bible-study': {
+      id: '/bible-study'
+      path: '/bible-study'
+      fullPath: '/bible-study'
+      preLoaderRoute: typeof BibleStudyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -559,6 +591,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/events/$id'
       preLoaderRoute: typeof EventsIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/services': {
+      id: '/dashboard/services'
+      path: '/services'
+      fullPath: '/dashboard/services'
+      preLoaderRoute: typeof DashboardServicesRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/programs': {
       id: '/dashboard/programs'
@@ -800,6 +839,7 @@ interface DashboardRouteChildren {
   DashboardFollowUpsRoute: typeof DashboardFollowUpsRoute
   DashboardGroupsRoute: typeof DashboardGroupsRouteWithChildren
   DashboardProgramsRoute: typeof DashboardProgramsRouteWithChildren
+  DashboardServicesRoute: typeof DashboardServicesRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
@@ -812,6 +852,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardFollowUpsRoute: DashboardFollowUpsRoute,
   DashboardGroupsRoute: DashboardGroupsRouteWithChildren,
   DashboardProgramsRoute: DashboardProgramsRouteWithChildren,
+  DashboardServicesRoute: DashboardServicesRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 
@@ -823,6 +864,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
+  BibleStudyRoute: BibleStudyRoute,
   DashboardRoute: DashboardRouteWithChildren,
   EventsRoute: EventsRoute,
   FindUsRoute: FindUsRoute,

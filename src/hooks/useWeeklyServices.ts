@@ -9,6 +9,7 @@ export type WeeklyService = {
   start_time: string;
   location: string | null;
   is_virtual: boolean;
+  virtual_platform: "zoom" | "facebook" | "other" | null;
   virtual_note: string | null;
   virtual_link: string | null;
   virtual_until: string | null;
@@ -101,7 +102,7 @@ export function useWeeklyServices() {
     (async () => {
       const { data } = await supabase
         .from("weekly_services")
-        .select("id,title,description,day_of_week,start_time,location,is_virtual,virtual_note,virtual_link,virtual_until")
+        .select("id,title,description,day_of_week,start_time,location,is_virtual,virtual_platform,virtual_note,virtual_link,virtual_until")
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
       if (active) setServices((data as WeeklyService[] | null) ?? []);

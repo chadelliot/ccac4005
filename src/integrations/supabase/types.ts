@@ -1522,6 +1522,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      announce_virtual_service: {
+        Args: {
+          _link?: string
+          _note?: string
+          _platform: string
+          _service_id: string
+        }
+        Returns: {
+          meeting_at: string
+          notified: number
+        }[]
+      }
+      clear_virtual_service: {
+        Args: { _service_id: string }
+        Returns: undefined
+      }
       event_guest_list: {
         Args: { _event_id: string }
         Returns: {
@@ -1562,6 +1578,10 @@ export type Database = {
       is_group_member: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
+      }
+      next_service_occurrence: {
+        Args: { _day_of_week: number; _start_time: string }
+        Returns: string
       }
       prune_bishop_rate_limit: {
         Args: { _older_than?: string }
