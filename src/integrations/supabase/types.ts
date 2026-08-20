@@ -656,6 +656,7 @@ export type Database = {
           event_id: string
           id: string
           name: string
+          party_size: number
           response: string
         }
         Insert: {
@@ -664,6 +665,7 @@ export type Database = {
           event_id: string
           id?: string
           name: string
+          party_size?: number
           response?: string
         }
         Update: {
@@ -672,6 +674,7 @@ export type Database = {
           event_id?: string
           id?: string
           name?: string
+          party_size?: number
           response?: string
         }
         Relationships: []
@@ -681,6 +684,7 @@ export type Database = {
           created_at: string
           event_id: string
           id: string
+          party_size: number
           response: string
           updated_at: string
           user_id: string
@@ -689,6 +693,7 @@ export type Database = {
           created_at?: string
           event_id: string
           id?: string
+          party_size?: number
           response?: string
           updated_at?: string
           user_id: string
@@ -697,6 +702,7 @@ export type Database = {
           created_at?: string
           event_id?: string
           id?: string
+          party_size?: number
           response?: string
           updated_at?: string
           user_id?: string
@@ -1521,7 +1527,16 @@ export type Database = {
         Returns: {
           first_name: string
           is_member: boolean
+          party_size: number
           response: string
+        }[]
+      }
+      event_headcount: {
+        Args: { _event_id: string }
+        Returns: {
+          going: number
+          maybe: number
+          parties: number
         }[]
       }
       has_bishop_desk_access: { Args: { _user_id: string }; Returns: boolean }

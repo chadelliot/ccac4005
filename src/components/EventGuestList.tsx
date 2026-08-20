@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-type Guest = { first_name: string | null; response: string; is_member: boolean };
+type Guest = { first_name: string | null; response: string; is_member: boolean; party_size: number };
 
 /**
  * Who's coming, for anyone with the event link.
@@ -35,6 +35,13 @@ export function EventGuestList({ eventId }: { eventId: string }) {
   const going = guests.filter((g) => g.response === "going");
   const maybe = guests.filter((g) => g.response === "maybe");
 
+  // Head count, not reply count. A family of five replying once is five seats,
+  // five meals and five giveaways — the number a planner actually needs.
+  const headcount = (list: Guest[]) => list.reduce((n, g) => n + (g.party_size || 1), 0);
+  const goingHeads = headcount(going);
+  const maybeHeads = headcount(maybe);
+  const extraGuests = goingHeads - going.length;
+
   return (
     <section className="border border-border bg-card p-6">
       <div className="eyebrow text-gold-deep mb-4 flex items-center gap-1.5">
@@ -43,16 +50,23 @@ export function EventGuestList({ eventId }: { eventId: string }) {
 
       <div className="flex items-baseline gap-4">
         <div>
-          <span className="font-display text-3xl">{going.length}</span>
+          <span className="font-display text-3xl">{goingHeads}</span>
           <span className="ml-1.5 text-sm text-muted-foreground">going</span>
         </div>
-        {maybe.length > 0 && (
+        {maybeHeads > 0 && (
           <div>
-            <span className="font-display text-2xl text-muted-foreground">{maybe.length}</span>
+            <span className="font-display text-2xl text-muted-foreground">{maybeHeads}</span>
             <span className="ml-1.5 text-sm text-muted-foreground">maybe</span>
           </div>
         )}
       </div>
+
+      {extraGuests > 0 && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          {going.length} {going.length === 1 ? "reply" : "replies"}, bringing {extraGuests}{" "}
+          {extraGuests === 1 ? "guest" : "guests"}
+        </p>
+      )}
 
       {going.length > 0 && <NameRow guests={going} />}
       {maybe.length > 0 && (
@@ -83,7 +97,12 @@ function NameRow({ guests, muted = false }: { guests: Guest[]; muted?: boolean }
                 they just have no initial to show. */}
             {g.first_name?.[0] ?? "?"}
           </span>
-          <span className="text-sm">{g.first_name ?? "Guest"}</span>
+          <span className="text-sm">
+            {g.first_name ?? "Guest"}
+            {g.party_size > 1 && (
+              <span className="ml-1 text-muted-foreground">+{g.party_size - 1}</span>
+            )}
+          </span>
         </li>
       ))}
     </ul>

@@ -89,6 +89,8 @@ const rsvpSchema = z.object({
   name: z.string().trim().min(2, "Please enter your name").max(100),
   email: z.string().trim().email("Enter a valid email").max(200),
   response: z.enum(["going", "maybe"]),
+  // The whole party including the person replying, so 1 means just them.
+  party_size: z.number().int().min(1).max(20),
 });
 
 function PublicEventDetail() {
@@ -212,12 +214,13 @@ function GuestRsvpForm({ eventId, eventTitle }: { eventId: string; eventTitle: s
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [response, setResponse] = useState<"going" | "maybe">("going");
+  const [partySize, setPartySize] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = rsvpSchema.safeParse({ name, email, response });
+    const parsed = rsvpSchema.safeParse({ name, email, response, party_size: partySize });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
       return;
@@ -228,6 +231,7 @@ function GuestRsvpForm({ eventId, eventTitle }: { eventId: string; eventTitle: s
       name: parsed.data.name,
       email: parsed.data.email,
       response: parsed.data.response,
+      party_size: parsed.data.party_size,
     });
     setSubmitting(false);
     if (error) {
@@ -245,8 +249,9 @@ function GuestRsvpForm({ eventId, eventTitle }: { eventId: string; eventTitle: s
         <div className="font-display text-2xl">You're on the list</div>
         <p className="text-sm text-muted-foreground">
           Thanks for letting us know you're {response === "going" ? "coming" : "considering"}{" "}
-          to <span className="font-medium text-foreground">{eventTitle}</span>. We can't wait to
-          see you.
+          to <span className="font-medium text-foreground">{eventTitle}</span>
+          {partySize > 1 && <> with {partySize - 1} {partySize === 2 ? "other" : "others"}</>}. We
+          can't wait to see you.
         </p>
       </div>
     );
@@ -309,6 +314,29 @@ function GuestRsvpForm({ eventId, eventTitle }: { eventId: string; eventTitle: s
           </button>
         </div>
       </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="rsvp-party">Anyone coming with you?</Label>
+        <select
+          id="rsvp-party"
+          value={partySize}
+          onChange={(e) => setPartySize(Number(e.target.value))}
+          className="w-full border border-border bg-background px-3 py-2 text-sm"
+        >
+          {/* Stored as the whole party, offered as "+N", because that is how
+              someone thinks about it — and how a flyer would ask. The value is
+              the total, so nothing downstream has to add one. */}
+          <option value={1}>Just me</option>
+          <option value={2}>+1 (2 of us)</option>
+          <option value={3}>+2 (3 of us)</option>
+          <option value={4}>+3 (4 of us)</option>
+          <option value={5}>+4 (5 of us)</option>
+          <option value={8}>+5 or more</option>
+        </select>
+        <p className="text-xs text-muted-foreground">
+          Helps us plan seating, food and giveaways.
+        </p>
+      </div>
+
       <Button type="submit" disabled={submitting} className="w-full">
         {submitting ? "Submitting…" : "Submit RSVP"}
       </Button>
