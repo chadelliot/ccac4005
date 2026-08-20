@@ -69,20 +69,22 @@ export function remainingUntil(iso: string, from: number = Date.now()): Remainin
 /**
  * A ticking `Remaining`.
  *
- * Ticks once a second only while the event is under a day away; past that the
- * seconds digit is never rendered, so a per-second re-render of the homepage
- * header would be wasted work on every visitor's machine.
+ * The caller states its own tick rate, because only the caller knows which
+ * units it renders. This used to derive the interval from how far away the
+ * event was — dropping to 60s beyond a day out — which was wrong the moment a
+ * consumer displayed seconds: the digits sat frozen for a minute at a time and
+ * the counter looked broken on first paint. A component showing seconds must
+ * ask for 1000ms; one showing only days and hours can pass 60_000 and spare
+ * every visitor 59 needless re-renders a minute.
  */
-export function useCountdown(iso: string | undefined) {
+export function useCountdown(iso: string | undefined, tickMs: number = 1000) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (!iso) return;
-    const target = new Date(iso).getTime();
-    const interval = target - Date.now() < 86400_000 ? 1000 : 60_000;
-    const id = setInterval(() => setNow(Date.now()), interval);
+    const id = setInterval(() => setNow(Date.now()), tickMs);
     return () => clearInterval(id);
-  }, [iso]);
+  }, [iso, tickMs]);
 
   return iso ? remainingUntil(iso, now) : null;
 }

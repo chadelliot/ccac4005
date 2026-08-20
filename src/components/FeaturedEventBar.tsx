@@ -24,7 +24,8 @@ const SHOW_WITHIN_DAYS = 14;
  */
 export function FeaturedEventBar() {
   const { event } = useFeaturedEvent();
-  const remaining = useCountdown(event?.start_at);
+  // Only d/h/m are shown here, so a per-minute tick is enough.
+  const remaining = useCountdown(event?.start_at, 60_000);
 
   if (!event || !remaining || remaining.past) return null;
   if (remaining.days >= SHOW_WITHIN_DAYS) return null;
