@@ -1,17 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Target, MapPin, Loader2, Users } from "lucide-react";
+import { Target, MapPin, Loader2, Users, Plus, X, CalendarDays } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/auth";
 import { useCapabilities } from "@/lib/adminCapabilities";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { TerritoryMap, type LatLng, type Zone } from "./TerritoryMap";
+import { Input } from "@/components/ui/input";
+import { TerritoryMap, type LatLng, type Zone, type StopPoint } from "./TerritoryMap";
 
 type TerritoryRow = { id: string; name: string; description: string | null; boundary: LatLng[] };
 type ZoneRow = { id: string; name: string; description: string | null; boundary: LatLng[]; colour: string; sort_order: number };
 type Coverage = { zone_id: string; contacts: number; gospel_shared: number; visited: number; baptized: number; holy_ghost: number };
 type Focus = { zone_id: string; zone_name: string; note: string | null; week_start: string };
+type Assignment = {
+  id: string;
+  assignment_date: string;
+  zone_id: string | null;
+  zone_name: string | null;
+  note: string | null;
+  meet_at: string | null;
+  points: StopPoint[];
+};
 
 /**
  * The territory, its quadrants, and this week's target.
@@ -36,13 +46,32 @@ export function TerritoryPanel() {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Saturday assignment state.
+  const [saturday, setSaturday] = useState<string>("");
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [plotting, setPlotting] = useState(false);
+  const [stops, setStops] = useState<StopPoint[]>([]);
+  const [meetAt, setMeetAt] = useState("");
+  const [planNote, setPlanNote] = useState("");
+
   const load = useCallback(async () => {
-    const [t, z, c, f] = await Promise.all([
+    const [t, z, c, f, sat] = await Promise.all([
       supabase.from("evangelism_territories").select("id,name,description,boundary").eq("is_active", true).limit(1).maybeSingle(),
       supabase.from("evangelism_zones").select("id,name,description,boundary,colour,sort_order").order("sort_order"),
       supabase.rpc("evangelism_zone_coverage"),
       supabase.rpc("current_evangelism_focus"),
+      supabase.rpc("next_saturday"),
     ]);
+    const satDate = (sat.data as string | null) ?? "";
+    setSaturday(satDate);
+    if (satDate) {
+      const { data: a } = await supabase.rpc("evangelism_assignment_for", { _on: satDate });
+      const row = Array.isArray(a) ? (a[0] as Assignment | undefined) : undefined;
+      setAssignment(row ?? null);
+      setStops(row?.points ?? []);
+      setMeetAt(row?.meet_at ?? "");
+      setPlanNote(row?.note ?? "");
+    }
     setTerritory((t.data as TerritoryRow | null) ?? null);
     setZones((z.data as ZoneRow[] | null) ?? []);
     setCoverage((c.data as Coverage[] | null) ?? []);
@@ -93,6 +122,39 @@ export function TerritoryPanel() {
     load();
   };
 
+  const addStop = useCallback((p: LatLng) => {
+    setStops((prev) => [...prev, { lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6), label: null }]);
+  }, []);
+
+  const removeStop = useCallback((i: number) => {
+    setStops((prev) => prev.filter((_, idx) => idx !== i));
+  }, []);
+
+  const saveAssignment = async (notify: boolean) => {
+    setSaving(true);
+    const { data, error } = await supabase.rpc("save_evangelism_assignment", {
+      _assignment_date: saturday,
+      _points: stops,
+      _zone_id: focus?.zone_id ?? undefined,
+      _note: planNote.trim() || undefined,
+      _meet_at: meetAt.trim() || undefined,
+      _notify: notify,
+    });
+    setSaving(false);
+    if (error) {
+      toast.error(error.message ?? "Could not save the assignment.");
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    toast.success(
+      notify
+        ? `Saved ${row?.points ?? 0} stops. ${row?.notified ?? 0} notified.`
+        : `Saved ${row?.points ?? 0} stops.`,
+    );
+    setPlotting(false);
+    load();
+  };
+
   if (loading) return <div className="eyebrow text-muted-foreground">Loading the map…</div>;
   if (!territory) return null;
 
@@ -131,7 +193,32 @@ export function TerritoryPanel() {
         territory={territory.boundary}
         zones={zonesForMap}
         focusZoneId={focus?.zone_id ?? selected}
-        onZoneClick={canManage ? setSelected : undefined}
+        onZoneClick={canManage && !plotting ? setSelected : undefined}
+        stops={stops}
+        // Click-to-plot only while plotting, so an ordinary member — or an
+        // admin just reading the map — cannot drop a pin by accident.
+        onMapClick={plotting ? addStop : undefined}
+        onStopClick={plotting ? removeStop : undefined}
+      />
+
+      <SaturdayPlan
+        saturday={saturday}
+        assignment={assignment}
+        stops={stops}
+        plotting={plotting}
+        canManage={canManage}
+        saving={saving}
+        meetAt={meetAt}
+        planNote={planNote}
+        onMeetAt={setMeetAt}
+        onPlanNote={setPlanNote}
+        onStartPlotting={() => setPlotting(true)}
+        onCancel={() => {
+          setPlotting(false);
+          setStops(assignment?.points ?? []);
+        }}
+        onRemoveStop={removeStop}
+        onSave={saveAssignment}
       />
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -211,5 +298,147 @@ function Stat({ icon, label, value }: { icon?: React.ReactNode; label: string; v
       {icon}
       <span className="font-semibold text-foreground">{value}</span> {label}
     </span>
+  );
+}
+
+/**
+ * This Saturday's outing: where we're meeting, and the stops in order.
+ *
+ * Kept separate from the territory above because the two move on different
+ * clocks — the territory is the season's ground, this is redrawn every week.
+ */
+function SaturdayPlan({
+  saturday,
+  assignment,
+  stops,
+  plotting,
+  canManage,
+  saving,
+  meetAt,
+  planNote,
+  onMeetAt,
+  onPlanNote,
+  onStartPlotting,
+  onCancel,
+  onRemoveStop,
+  onSave,
+}: {
+  saturday: string;
+  assignment: Assignment | null;
+  stops: StopPoint[];
+  plotting: boolean;
+  canManage: boolean;
+  saving: boolean;
+  meetAt: string;
+  planNote: string;
+  onMeetAt: (v: string) => void;
+  onPlanNote: (v: string) => void;
+  onStartPlotting: () => void;
+  onCancel: () => void;
+  onRemoveStop: (i: number) => void;
+  onSave: (notify: boolean) => void;
+}) {
+  if (!saturday) return null;
+
+  const pretty = new Date(saturday + "T12:00:00").toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+  return (
+    <div className="border border-border bg-card p-5 space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="eyebrow text-accent flex items-center gap-1.5">
+            <CalendarDays className="h-3.5 w-3.5" />— Saturday assignment
+          </div>
+          <div className="font-display text-2xl mt-1">{pretty}</div>
+          {assignment?.zone_name && (
+            <div className="text-sm text-muted-foreground">{assignment.zone_name}</div>
+          )}
+        </div>
+        {canManage && !plotting && (
+          <Button variant="outline" onClick={onStartPlotting}>
+            <Plus className="mr-1.5 h-4 w-4" />
+            {stops.length ? "Edit stops" : "Plot stops"}
+          </Button>
+        )}
+      </div>
+
+      {plotting && (
+        <p className="border-l-2 border-accent bg-accent/5 py-2 pl-3 text-xs text-muted-foreground">
+          Click the map to drop a stop. Click a numbered pin to remove it.
+        </p>
+      )}
+
+      {assignment?.meet_at && !plotting && (
+        <div className="text-sm">
+          <span className="text-muted-foreground">Meeting at </span>
+          <span className="font-medium">{assignment.meet_at}</span>
+        </div>
+      )}
+
+      {assignment?.note && !plotting && (
+        <p className="text-sm text-muted-foreground">{assignment.note}</p>
+      )}
+
+      {stops.length > 0 ? (
+        <ol className="space-y-1.5">
+          {stops.map((s, i) => (
+            <li key={i} className="flex items-center gap-2 text-sm">
+              <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-night text-[11px] font-semibold text-night-foreground">
+                {i + 1}
+              </span>
+              <span className="min-w-0 flex-1 truncate">
+                {s.label ?? `${Number(s.lat).toFixed(4)}, ${Number(s.lng).toFixed(4)}`}
+              </span>
+              {plotting && (
+                <button
+                  type="button"
+                  onClick={() => onRemoveStop(i)}
+                  aria-label={`Remove stop ${i + 1}`}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          {canManage ? "No stops plotted yet." : "The stops for this week haven't been posted yet."}
+        </p>
+      )}
+
+      {canManage && plotting && (
+        <div className="space-y-3 border-t border-border pt-4">
+          <Input
+            value={meetAt}
+            onChange={(e) => onMeetAt(e.target.value)}
+            placeholder="Where and when to meet — e.g. the church car park, 10am"
+          />
+          <Textarea
+            value={planNote}
+            onChange={(e) => onPlanNote(e.target.value)}
+            rows={2}
+            placeholder="Optional — anything the team should know before Saturday."
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => onSave(true)} disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save and notify members
+            </Button>
+            <Button variant="outline" onClick={() => onSave(false)} disabled={saving}>
+              Save quietly
+            </Button>
+            <Button variant="ghost" onClick={onCancel}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

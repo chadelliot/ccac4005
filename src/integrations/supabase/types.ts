@@ -545,6 +545,82 @@ export type Database = {
           },
         ]
       }
+      evangelism_assignment_points: {
+        Row: {
+          assignment_id: string
+          id: string
+          label: string | null
+          latitude: number
+          longitude: number
+          sort_order: number
+        }
+        Insert: {
+          assignment_id: string
+          id?: string
+          label?: string | null
+          latitude: number
+          longitude: number
+          sort_order?: number
+        }
+        Update: {
+          assignment_id?: string
+          id?: string
+          label?: string | null
+          latitude?: number
+          longitude?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evangelism_assignment_points_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "evangelism_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evangelism_assignments: {
+        Row: {
+          assignment_date: string
+          created_at: string
+          created_by: string | null
+          id: string
+          meet_at: string | null
+          note: string | null
+          updated_at: string
+          zone_id: string | null
+        }
+        Insert: {
+          assignment_date: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meet_at?: string | null
+          note?: string | null
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Update: {
+          assignment_date?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meet_at?: string | null
+          note?: string | null
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evangelism_assignments_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "evangelism_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evangelism_contacts: {
         Row: {
           added_by: string
@@ -1654,6 +1730,18 @@ export type Database = {
         }[]
       }
       current_week_start: { Args: never; Returns: string }
+      evangelism_assignment_for: {
+        Args: { _on: string }
+        Returns: {
+          assignment_date: string
+          id: string
+          meet_at: string
+          note: string
+          points: Json
+          zone_id: string
+          zone_name: string
+        }[]
+      }
       evangelism_zone_coverage: {
         Args: never
         Returns: {
@@ -1706,6 +1794,7 @@ export type Database = {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
+      next_saturday: { Args: never; Returns: string }
       next_service_occurrence: {
         Args: { _day_of_week: number; _start_time: string }
         Returns: string
@@ -1713,6 +1802,21 @@ export type Database = {
       prune_bishop_rate_limit: {
         Args: { _older_than?: string }
         Returns: number
+      }
+      save_evangelism_assignment: {
+        Args: {
+          _assignment_date: string
+          _meet_at?: string
+          _note?: string
+          _notify?: boolean
+          _points: Json
+          _zone_id?: string
+        }
+        Returns: {
+          assignment_id: string
+          notified: number
+          points: number
+        }[]
       }
       schedule_followups_for_contact: {
         Args: { _contact_id: string }

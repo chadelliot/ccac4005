@@ -2,7 +2,11 @@
 import { useEffect, useRef } from "react";
 import { loadGoogleMaps } from "./EvangelismMap";
 
+const BROWSER_KEY = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY as string | undefined;
+
 export type LatLng = { lat: number; lng: number };
+
+export type StopPoint = { lat: number; lng: number; label?: string | null };
 
 export type Zone = {
   id: string;
@@ -31,17 +35,27 @@ export function TerritoryMap({
   zones,
   focusZoneId,
   onZoneClick,
+  stops = [],
+  onMapClick,
+  onStopClick,
   height = 460,
 }: {
   territory: LatLng[];
   zones: Zone[];
   focusZoneId?: string | null;
   onZoneClick?: (zoneId: string) => void;
+  /** This week's stops, drawn as numbered pins. */
+  stops?: StopPoint[];
+  /** Supplied only in plotting mode: clicking the map drops a stop. */
+  onMapClick?: (point: LatLng) => void;
+  onStopClick?: (index: number) => void;
   height?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const shapesRef = useRef<google.maps.Polygon[]>([]);
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const clickRef = useRef<google.maps.MapsEventListener | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +126,35 @@ export function TerritoryMap({
           z.boundary.forEach((p) => bounds.extend(p));
         });
 
+        // Numbered pins for the week's stops. Cleared first for the same
+        // reason as the polygons: Google markers are not React-managed, so
+        // stale ones would pile up on every redraw.
+        markersRef.current.forEach((m) => m.setMap(null));
+        markersRef.current = [];
+
+        stops.forEach((stop, i) => {
+          const marker = new window.google!.maps.Marker({
+            position: { lat: stop.lat, lng: stop.lng },
+            map,
+            label: { text: String(i + 1), color: "#fff", fontSize: "12px", fontWeight: "600" },
+            title: stop.label ?? `Stop ${i + 1}`,
+            zIndex: 5,
+          });
+          if (onStopClick) marker.addListener("click", () => onStopClick(i));
+          markersRef.current.push(marker);
+          bounds.extend({ lat: stop.lat, lng: stop.lng });
+        });
+
+        // Plotting mode. Re-bound each pass so the handler never closes over a
+        // stale stops array and drops a pin into the wrong position.
+        clickRef.current?.remove();
+        clickRef.current = null;
+        if (onMapClick) {
+          clickRef.current = map.addListener("click", (e: google.maps.MapMouseEvent) => {
+            if (e.latLng) onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+          });
+        }
+
         if (!bounds.isEmpty()) map.fitBounds(bounds, 24);
       })
       .catch((e) => console.error("[TerritoryMap]", e));
@@ -119,16 +162,34 @@ export function TerritoryMap({
     return () => {
       cancelled = true;
     };
-  }, [territory, zones, focusZoneId, onZoneClick]);
+  }, [territory, zones, focusZoneId, onZoneClick, stops, onMapClick, onStopClick]);
 
   // Detach on unmount so the polygons do not outlive the component and leak.
   useEffect(
     () => () => {
       shapesRef.current.forEach((s) => s.setMap(null));
       shapesRef.current = [];
+      markersRef.current.forEach((m) => m.setMap(null));
+      markersRef.current = [];
+      clickRef.current?.remove();
     },
     [],
   );
+
+  if (!BROWSER_KEY) {
+    return (
+      <div
+        style={{ height }}
+        className="flex w-full flex-col items-center justify-center gap-1 border border-dashed border-border p-8 text-center"
+      >
+        <div className="text-sm font-medium">Map unavailable</div>
+        <p className="max-w-sm text-xs text-muted-foreground">
+          No Google Maps browser key is configured for this build. The territory and this week's
+          stops are still listed below.
+        </p>
+      </div>
+    );
+  }
 
   return <div ref={ref} style={{ height }} className="w-full border border-border bg-muted" />;
 }
