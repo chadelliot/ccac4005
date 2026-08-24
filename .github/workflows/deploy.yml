@@ -35,6 +35,10 @@ jobs:
       - name: Build static site
         env:
           # Optional. The public pages don't need it; the evangelism map does.
+          #
+          # This is compiled into the public browser bundle, so it must be the
+          # HTTP-referrer-restricted browser key. The unrestricted geocoding key
+          # lives only in Supabase secrets and must never reach this variable.
           VITE_GOOGLE_MAPS_BROWSER_KEY: ${{ secrets.VITE_GOOGLE_MAPS_BROWSER_KEY }}
         run: npm run build:mobile
 
