@@ -56,6 +56,7 @@ export function TerritoryMap({
   const shapesRef = useRef<google.maps.Polygon[]>([]);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const clickRef = useRef<google.maps.MapsEventListener | null>(null);
+  const framedRef = useRef<string>("");
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +66,20 @@ export function TerritoryMap({
         if (cancelled || !ref.current || !window.google) return;
 
         if (!mapRef.current) {
+          // center and zoom are required by the Maps API. Omitting them is what
+          // opened the map on the whole world before fitBounds had a chance to
+          // run. Seeded from the territory's own centre at street level, so the
+          // very first paint is already over Baltimore.
+          const seed = territory.length
+            ? {
+                lat: territory.reduce((n, p) => n + p.lat, 0) / territory.length,
+                lng: territory.reduce((n, p) => n + p.lng, 0) / territory.length,
+              }
+            : { lat: 39.3289, lng: -76.5959 };
+
           mapRef.current = new window.google.maps.Map(ref.current, {
+            center: seed,
+            zoom: 13,
             mapTypeControl: false,
             streetViewControl: false,
             fullscreenControl: true,
@@ -155,7 +169,22 @@ export function TerritoryMap({
           });
         }
 
-        if (!bounds.isEmpty()) map.fitBounds(bounds, 24);
+        // Frame the territory once and then leave the view alone. This used to
+        // run on every pass with `stops` in the dependencies, so each pin an
+        // admin dropped snapped the map back and fought them while plotting.
+        // Re-frames only if the territory itself changes.
+        const frameKey = JSON.stringify(territory);
+        if (!bounds.isEmpty() && framedRef.current !== frameKey) {
+          map.fitBounds(bounds, 24);
+          framedRef.current = frameKey;
+
+          // fitBounds on a small area can zoom to rooftop level. Cap it so the
+          // surrounding streets stay readable — this is a map for finding your
+          // way round a neighbourhood, not inspecting a driveway.
+          window.google!.maps.event.addListenerOnce(map, "idle", () => {
+            if ((map.getZoom() ?? 0) > 16) map.setZoom(16);
+          });
+        }
       })
       .catch((e) => console.error("[TerritoryMap]", e));
 
