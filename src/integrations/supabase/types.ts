@@ -649,6 +649,109 @@ export type Database = {
           },
         ]
       }
+      evangelism_focus: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          set_by: string | null
+          week_start: string
+          zone_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          set_by?: string | null
+          week_start: string
+          zone_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          set_by?: string | null
+          week_start?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evangelism_focus_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "evangelism_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evangelism_territories: {
+        Row: {
+          boundary: Json
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          boundary: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          boundary?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      evangelism_zones: {
+        Row: {
+          boundary: Json
+          colour: string
+          description: string | null
+          id: string
+          name: string
+          sort_order: number
+          territory_id: string
+        }
+        Insert: {
+          boundary: Json
+          colour?: string
+          description?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+          territory_id: string
+        }
+        Update: {
+          boundary?: Json
+          colour?: string
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          territory_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evangelism_zones_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "evangelism_territories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_guest_rsvps: {
         Row: {
           created_at: string
@@ -1534,9 +1637,33 @@ export type Database = {
           notified: number
         }[]
       }
+      boundary_to_polygon: { Args: { _boundary: Json }; Returns: unknown }
       clear_virtual_service: {
         Args: { _service_id: string }
         Returns: undefined
+      }
+      current_evangelism_focus: {
+        Args: never
+        Returns: {
+          boundary: Json
+          colour: string
+          note: string
+          week_start: string
+          zone_id: string
+          zone_name: string
+        }[]
+      }
+      current_week_start: { Args: never; Returns: string }
+      evangelism_zone_coverage: {
+        Args: never
+        Returns: {
+          baptized: number
+          contacts: number
+          gospel_shared: number
+          holy_ghost: number
+          visited: number
+          zone_id: string
+        }[]
       }
       event_guest_list: {
         Args: { _event_id: string }
@@ -1590,6 +1717,13 @@ export type Database = {
       schedule_followups_for_contact: {
         Args: { _contact_id: string }
         Returns: undefined
+      }
+      set_evangelism_focus: {
+        Args: { _note?: string; _zone_id: string }
+        Returns: {
+          notified: number
+          week_start: string
+        }[]
       }
     }
     Enums: {

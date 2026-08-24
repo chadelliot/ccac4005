@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 import { listWitnesses, resolveWitnessId, splitWitnessNames, type Witness } from "@/lib/witnesses";
+import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
 
 export const Route = createFileRoute("/dashboard/evangelism/")({
   head: () => ({ meta: [{ title: "Evangelism — CCAC" }] }),
@@ -229,6 +230,8 @@ function EvangelismPage() {
 
   return (
     <div className="space-y-8 max-w-6xl">
+      <TerritoryPanel />
+
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <div className="eyebrow text-accent mb-2">— Evangelism</div>
