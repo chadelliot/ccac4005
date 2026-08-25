@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/auth";
 import { AdminActionItems } from "@/components/dashboard/AdminActionItems";
+import { EvangelismThisWeek } from "@/components/evangelism/EvangelismThisWeek";
 import { Users, Bell, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/")({
@@ -43,6 +44,11 @@ function DashboardOverview() {
           gated on the capability that governs it, so nobody is shown a queue
           they cannot act on. */}
       <AdminActionItems user={user} />
+
+      {/* Above the personal stats and visible to every member, not just admins:
+          the point is that evangelism is the first thing anyone sees after
+          signing in. Renders nothing until a target is actually set. */}
+      <EvangelismThisWeek />
 
       <div className="grid sm:grid-cols-3 gap-4">
         <StatCard icon={<Users />} label="Contacts You've Added" value={stats.contacts} link="/dashboard/evangelism" />
