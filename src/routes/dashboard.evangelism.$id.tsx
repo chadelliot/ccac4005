@@ -39,6 +39,7 @@ type Contact = {
   gospel_shared: boolean;
   status: string;
   created_at: string;
+  met_on: string | null;
 };
 
 type FollowUp = {
@@ -93,7 +94,15 @@ function ContactDetail() {
   const canEdit = user?.id === contact.added_by || isAdmin;
 
   const updateFlag = async (field: "visited" | "baptized" | "holy_ghost" | "gospel_shared", value: boolean) => {
-    const patch = { [field]: value } as Partial<Contact>;
+    // Exactly the four flags this sets. Partial<Contact> dragged in every
+    // column of the local row type, and Record<string, boolean> is too loose
+    // for the generated update type, which rejects excess properties.
+    const patch: {
+      visited?: boolean;
+      baptized?: boolean;
+      holy_ghost?: boolean;
+      gospel_shared?: boolean;
+    } = { [field]: value };
     const { error } = await supabase.from("evangelism_contacts").update(patch).eq("id", id);
     if (error) return toast.error(error.message);
     if (contact) setContact({ ...contact, [field]: value });
@@ -159,7 +168,8 @@ function ContactDetail() {
         <div className="flex flex-wrap gap-4 mt-3 text-sm text-muted-foreground">
           {contact.phone && <span className="flex items-center gap-1"><Phone className="h-4 w-4" />{contact.phone}</span>}
           {contact.where_met && <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{contact.where_met}</span>}
-          <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />Added {new Date(contact.created_at).toLocaleDateString()}</span>
+          {/* The date they were met, not the date the record was typed. */}
+          <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />Met {new Date(contact.met_on ?? contact.created_at).toLocaleDateString()}</span>
         </div>
       </div>
 

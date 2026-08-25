@@ -57,6 +57,7 @@ type Contact = {
   status: string;
   added_by: string;
   created_at: string;
+  met_on: string | null;
   latitude: number | null;
   longitude: number | null;
   city: string | null;
@@ -100,6 +101,13 @@ function EvangelismAdmin() {
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [witnesses, setWitnesses] = useState<Witness[]>([]);
+
+  // The date a soul was actually met, not the date somebody typed them in.
+  // Eighty-three of these were entered in one sitting during the harvest-list
+  // import, so created_at would file them all under August and make seven
+  // months of outreach look like a single afternoon. Falls back to created_at
+  // for anything recorded before met_on existed.
+  const metOn = (c: { met_on: string | null; created_at: string }) => c.met_on ?? c.created_at;
   const [loadingData, setLoadingData] = useState(true);
   const [backfilling, setBackfilling] = useState(false);
 
@@ -181,14 +189,10 @@ function EvangelismAdmin() {
 
   // ---- derived data ----
   const monthKeys = useMemo(() => {
-    const set = new Set(contacts.map((c) => monthKey(c.created_at)));
+    const set = new Set(contacts.map((c) => monthKey(metOn(c))));
     return Array.from(set).sort((a, b) => b.localeCompare(a));
   }, [contacts]);
 
-  const addedByOptions = useMemo(() => {
-    const set = new Set(contacts.map((c) => c.added_by));
-    return Array.from(set).map((id) => ({ id, name: profiles[id]?.display_name || "Unknown" }));
-  }, [contacts, profiles]);
 
   const whereMetOptions = useMemo(() => {
     const set = new Set(contacts.map((c) => c.where_met).filter(Boolean) as string[]);
@@ -200,6 +204,16 @@ function EvangelismAdmin() {
     witnesses.forEach((w) => (m[w.id] = w));
     return m;
   }, [witnesses]);
+
+  // Who witnessed, not who typed it in. The account that created a record is
+  // an implementation detail — the whole harvest list was imported under one
+  // login, so filtering by it would offer a single meaningless option.
+  const witnessOptions = useMemo(() => {
+    const ids = new Set(contacts.map((c) => c.witness_id).filter(Boolean) as string[]);
+    return Array.from(ids)
+      .map((id) => ({ id, name: witnessById[id]?.name ?? "Unknown" }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [contacts, witnessById]);
 
   const soulsByWitness = useMemo(() => {
     const m: Record<string, number> = {};
@@ -255,7 +269,7 @@ function EvangelismAdmin() {
     const cutoffIso = cutoff.toISOString();
     const counts: Record<string, number> = {};
     for (const c of contacts) {
-      if (topRange === "12mo" && c.created_at < cutoffIso) continue;
+      if (topRange === "12mo" && metOn(c) < cutoffIso) continue;
       const key = (c.where_met && c.where_met.trim()) || c.city || "Unspecified";
       counts[key] = (counts[key] ?? 0) + 1;
     }
@@ -268,7 +282,7 @@ function EvangelismAdmin() {
   const [q, setQ] = useState("");
   const [monthFilter, setMonthFilter] = useState<string>("all");
   const [whereFilter, setWhereFilter] = useState<string>("all");
-  const [addedByFilter, setAddedByFilter] = useState<string>("all");
+  const [witnessFilter, setWitnessFilter] = useState<string>("all");
   const [journeyFilter, setJourneyFilter] = useState<string>("all");
   const [sortMode, setSortMode] = useState<"recent" | "oldest" | "alpha">("recent");
 
@@ -280,17 +294,17 @@ function EvangelismAdmin() {
         `${fullName(c)} ${c.phone ?? ""} ${c.where_met ?? ""}`.toLowerCase().includes(ql),
       );
     }
-    if (monthFilter !== "all") list = list.filter((c) => monthKey(c.created_at) === monthFilter);
+    if (monthFilter !== "all") list = list.filter((c) => monthKey(metOn(c)) === monthFilter);
     if (whereFilter !== "all") list = list.filter((c) => c.where_met === whereFilter);
-    if (addedByFilter !== "all") list = list.filter((c) => c.added_by === addedByFilter);
+    if (witnessFilter !== "all") list = list.filter((c) => c.witness_id === witnessFilter);
     if (journeyFilter !== "all") {
       list = list.filter((c) => (c as any)[journeyFilter] === true);
     }
     if (sortMode === "alpha") list = [...list].sort((a, b) => fullName(a).localeCompare(fullName(b)));
-    else if (sortMode === "oldest") list = [...list].sort((a, b) => a.created_at.localeCompare(b.created_at));
-    else list = [...list].sort((a, b) => b.created_at.localeCompare(a.created_at));
+    else if (sortMode === "oldest") list = [...list].sort((a, b) => metOn(a).localeCompare(metOn(b)));
+    else list = [...list].sort((a, b) => metOn(b).localeCompare(metOn(a)));
     return list;
-  }, [contacts, q, monthFilter, whereFilter, addedByFilter, journeyFilter, sortMode]);
+  }, [contacts, q, monthFilter, whereFilter, witnessFilter, journeyFilter, sortMode]);
 
   // ---- follow-up tracker filters ----
   const [touchFilter, setTouchFilter] = useState<"all" | "overdue" | "awaiting">("all");
@@ -448,13 +462,13 @@ function EvangelismAdmin() {
                 {whereMetOptions.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={addedByFilter} onValueChange={setAddedByFilter}>
-              <SelectTrigger><SelectValue placeholder="Added by" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All members</SelectItem>
-                {addedByOptions.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+              <Select value={witnessFilter} onValueChange={setWitnessFilter}>
+                <SelectTrigger><SelectValue placeholder="Who witnessed" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All witnesses</SelectItem>
+                  {witnessOptions.map((w) => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
           </div>
           <div className="flex flex-wrap gap-3">
             <Select value={journeyFilter} onValueChange={setJourneyFilter}>
@@ -486,12 +500,11 @@ function EvangelismAdmin() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Witness</TableHead>
-                  <TableHead>Added by</TableHead>
                   <TableHead>Where met</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Journey</TableHead>
                   <TableHead>Touches</TableHead>
-                  <TableHead>Added</TableHead>
+                  <TableHead>Date witnessed</TableHead>
                   <TableHead className="w-[40px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -532,7 +545,7 @@ function EvangelismAdmin() {
                         ) : <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        {new Date(c.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "2-digit" })}
+                        {new Date(metOn(c)).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "2-digit" })}
                       </TableCell>
                       <TableCell>
                         <DeleteContactDialog contactId={c.id} contactName={fullName(c)} onDeleted={load} />

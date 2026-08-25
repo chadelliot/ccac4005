@@ -55,6 +55,7 @@ export function TerritoryMap({
   const mapRef = useRef<google.maps.Map | null>(null);
   const shapesRef = useRef<google.maps.Polygon[]>([]);
   const markersRef = useRef<google.maps.Marker[]>([]);
+  const routeRef = useRef<google.maps.Polygon | google.maps.Polyline | null>(null);
   const clickRef = useRef<google.maps.MapsEventListener | null>(null);
   const framedRef = useRef<string>("");
 
@@ -146,6 +147,38 @@ export function TerritoryMap({
         markersRef.current.forEach((m) => m.setMap(null));
         markersRef.current = [];
 
+        // Join the stops in the order they were dropped, so a route reads as a
+        // route. Two points is a line along a street; three or more encloses
+        // the block being covered, which is what makes it a coverage area
+        // rather than a scattering of pins.
+        routeRef.current?.setMap(null);
+        routeRef.current = null;
+        if (stops.length >= 2) {
+          const path = stops.map((s) => ({ lat: s.lat, lng: s.lng }));
+          routeRef.current =
+            stops.length >= 3
+              ? new window.google!.maps.Polygon({
+                  paths: path,
+                  strokeColor: "#1d4ed8",
+                  strokeOpacity: 0.9,
+                  strokeWeight: 3,
+                  fillColor: "#1d4ed8",
+                  fillOpacity: 0.14,
+                  clickable: false,
+                  zIndex: 4,
+                  map,
+                })
+              : new window.google!.maps.Polyline({
+                  path,
+                  strokeColor: "#1d4ed8",
+                  strokeOpacity: 0.9,
+                  strokeWeight: 3,
+                  clickable: false,
+                  zIndex: 4,
+                  map,
+                });
+        }
+
         stops.forEach((stop, i) => {
           const marker = new window.google!.maps.Marker({
             position: { lat: stop.lat, lng: stop.lng },
@@ -200,6 +233,8 @@ export function TerritoryMap({
       shapesRef.current = [];
       markersRef.current.forEach((m) => m.setMap(null));
       markersRef.current = [];
+      routeRef.current?.setMap(null);
+      routeRef.current = null;
       clickRef.current?.remove();
     },
     [],

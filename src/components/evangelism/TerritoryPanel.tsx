@@ -10,8 +10,22 @@ import { Input } from "@/components/ui/input";
 import { TerritoryMap, type LatLng, type Zone, type StopPoint } from "./TerritoryMap";
 
 type TerritoryRow = { id: string; name: string; description: string | null; boundary: LatLng[] };
-type ZoneRow = { id: string; name: string; description: string | null; boundary: LatLng[]; colour: string; sort_order: number };
-type Coverage = { zone_id: string; contacts: number; gospel_shared: number; visited: number; baptized: number; holy_ghost: number };
+type ZoneRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  boundary: LatLng[];
+  colour: string;
+  sort_order: number;
+};
+type Coverage = {
+  zone_id: string;
+  contacts: number;
+  gospel_shared: number;
+  visited: number;
+  baptized: number;
+  holy_ghost: number;
+};
 type Focus = { zone_id: string; zone_name: string; note: string | null; week_start: string };
 type Assignment = {
   id: string;
@@ -42,8 +56,6 @@ export function TerritoryPanel() {
   const [coverage, setCoverage] = useState<Coverage[]>([]);
   const [focus, setFocus] = useState<Focus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Saturday assignment state.
@@ -56,8 +68,16 @@ export function TerritoryPanel() {
 
   const load = useCallback(async () => {
     const [t, z, c, f, sat] = await Promise.all([
-      supabase.from("evangelism_territories").select("id,name,description,boundary").eq("is_active", true).limit(1).maybeSingle(),
-      supabase.from("evangelism_zones").select("id,name,description,boundary,colour,sort_order").order("sort_order"),
+      supabase
+        .from("evangelism_territories")
+        .select("id,name,description,boundary")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("evangelism_zones")
+        .select("id,name,description,boundary,colour,sort_order")
+        .order("sort_order"),
       supabase.rpc("evangelism_zone_coverage"),
       supabase.rpc("current_evangelism_focus"),
       supabase.rpc("next_saturday"),
@@ -95,35 +115,38 @@ export function TerritoryPanel() {
           boundary: z.boundary,
           colour: z.colour,
           coverage: cov
-            ? { contacts: cov.contacts, visited: cov.visited, baptized: cov.baptized, holy_ghost: cov.holy_ghost }
+            ? {
+                contacts: cov.contacts,
+                visited: cov.visited,
+                baptized: cov.baptized,
+                holy_ghost: cov.holy_ghost,
+              }
             : undefined,
         };
       }),
     [zones, coverage],
   );
 
-  const setWeeklyTarget = async () => {
-    if (!selected) return;
-    setSaving(true);
-    const { data, error } = await supabase.rpc("set_evangelism_focus", {
-      _zone_id: selected,
-      _note: note.trim() || undefined,
-    });
-    setSaving(false);
-    if (error) {
-      toast.error(error.message ?? "Could not set the target.");
-      return;
-    }
-    const row = Array.isArray(data) ? data[0] : data;
-    const n = row?.notified ?? 0;
-    toast.success(`Target set. ${n} ${n === 1 ? "person" : "people"} notified.`);
-    setNote("");
-    setSelected(null);
-    load();
-  };
-
   const addStop = useCallback((p: LatLng) => {
-    setStops((prev) => [...prev, { lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6), label: null }]);
+    const stop = { lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6), label: null as string | null };
+    setStops((prev) => [...prev, stop]);
+
+    // Name the pin from the map. A route is plotted by clicking street corners,
+    // and a list of raw coordinates is no use to someone standing on one. The
+    // pin appears immediately and fills in its own name a moment later, so
+    // plotting never waits on the network.
+    (async () => {
+      const { data } = await supabase.functions.invoke("geocode-address", {
+        body: { lat: stop.lat, lng: stop.lng },
+      });
+      const label = (data as { ok?: boolean; label?: string } | null)?.label;
+      if (!label) return;
+      setStops((prev) =>
+        prev.map((x) =>
+          x.lat === stop.lat && x.lng === stop.lng && !x.label ? { ...x, label } : x,
+        ),
+      );
+    })();
   }, []);
 
   const removeStop = useCallback((i: number) => {
@@ -175,7 +198,9 @@ export function TerritoryPanel() {
       {focus ? (
         <div
           className="border-l-4 bg-card p-5"
-          style={{ borderLeftColor: zones.find((z) => z.id === focus.zone_id)?.colour ?? "var(--royal)" }}
+          style={{
+            borderLeftColor: zones.find((z) => z.id === focus.zone_id)?.colour ?? "var(--royal)",
+          }}
         >
           <div className="eyebrow text-muted-foreground text-[10px]">— This week</div>
           <div className="font-display text-2xl mt-1">{focus.zone_name}</div>
@@ -192,8 +217,7 @@ export function TerritoryPanel() {
       <TerritoryMap
         territory={territory.boundary}
         zones={zonesForMap}
-        focusZoneId={focus?.zone_id ?? selected}
-        onZoneClick={canManage && !plotting ? setSelected : undefined}
+        focusZoneId={focus?.zone_id ?? null}
         stops={stops}
         // Click-to-plot only while plotting, so an ordinary member — or an
         // admin just reading the map — cannot drop a pin by accident.
@@ -225,29 +249,31 @@ export function TerritoryPanel() {
         {zones.map((z) => {
           const cov = coverage.find((c) => c.zone_id === z.id);
           const isFocus = focus?.zone_id === z.id;
-          const isSelected = selected === z.id;
           return (
-            <button
-              key={z.id}
-              type="button"
-              disabled={!canManage}
-              onClick={() => setSelected(z.id)}
-              className={`border p-4 text-left transition-colors ${
-                isSelected ? "border-foreground" : "border-border"
-              } ${canManage ? "hover:border-foreground/50" : "cursor-default"}`}
-            >
+            <div key={z.id} className="border border-border p-4 text-left">
               <div className="flex items-start gap-2">
-                <span className="mt-1 h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: z.colour }} />
+                <span
+                  className="mt-1 h-3 w-3 shrink-0 rounded-sm"
+                  style={{ backgroundColor: z.colour }}
+                />
                 <div className="min-w-0">
                   <div className="font-medium leading-tight">
                     {z.name}
-                    {isFocus && <span className="ml-2 text-[10px] uppercase tracking-wider text-accent">This week</span>}
+                    {isFocus && (
+                      <span className="ml-2 text-[10px] uppercase tracking-wider text-accent">
+                        This week
+                      </span>
+                    )}
                   </div>
                   {z.description && (
                     <div className="mt-0.5 text-xs text-muted-foreground">{z.description}</div>
                   )}
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <Stat icon={<Users className="h-3 w-3" />} label="contacts" value={cov?.contacts ?? 0} />
+                    <Stat
+                      icon={<Users className="h-3 w-3" />}
+                      label="contacts"
+                      value={cov?.contacts ?? 0}
+                    />
                     <Stat label="visited" value={cov?.visited ?? 0} />
                     <Stat label="baptized" value={cov?.baptized ?? 0} />
                     <Stat label="Holy Ghost" value={cov?.holy_ghost ?? 0} />
@@ -261,33 +287,10 @@ export function TerritoryPanel() {
                   )}
                 </div>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
-
-      {canManage && selected && (
-        <div className="border border-border bg-card p-5 space-y-3">
-          <div className="text-sm font-medium">
-            Set “{zones.find((z) => z.id === selected)?.name}” as this week's target
-          </div>
-          <Textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={2}
-            placeholder="Optional — a word to the congregation about this week's focus."
-          />
-          <div className="flex gap-2">
-            <Button onClick={setWeeklyTarget} disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Set target and notify members
-            </Button>
-            <Button variant="outline" onClick={() => setSelected(null)}>
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
     </section>
   );
 }
