@@ -68,8 +68,12 @@ export function EvangelismMap({
         if (cancelled || !ref.current || !window.google) return;
         if (!mapRef.current) {
           mapRef.current = new window.google.maps.Map(ref.current, {
-            center: { lat: 39.2904, lng: -76.6122 }, // Baltimore default
-            zoom: 4,
+            // The church, at neighbourhood zoom. This used to be zoom 4 — the
+            // whole continent — which only ever corrected itself once markers
+            // existed to fit bounds to. With no geocoded contacts it just sat
+            // there showing North America.
+            center: { lat: 39.3383, lng: -76.6074 },
+            zoom: 13,
             mapTypeControl: false,
             streetViewControl: false,
             fullscreenControl: true,

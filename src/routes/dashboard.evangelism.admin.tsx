@@ -35,6 +35,7 @@ import {
 import { EvangelismMap, type MapContact } from "@/components/evangelism/EvangelismMap";
 import { DeleteContactDialog } from "@/components/evangelism/DeleteContactDialog";
 import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
+import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
 
 export const Route = createFileRoute("/dashboard/evangelism/admin")({
   head: () => ({ meta: [{ title: "Evangelism Admin — CCAC" }] }),
@@ -358,6 +359,10 @@ function EvangelismAdmin() {
 
         {/* MAP */}
         <TabsContent value="map" className="space-y-5">
+          {/* The territory first: it is the frame the contacts sit inside, and
+              it reads even when nothing has been geocoded yet. */}
+          <TerritoryPanel />
+
           <EvangelismMap
             contacts={mapContacts}
             onMarkerClick={(m) => navigate({ to: "/dashboard/evangelism/$id", params: { id: m.id } })}
