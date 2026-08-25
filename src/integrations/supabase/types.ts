@@ -964,6 +964,99 @@ export type Database = {
           },
         ]
       }
+      expense_categories: {
+        Row: {
+          commonly_1099: boolean
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          commonly_1099?: boolean
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          commonly_1099?: boolean
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount_cents: number
+          category_id: string | null
+          check_number: string | null
+          created_at: string
+          description: string | null
+          entered_by: string | null
+          id: string
+          payee_id: string | null
+          payment_method: string | null
+          receipt_path: string | null
+          reviewed: boolean
+          spent_on: string
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          amount_cents: number
+          category_id?: string | null
+          check_number?: string | null
+          created_at?: string
+          description?: string | null
+          entered_by?: string | null
+          id?: string
+          payee_id?: string | null
+          payment_method?: string | null
+          receipt_path?: string | null
+          reviewed?: boolean
+          spent_on: string
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          category_id?: string | null
+          check_number?: string | null
+          created_at?: string
+          description?: string | null
+          entered_by?: string | null
+          id?: string
+          payee_id?: string | null
+          payment_method?: string | null
+          receipt_path?: string | null
+          reviewed?: boolean
+          spent_on?: string
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "payees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_members: {
         Row: {
           created_at: string
@@ -1131,6 +1224,45 @@ export type Database = {
           read?: boolean
           title?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      payees: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          kind: string
+          name: string
+          notes: string | null
+          phone: string | null
+          w9_on_file: boolean
+          w9_received_on: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          kind?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          w9_on_file?: boolean
+          w9_received_on?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          w9_on_file?: boolean
+          w9_received_on?: string | null
         }
         Relationships: []
       }
@@ -1838,6 +1970,7 @@ export type Database = {
         | "programs_management"
         | "bishop_desk"
         | "admin_management"
+        | "finance_management"
       app_role: "admin" | "leader" | "member"
       bishop_apparel: "vestments" | "civic" | "shirt_tie" | "casual" | "other"
       bishop_booking_status:
@@ -2008,6 +2141,7 @@ export const Constants = {
         "programs_management",
         "bishop_desk",
         "admin_management",
+        "finance_management",
       ],
       app_role: ["admin", "leader", "member"],
       bishop_apparel: ["vestments", "civic", "shirt_tie", "casual", "other"],

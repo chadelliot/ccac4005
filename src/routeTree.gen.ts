@@ -28,6 +28,7 @@ import { Route as DashboardServicesRouteImport } from './routes/dashboard.servic
 import { Route as DashboardProgramsRouteImport } from './routes/dashboard.programs'
 import { Route as DashboardGroupsRouteImport } from './routes/dashboard.groups'
 import { Route as DashboardFollowUpsRouteImport } from './routes/dashboard.follow-ups'
+import { Route as DashboardFinanceRouteImport } from './routes/dashboard.finance'
 import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
 import { Route as DashboardEvangelismRouteImport } from './routes/dashboard.evangelism'
 import { Route as DashboardEngagementsRouteImport } from './routes/dashboard.engagements'
@@ -140,6 +141,11 @@ const DashboardGroupsRoute = DashboardGroupsRouteImport.update({
 const DashboardFollowUpsRoute = DashboardFollowUpsRouteImport.update({
   id: '/follow-ups',
   path: '/follow-ups',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardFinanceRoute = DashboardFinanceRouteImport.update({
+  id: '/finance',
+  path: '/finance',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardEventsRoute = DashboardEventsRouteImport.update({
@@ -259,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/engagements': typeof DashboardEngagementsRouteWithChildren
   '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
   '/dashboard/events': typeof DashboardEventsRouteWithChildren
+  '/dashboard/finance': typeof DashboardFinanceRoute
   '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/groups': typeof DashboardGroupsRouteWithChildren
   '/dashboard/programs': typeof DashboardProgramsRouteWithChildren
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/about/$slug': typeof AboutSlugRoute
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/bible': typeof DashboardBibleRoute
+  '/dashboard/finance': typeof DashboardFinanceRoute
   '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/groups': typeof DashboardGroupsRouteWithChildren
   '/dashboard/services': typeof DashboardServicesRoute
@@ -333,6 +341,7 @@ export interface FileRoutesById {
   '/dashboard/engagements': typeof DashboardEngagementsRouteWithChildren
   '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
   '/dashboard/events': typeof DashboardEventsRouteWithChildren
+  '/dashboard/finance': typeof DashboardFinanceRoute
   '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/groups': typeof DashboardGroupsRouteWithChildren
   '/dashboard/programs': typeof DashboardProgramsRouteWithChildren
@@ -374,6 +383,7 @@ export interface FileRouteTypes {
     | '/dashboard/engagements'
     | '/dashboard/evangelism'
     | '/dashboard/events'
+    | '/dashboard/finance'
     | '/dashboard/follow-ups'
     | '/dashboard/groups'
     | '/dashboard/programs'
@@ -409,6 +419,7 @@ export interface FileRouteTypes {
     | '/about/$slug'
     | '/dashboard/admin'
     | '/dashboard/bible'
+    | '/dashboard/finance'
     | '/dashboard/follow-ups'
     | '/dashboard/groups'
     | '/dashboard/services'
@@ -447,6 +458,7 @@ export interface FileRouteTypes {
     | '/dashboard/engagements'
     | '/dashboard/evangelism'
     | '/dashboard/events'
+    | '/dashboard/finance'
     | '/dashboard/follow-ups'
     | '/dashboard/groups'
     | '/dashboard/programs'
@@ -618,6 +630,13 @@ declare module '@tanstack/react-router' {
       path: '/follow-ups'
       fullPath: '/dashboard/follow-ups'
       preLoaderRoute: typeof DashboardFollowUpsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/finance': {
+      id: '/dashboard/finance'
+      path: '/finance'
+      fullPath: '/dashboard/finance'
+      preLoaderRoute: typeof DashboardFinanceRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/events': {
@@ -836,6 +855,7 @@ interface DashboardRouteChildren {
   DashboardEngagementsRoute: typeof DashboardEngagementsRouteWithChildren
   DashboardEvangelismRoute: typeof DashboardEvangelismRouteWithChildren
   DashboardEventsRoute: typeof DashboardEventsRouteWithChildren
+  DashboardFinanceRoute: typeof DashboardFinanceRoute
   DashboardFollowUpsRoute: typeof DashboardFollowUpsRoute
   DashboardGroupsRoute: typeof DashboardGroupsRouteWithChildren
   DashboardProgramsRoute: typeof DashboardProgramsRouteWithChildren
@@ -849,6 +869,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardEngagementsRoute: DashboardEngagementsRouteWithChildren,
   DashboardEvangelismRoute: DashboardEvangelismRouteWithChildren,
   DashboardEventsRoute: DashboardEventsRouteWithChildren,
+  DashboardFinanceRoute: DashboardFinanceRoute,
   DashboardFollowUpsRoute: DashboardFollowUpsRoute,
   DashboardGroupsRoute: DashboardGroupsRouteWithChildren,
   DashboardProgramsRoute: DashboardProgramsRouteWithChildren,

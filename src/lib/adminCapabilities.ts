@@ -8,7 +8,8 @@ export type AdminCapability =
   | "evangelism_management"
   | "programs_management"
   | "bishop_desk"
-  | "admin_management";
+  | "admin_management"
+  | "finance_management";
 
 export const CAPABILITY_CATALOG: { key: AdminCapability; label: string; description: string }[] = [
   { key: "events_review", label: "Events", description: "Approve, reject, and edit member-submitted events." },
@@ -16,6 +17,7 @@ export const CAPABILITY_CATALOG: { key: AdminCapability; label: string; descript
   { key: "evangelism_management", label: "Evangelism", description: "Oversee all evangelism contacts and follow-ups, not just their own." },
   { key: "programs_management", label: "Reading Programs", description: "Create and edit reading programs, lessons, and quizzes." },
   { key: "bishop_desk", label: "Bishop's Desk", description: "Access and manage Bishop's ministry engagement requests and calendar." },
+  { key: "finance_management", label: "Finances", description: "Record expenses and receipts, manage payees, and run year-end reports. Sensitive — this is what the church pays people." },
   { key: "admin_management", label: "Admin Settings", description: "Name admins and control which capabilities each one holds. Sensitive — grant sparingly." },
 ];
 

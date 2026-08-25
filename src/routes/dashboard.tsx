@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useSession, useRoles } from "@/lib/auth";
 import { useBishopDesk } from "@/hooks/useBishopDesk";
 import { useCapabilities } from "@/lib/adminCapabilities";
-import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar, UsersRound, BookOpen, BookMarked, CalendarCheck, ShieldCheck, Church } from "lucide-react";
+import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar, UsersRound, BookOpen, BookMarked, CalendarCheck, ShieldCheck, Church, Receipt } from "lucide-react";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,6 +68,9 @@ function DashboardLayout() {
             {hasCapability("events_review") && (
               <DashLink to="/dashboard/services" icon={<Church className="h-4 w-4" />}>Weekly Services</DashLink>
             )}
+            {hasCapability("finance_management") && (
+              <DashLink to="/dashboard/finance" icon={<Receipt className="h-4 w-4" />}>Finances</DashLink>
+            )}
             {hasCapability("admin_management") && (
               <DashLink to="/dashboard/admin/permissions" icon={<ShieldCheck className="h-4 w-4" />}>Admin Settings</DashLink>
             )}
@@ -97,6 +100,7 @@ function DashboardLayout() {
             <DashLinkPill to="/dashboard/programs">Programs</DashLinkPill>
             {desk.hasAccess && <DashLinkPill to="/dashboard/engagements">Engagements</DashLinkPill>}
             {hasCapability("events_review") && <DashLinkPill to="/dashboard/services">Services</DashLinkPill>}
+            {hasCapability("finance_management") && <DashLinkPill to="/dashboard/finance">Finances</DashLinkPill>}
             {hasCapability("admin_management") && <DashLinkPill to="/dashboard/admin/permissions">Admin</DashLinkPill>}
           </div>
           <div className="hidden lg:block" />
