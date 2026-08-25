@@ -51,3 +51,10 @@ verify_jwt = false
 # role because auth.users (and therefore email) is not exposed to PostgREST.
 [functions.admin-manage-permissions]
 verify_jwt = true
+
+# Private. Reads a photographed receipt into the expense form's fields.
+# verify_jwt proves the caller is signed in; the function additionally requires
+# the finance_management capability, because reading receipts spends API credits
+# and only finance may record an expense anyway.
+[functions.receipt-scan]
+verify_jwt = true

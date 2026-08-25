@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Receipt, Plus, Loader2, AlertTriangle, Download, Paperclip } from "lucide-react";
+import { Receipt, Plus, Loader2, AlertTriangle, Download, Paperclip, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/auth";
 import { useCapabilities } from "@/lib/adminCapabilities";
@@ -363,6 +363,67 @@ function AddExpenseDialog({
   const [description, setDescription] = useState("");
   const [method, setMethod] = useState("card");
   const [receipt, setReceipt] = useState<File | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanNote, setScanNote] = useState<string | null>(null);
+
+  /**
+   * Read the photo into the form, then stop.
+   *
+   * Everything it returns is a suggestion the person confirms — a misread total
+   * on a tax return is worse than no reading at all. Fields it could not read
+   * come back null and are left alone rather than filled with a guess, and
+   * anything already typed is never overwritten.
+   */
+  const scanReceipt = async (file: File) => {
+    setScanning(true);
+    setScanNote(null);
+    try {
+      const base64: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        // readAsDataURL gives "data:image/jpeg;base64,AAAA…" — the API wants
+        // only what follows the comma.
+        reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+        reader.onerror = () => reject(new Error("Could not read that file"));
+        reader.readAsDataURL(file);
+      });
+
+      const { data, error } = await supabase.functions.invoke("receipt-scan", {
+        body: {
+          image_base64: base64,
+          media_type: file.type || "image/jpeg",
+          categories: categories.map((c) => c.name),
+        },
+      });
+      if (error) throw error;
+      const res = data as { ok?: boolean; error?: string; fields?: Record<string, string | null> };
+      if (!res?.ok || !res.fields) {
+        setScanNote(res?.error ?? "Could not read that receipt — fill it in below.");
+        return;
+      }
+
+      const f = res.fields;
+      if (f.spent_on) setSpentOn(f.spent_on);
+      if (f.amount && parseAmountToCents(f.amount)) setAmount(f.amount);
+      if (f.vendor && !vendor) setVendor(f.vendor);
+      if (f.description && !description) setDescription(f.description);
+      if (f.payment_method) setMethod(f.payment_method);
+      if (f.category_hint) {
+        const match = categories.find(
+          (c) => c.name.toLowerCase() === String(f.category_hint).toLowerCase(),
+        );
+        if (match) setCategoryId(match.id);
+      }
+      setScanNote(
+        f.confidence === "low"
+          ? "The photo was hard to read — please check every field."
+          : "Read from the photo. Check it before saving.",
+      );
+    } catch {
+      setScanNote("Could not read that receipt — fill it in below.");
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const save = async () => {
     const cents = parseAmountToCents(amount);
@@ -498,11 +559,26 @@ function AddExpenseDialog({
               type="file"
               accept="image/*,application/pdf"
               capture="environment"
-              onChange={(e) => setReceipt(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                setReceipt(f);
+                // PDFs are stored but not read — this reads photographs.
+                if (f && f.type.startsWith("image/")) scanReceipt(f);
+              }}
             />
+            {scanning && (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" /> Reading the receipt…
+              </p>
+            )}
+            {scanNote && !scanning && (
+              <p className="flex items-start gap-1.5 text-xs text-accent">
+                <Sparkles className="mt-0.5 h-3 w-3 shrink-0" /> {scanNote}
+              </p>
+            )}
             <p className="text-xs text-muted-foreground">
-              On a phone this opens the camera. Receipts are stored privately and opened through a
-              link that expires.
+              On a phone this opens the camera. A photograph fills in the fields above for you to
+              check. Receipts are stored privately and opened through a link that expires.
             </p>
           </div>
         </div>
