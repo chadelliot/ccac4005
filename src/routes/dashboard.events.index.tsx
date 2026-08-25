@@ -48,6 +48,7 @@ const eventSchema = z.object({
   end_at: z.string().optional().or(z.literal("")),
   is_public: z.boolean(),
   is_featured: z.boolean(),
+  group_id: z.string().optional(),
 });
 
 function EventsPage() {
@@ -246,6 +247,18 @@ function SubmitEventDialog({ onSubmitted }: { onSubmitted: () => void }) {
   const [endAt, setEndAt] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
+  const [groupId, setGroupId] = useState("");
+  // Only groups this person belongs to or leads — RLS returns nothing else, so
+  // the list cannot offer a group they could not post to anyway.
+  const [myGroups, setMyGroups] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase.from("groups").select("id,name").order("name");
+      setMyGroups((data as { id: string; name: string }[] | null) ?? []);
+    })();
+  }, [user]);
   const [flyer, setFlyer] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -261,6 +274,7 @@ function SubmitEventDialog({ onSubmitted }: { onSubmitted: () => void }) {
       end_at: endAt,
       is_public: isPublic,
       is_featured: isFeatured,
+      group_id: groupId || undefined,
     });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Invalid input");
@@ -297,6 +311,7 @@ function SubmitEventDialog({ onSubmitted }: { onSubmitted: () => void }) {
         // a quietly unfeatured event a reviewer can flip on beats a rejected
         // insert that loses everything they typed.
         is_featured: canFeature ? parsed.data.is_featured : false,
+        group_id: parsed.data.group_id || null,
         flyer_url,
         submitted_by: user.id,
       });
@@ -376,6 +391,27 @@ function SubmitEventDialog({ onSubmitted }: { onSubmitted: () => void }) {
           />
           Share publicly on the website once approved
         </label>
+
+        {myGroups.length > 0 && (
+          <div className="space-y-1.5">
+            <Label htmlFor="ev-group">Just for one group?</Label>
+            <select
+              id="ev-group"
+              value={groupId}
+              onChange={(e) => setGroupId(e.target.value)}
+              className="w-full border border-border bg-background px-3 py-2 text-sm"
+            >
+              <option value="">The whole church</option>
+              {myGroups.map((g) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Choose a group and only its members are notified and can see it. Leave it on the whole
+              church for everything else.
+            </p>
+          </div>
+        )}
         {canFeature && (
           <label className="flex items-start gap-2 text-sm">
             <input
