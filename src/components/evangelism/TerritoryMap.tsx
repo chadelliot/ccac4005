@@ -38,6 +38,7 @@ export function TerritoryMap({
   stops = [],
   onMapClick,
   onStopClick,
+  onTerritoryPointClick,
   height = 460,
 }: {
   territory: LatLng[];
@@ -49,6 +50,8 @@ export function TerritoryMap({
   /** Supplied only in plotting mode: clicking the map drops a stop. */
   onMapClick?: (point: LatLng) => void;
   onStopClick?: (index: number) => void;
+  /** Supplied while editing the focus area: clicking a corner removes it. */
+  onTerritoryPointClick?: (index: number) => void;
   height?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -141,11 +144,35 @@ export function TerritoryMap({
           z.boundary.forEach((p) => bounds.extend(p));
         });
 
-        // Numbered pins for the week's stops. Cleared first for the same
-        // reason as the polygons: Google markers are not React-managed, so
+        // Markers are not React-managed, so clear before drawing anything —
+        // both the corner handles and the stop pins live in this array, and
         // stale ones would pile up on every redraw.
         markersRef.current.forEach((m) => m.setMap(null));
         markersRef.current = [];
+
+        // Corner handles, shown only while the focus area is being edited. The
+        // boundary is otherwise a plain outline — handles on a map nobody is
+        // editing are just clutter inviting a misclick.
+        if (onTerritoryPointClick) {
+          territory.forEach((corner, i) => {
+            const handle = new window.google!.maps.Marker({
+              position: corner,
+              map,
+              title: `Corner ${i + 1} — click to remove`,
+              zIndex: 6,
+              icon: {
+                path: window.google!.maps.SymbolPath.CIRCLE,
+                scale: 6,
+                fillColor: "#1d4ed8",
+                fillOpacity: 1,
+                strokeColor: "#fff",
+                strokeWeight: 2,
+              },
+            });
+            handle.addListener("click", () => onTerritoryPointClick(i));
+            markersRef.current.push(handle);
+          });
+        }
 
         // Join the stops in the order they were dropped, so a route reads as a
         // route. Two points is a line along a street; three or more encloses
@@ -224,7 +251,7 @@ export function TerritoryMap({
     return () => {
       cancelled = true;
     };
-  }, [territory, zones, focusZoneId, onZoneClick, stops, onMapClick, onStopClick]);
+  }, [territory, zones, focusZoneId, onZoneClick, stops, onMapClick, onStopClick, onTerritoryPointClick]);
 
   // Detach on unmount so the polygons do not outlive the component and leak.
   useEffect(

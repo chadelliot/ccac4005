@@ -377,10 +377,6 @@ function EvangelismAdmin() {
               it reads even when nothing has been geocoded yet. */}
           <TerritoryPanel />
 
-          <EvangelismMap
-            contacts={mapContacts}
-            onMarkerClick={(m) => navigate({ to: "/dashboard/evangelism/$id", params: { id: m.id } })}
-          />
           <div className="grid md:grid-cols-3 gap-4">
             <div className="md:col-span-2 bg-card border border-border p-5">
               <div className="flex items-center justify-between mb-4">

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { TerritoryMap, type LatLng, type Zone, type StopPoint } from "./TerritoryMap";
+import { splitIntoQuadrants } from "@/lib/territorySplit";
 
 type TerritoryRow = { id: string; name: string; description: string | null; boundary: LatLng[] };
 type ZoneRow = {
@@ -65,6 +66,10 @@ export function TerritoryPanel() {
   const [stops, setStops] = useState<StopPoint[]>([]);
   const [meetAt, setMeetAt] = useState("");
   const [planNote, setPlanNote] = useState("");
+
+  // Editing the focus area itself — the standing ground, not the week's route.
+  const [editingArea, setEditingArea] = useState(false);
+  const [areaDraft, setAreaDraft] = useState<LatLng[]>([]);
 
   const load = useCallback(async () => {
     const [t, z, c, f, sat] = await Promise.all([
@@ -126,6 +131,51 @@ export function TerritoryPanel() {
       }),
     [zones, coverage],
   );
+
+  const addAreaPoint = useCallback((p: LatLng) => {
+    setAreaDraft((prev) => [...prev, { lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6) }]);
+  }, []);
+
+  const removeAreaPoint = useCallback((i: number) => {
+    setAreaDraft((prev) => prev.filter((_, idx) => idx !== i));
+  }, []);
+
+  const saveArea = async () => {
+    if (areaDraft.length < 3) {
+      toast.error("A focus area needs at least three corners.");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase
+      .from("evangelism_territories")
+      .update({ boundary: areaDraft, updated_at: new Date().toISOString() })
+      .eq("id", territory!.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message ?? "Could not save the focus area.");
+      return;
+    }
+    // Re-clip the quadrants from the new outline. They are derived from it, so
+    // leaving them alone would have four zones dividing a shape that no longer
+    // exists, and coverage counted against ground the church had stopped
+    // claiming. Ordered by sort_order, which is the order the split returns.
+    const q = splitIntoQuadrants(areaDraft);
+    const ordered = [q.north_west, q.north_east, q.south_west, q.south_east];
+    const ranked = [...zones].sort((a, b) => a.sort_order - b.sort_order);
+    const results = await Promise.all(
+      ranked.map((z, i) =>
+        supabase.from("evangelism_zones").update({ boundary: ordered[i] }).eq("id", z.id),
+      ),
+    );
+    const failed = results.filter((r) => r.error).length;
+    toast.success(
+      failed
+        ? `Focus area saved, but ${failed} quadrant(s) could not be redrawn.`
+        : "Focus area saved and the four quadrants redrawn to match.",
+    );
+    setEditingArea(false);
+    load();
+  };
 
   const addStop = useCallback((p: LatLng) => {
     const stop = { lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6), label: null as string | null };
@@ -193,7 +243,39 @@ export function TerritoryPanel() {
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{territory.description}</p>
           )}
         </div>
+
+        {canManage && (
+          <div className="flex gap-2">
+            {editingArea ? (
+              <>
+                <Button onClick={saveArea} disabled={saving}>
+                  {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Save focus area
+                </Button>
+                <Button variant="outline" onClick={() => { setEditingArea(false); setAreaDraft([]); }}>
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                disabled={plotting}
+                onClick={() => { setAreaDraft(territory.boundary); setEditingArea(true); }}
+              >
+                Edit focus area
+              </Button>
+            )}
+          </div>
+        )}
       </div>
+
+      {editingArea && (
+        <p className="border-l-2 border-royal bg-royal/5 py-2 pl-3 text-xs text-muted-foreground">
+          Click the map to add a corner to the focus area, or click an existing corner to remove it.
+          This is the standing ground the church is claiming — it is not the weekly route.
+          {areaDraft.length < 3 && " At least three corners are needed."}
+        </p>
+      )}
 
       {focus ? (
         <div
@@ -215,20 +297,21 @@ export function TerritoryPanel() {
       )}
 
       <TerritoryMap
-        territory={territory.boundary}
+        territory={editingArea ? areaDraft : territory.boundary}
         zones={zonesForMap}
         focusZoneId={focus?.zone_id ?? null}
-        stops={stops}
+        stops={editingArea ? [] : stops}
         // Click-to-plot only while plotting, so an ordinary member — or an
         // admin just reading the map — cannot drop a pin by accident.
-        onMapClick={plotting ? addStop : undefined}
-        onStopClick={plotting ? removeStop : undefined}
+        onMapClick={editingArea ? addAreaPoint : plotting ? addStop : undefined}
+        onStopClick={plotting && !editingArea ? removeStop : undefined}
+        onTerritoryPointClick={editingArea ? removeAreaPoint : undefined}
       />
 
       <SaturdayPlan
         saturday={saturday}
         assignment={assignment}
-        stops={stops}
+        stops={editingArea ? [] : stops}
         plotting={plotting}
         canManage={canManage}
         saving={saving}
