@@ -30,6 +30,7 @@ import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 import { listWitnesses, resolveWitnessId, splitWitnessNames, type Witness } from "@/lib/witnesses";
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
 import { EvangelismFocusSummary } from "@/components/evangelism/EvangelismFocusSummary";
+import { ContactActions } from "@/components/evangelism/ContactActions";
 import { useCapabilities } from "@/lib/adminCapabilities";
 import { addContactNote } from "@/lib/contactActivity";
 
@@ -330,6 +331,14 @@ function EvangelismPage() {
     [contacts, q, nowKey, genderFilter],
   );
 
+  // Counts the segment, not the whole table. "All Contacts (84)" sitting above
+  // 34 men is the kind of mismatch that makes someone distrust the page.
+  const segmentTotal = useMemo(
+    () => contacts.filter(matchesGender).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [contacts, genderFilter],
+  );
+
   const monthKeys = useMemo(() => {
     const set = new Set(contacts.map((c) => monthKey(c.met_on)));
     return Array.from(set).sort((a, b) => b.localeCompare(a));
@@ -599,7 +608,7 @@ function EvangelismPage() {
       <Tabs defaultValue="month" className="space-y-6">
         <TabsList>
           <TabsTrigger value="month">This Month ({currentMonthContacts.length})</TabsTrigger>
-          <TabsTrigger value="all">All Contacts ({contacts.length})</TabsTrigger>
+          <TabsTrigger value="all">All Contacts ({segmentTotal})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="month" className="space-y-4">
@@ -677,18 +686,26 @@ function ContactList({
   }
   return (
     <div className="space-y-2">
+      {/* The card is no longer one big link.
+          Text and Call are anchors themselves (tel:, sms:), and an anchor
+          inside an anchor is invalid HTML that browsers resolve by unnesting —
+          which is why these buttons could not live here before. The name and
+          the View chevron carry the navigation instead, and the row gets to
+          hold real actions. */}
       {contacts.map((c) => (
-        <Link
+        <div
           key={c.id}
-          to="/dashboard/evangelism/$id"
-          params={{ id: c.id }}
-          className="flex items-center justify-between gap-4 bg-card border border-border p-5 hover:border-foreground/30 hover:bg-muted/30 transition-colors group cursor-pointer"
+          className="group flex flex-wrap items-start justify-between gap-4 border border-border bg-card p-5 transition-colors hover:border-foreground/30"
         >
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="font-display text-xl underline-offset-4 group-hover:underline">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to="/dashboard/evangelism/$id"
+                params={{ id: c.id }}
+                className="font-display text-xl underline-offset-4 hover:underline"
+              >
                 {c.first_name} {c.last_name}
-              </div>
+              </Link>
               {c.baptized && (
                 <Badge variant="secondary" className="bg-accent/20 text-accent-foreground">
                   Baptized
@@ -735,12 +752,27 @@ function ContactList({
                 );
               })()}
             </div>
+
+            {/* Reaching them is the point of the list, so it takes one tap from
+                here rather than a trip through the profile. */}
+            <ContactActions
+              contactId={c.id}
+              phone={c.phone}
+              firstName={c.first_name}
+              size="sm"
+              className="mt-3"
+            />
           </div>
-          <div className="flex items-center gap-1 text-xs eyebrow text-muted-foreground group-hover:text-foreground shrink-0">
+
+          <Link
+            to="/dashboard/evangelism/$id"
+            params={{ id: c.id }}
+            className="eyebrow flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
             <span className="hidden sm:inline">View</span>
             <ChevronRight className="h-5 w-5" />
-          </div>
-        </Link>
+          </Link>
+        </div>
       ))}
     </div>
   );
