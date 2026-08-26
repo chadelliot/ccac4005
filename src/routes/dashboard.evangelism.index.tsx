@@ -172,7 +172,7 @@ function EvangelismPage() {
           notes: parsed.data.notes ?? "",
         },
       });
-      const r = sheetRes as { ok?: boolean; configured?: boolean; tab?: string; error?: string } | null;
+      const r = sheetRes as { ok?: boolean; configured?: boolean; tab?: string; created?: boolean; error?: string } | null;
       if (r?.ok) {
         toast.success(`Added to the ${r.tab} tab of the harvest list.`);
       } else if (r && r.configured !== false) {

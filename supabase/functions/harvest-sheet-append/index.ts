@@ -69,7 +69,7 @@ serve(async (req) => {
     });
 
     const text = await res.text();
-    let parsed: { ok?: boolean; tab?: string; row?: number; error?: string };
+    let parsed: { ok?: boolean; tab?: string; row?: number; created?: boolean; error?: string };
     try {
       parsed = JSON.parse(text);
     } catch {
@@ -82,7 +82,7 @@ serve(async (req) => {
     }
 
     if (!parsed.ok) return json({ ok: false, error: parsed.error ?? "The sheet refused the row." });
-    return json({ ok: true, tab: parsed.tab, row: parsed.row });
+    return json({ ok: true, tab: parsed.tab, row: parsed.row, created: parsed.created });
   } catch (e) {
     console.error("harvest-sheet-append error:", e);
     return json({ ok: false, error: "Could not reach the sheet." }, 500);

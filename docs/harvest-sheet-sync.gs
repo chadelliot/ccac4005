@@ -27,8 +27,13 @@ function doPost(e) {
     }
 
     var sheet = findMonthTab(body.met_on);
+    var created = false;
     if (!sheet) {
-      return json({ ok: false, error: 'no tab for ' + body.met_on });
+      sheet = createMonthTab(body.met_on);
+      created = true;
+    }
+    if (!sheet) {
+      return json({ ok: false, error: 'no tab for ' + body.met_on + ' and none could be made' });
     }
 
     var headerRow = findHeaderRow(sheet);
@@ -49,7 +54,7 @@ function doPost(e) {
       body.notes || ''
     ]]);
 
-    return json({ ok: true, tab: sheet.getName(), row: row });
+    return json({ ok: true, tab: sheet.getName(), row: row, created: created });
   } catch (err) {
     return json({ ok: false, error: String(err) });
   }
@@ -87,6 +92,94 @@ function findMonthTab(isoDate) {
   return null;
 }
 
+/**
+ * Make the tab for a month that does not have one yet.
+ *
+ * Copies the nearest earlier month rather than starting blank, so the new tab
+ * inherits the same headers, column widths, colours and fonts — a month created
+ * automatically should be indistinguishable from one made by hand.
+ *
+ * Only the data rows are cleared, with clearContent rather than clear, so the
+ * formatting the copy brought with it survives. Last month's rows would
+ * otherwise appear as this month's harvest.
+ */
+function createMonthTab(isoDate) {
+  var parts = String(isoDate).split('-');
+  if (parts.length < 2) return null;
+
+  var monthIndex = parseInt(parts[1], 10) - 1;
+  if (monthIndex < 0 || monthIndex > 11) return null;
+  var year = parts[0];
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var tabs = ss.getSheets();
+  if (tabs.length === 0) return null;
+
+  // Prefer the closest earlier month as the template — it is the most likely to
+  // carry the layout currently in use.
+  var template = null;
+  var bestDistance = 99;
+  for (var i = 0; i < tabs.length; i++) {
+    var m = monthIndexOf(tabs[i].getName());
+    if (m === -1) continue;
+    var distance = monthIndex - m;
+    if (distance > 0 && distance < bestDistance) {
+      bestDistance = distance;
+      template = tabs[i];
+    }
+  }
+  if (!template) template = tabs[tabs.length - 1];
+
+  var copy = template.copyTo(ss);
+  copy.setName(nameFor(template.getName(), monthIndex, year));
+
+  // Chronological order, so the tab strip still reads January to December.
+  var target = ss.getSheets().length;
+  var all = ss.getSheets();
+  for (var j = 0; j < all.length; j++) {
+    var jm = monthIndexOf(all[j].getName());
+    if (jm !== -1 && jm > monthIndex) { target = j + 1; break; }
+  }
+  ss.setActiveSheet(copy);
+  ss.moveActiveSheet(target);
+
+  // Empty the rows, keep the look.
+  var headerRow = findHeaderRow(copy);
+  if (headerRow) {
+    var last = copy.getLastRow();
+    if (last > headerRow) {
+      copy.getRange(headerRow + 1, 1, last - headerRow, copy.getLastColumn()).clearContent();
+    }
+  }
+  return copy;
+}
+
+/** Month index a tab name starts with, or -1. */
+function monthIndexOf(tabName) {
+  var names = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  var lower = String(tabName).toLowerCase();
+  for (var i = 0; i < names.length; i++) {
+    if (lower.indexOf(names[i]) === 0) return i;
+  }
+  return -1;
+}
+
+/**
+ * Name the new tab the way the template is named.
+ *
+ * The existing tabs are not consistent — "JANUARY 2026" shouts, "August 2026"
+ * does not — so the case of the template is copied rather than imposed. A tab
+ * that matches its neighbours is one nobody has to think about.
+ */
+function nameFor(templateName, monthIndex, year) {
+  var full = ['January','February','March','April','May','June',
+              'July','August','September','October','November','December'][monthIndex];
+  var t = String(templateName);
+  var alpha = t.replace(/[^A-Za-z]/g, '');
+  if (alpha && alpha === alpha.toUpperCase()) return full.toUpperCase() + ' ' + year;
+  return full + ' ' + year;
+}
+
 function findHeaderRow(sheet) {
   var scan = sheet.getRange(1, 1, MAX_HEADER_SCAN, 1).getValues();
   for (var i = 0; i < scan.length; i++) {
@@ -121,6 +214,12 @@ function json(obj) {
  *
  * 1. In the sheet: Extensions -> Apps Script. Delete anything there and paste
  *    this whole file in.
+ *
+ *    If you have pasted an earlier version already: replace it with this one,
+ *    keep the same SHARED_SECRET, and then Deploy -> Manage deployments ->
+ *    edit the existing deployment -> Version: New version -> Deploy. Editing
+ *    the existing deployment keeps the same URL, so the Supabase secret still
+ *    points at it and nothing else needs changing.
  *
  * 2. Replace CHANGE_ME_TO_A_LONG_RANDOM_STRING above with a long random string.
  *    Keep a copy — you need the same value in step 5.
