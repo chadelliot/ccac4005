@@ -58,6 +58,10 @@ const editSchema = z.object({
   where_met: z.string().trim().max(120).nullable(),
   notes: z.string().trim().max(2000).nullable(),
   prayer_request: z.string().trim().max(1000).nullable(),
+  // The day the soul was actually met. Editable because it gets recorded wrong
+  // — typed from memory days later, or copied from the wrong row — and it drives
+  // which month the harvest list files them under.
+  met_on: z.string().trim().min(1, "Witness date is required"),
   status: z.enum(STATUS_OPTIONS),
 });
 
@@ -119,6 +123,7 @@ function ContactDetail() {
       where_met: (fd.get("where_met") as string) || null,
       notes: (fd.get("notes") as string) || null,
       prayer_request: (fd.get("prayer_request") as string) || null,
+      met_on: fd.get("met_on") as string,
       status,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
@@ -275,6 +280,15 @@ function ContactDetail() {
               <Label>Where we met</Label>
               <Input name="where_met" defaultValue={contact.where_met ?? ""} maxLength={120} />
             </div>
+              <div>
+                <Label>Date witnessed</Label>
+                <Input
+                  name="met_on"
+                  type="date"
+                  defaultValue={(contact.met_on ?? contact.created_at).slice(0, 10)}
+                  required
+                />
+              </div>
           </div>
           <div>
             <Label>Address</Label>
