@@ -156,6 +156,30 @@ function EvangelismPage() {
     setFollowUp(false);
     (e.target as HTMLFormElement).reset();
     listWitnesses().then(setWitnessOptions);
+
+    // Mirror the row into HARVEST LIST 2026, on the tab for the month the soul
+    // was witnessed. Deliberately after the contact is saved and the dialog
+    // closed: the portal is the record and the sheet is a copy, so a sheet that
+    // is unreachable must never cost anyone the contact they just typed.
+    void (async () => {
+      const { data: sheetRes } = await supabase.functions.invoke("harvest-sheet-append", {
+        body: {
+          met_on: parsed.data.met_on,
+          witness: primary || typed,
+          where_met: parsed.data.where_met ?? "",
+          name: [parsed.data.first_name, parsed.data.last_name].filter(Boolean).join(" "),
+          phone: parsed.data.phone ?? "",
+          notes: parsed.data.notes ?? "",
+        },
+      });
+      const r = sheetRes as { ok?: boolean; configured?: boolean; tab?: string; error?: string } | null;
+      if (r?.ok) {
+        toast.success(`Added to the ${r.tab} tab of the harvest list.`);
+      } else if (r && r.configured !== false) {
+        toast.error(`Saved here, but not written to the sheet: ${r.error ?? "unknown reason"}`);
+      }
+    })();
+
     // fire-and-forget geocoding
     const query = parsed.data.address || parsed.data.where_met;
     if (inserted?.id && query) {

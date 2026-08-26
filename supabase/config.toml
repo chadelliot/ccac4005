@@ -58,3 +58,10 @@ verify_jwt = true
 # and only finance may record an expense anyway.
 [functions.receipt-scan]
 verify_jwt = true
+
+# Private. Appends a contact added on the site to the HARVEST LIST sheet, via an
+# Apps Script web app bound to that sheet. The webhook URL and its shared secret
+# stay server-side; a public endpoint that writes to the harvest list should not
+# be readable in the browser bundle.
+[functions.harvest-sheet-append]
+verify_jwt = true

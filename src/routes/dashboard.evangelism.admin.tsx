@@ -1,16 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  ArrowLeft,
-  Search,
-  MapPin,
-  Users,
-  CheckCircle2,
-  Loader2,
-  AlertCircle,
-  ChevronRight,
-} from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, ChevronRight, Loader2, MapPin, Plus, Search, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -341,14 +332,14 @@ function EvangelismAdmin() {
             Every soul, every touch, every outreach — at a glance.
           </p>
         </div>
-        <Button
-          onClick={backfillGeocodes}
-          disabled={backfilling || loadingData}
-          variant="outline"
-          className="rounded-none eyebrow"
-        >
-          {backfilling ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-          {backfilling ? "Mapping..." : "Geocode missing"}
+        {/* Adding a soul is what people come here to do; plotting old ones on
+            the map is housekeeping. The prominent button now says so, and the
+            geocode control moved down beside the map where its effect is
+            visible and its name means something in context. */}
+        <Button asChild className="rounded-none eyebrow">
+          <Link to="/dashboard/evangelism">
+            <Plus className="h-4 w-4" /> Add contact
+          </Link>
         </Button>
       </div>
 
@@ -373,6 +364,19 @@ function EvangelismAdmin() {
 
         {/* MAP */}
         <TabsContent value="map" className="space-y-5">
+          <div className="flex justify-end">
+            <Button
+              onClick={backfillGeocodes}
+              disabled={backfilling || loadingData}
+              variant="ghost"
+              size="sm"
+              className="rounded-none eyebrow text-xs text-muted-foreground"
+              title="Look up coordinates for contacts recorded without them, so they appear on the map"
+            >
+              {backfilling ? <Loader2 className="h-3 w-3 animate-spin" /> : <MapPin className="h-3 w-3" />}
+              {backfilling ? "Mapping…" : "Plot missing contacts on the map"}
+            </Button>
+          </div>
           {/* The territory first: it is the frame the contacts sit inside, and
               it reads even when nothing has been geocoded yet. */}
           <TerritoryPanel />
@@ -425,7 +429,7 @@ function EvangelismAdmin() {
               {stats.total > stats.mapped && (
                 <p className="text-xs text-muted-foreground">
                   {stats.total - stats.mapped} contact{stats.total - stats.mapped === 1 ? "" : "s"} need
-                  geocoding. Click <em>Geocode missing</em> above to plot them.
+                  geocoding.
                 </p>
               )}
             </div>
