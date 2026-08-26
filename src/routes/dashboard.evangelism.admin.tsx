@@ -631,7 +631,7 @@ function EvangelismAdmin() {
                   <TableHead>Where met</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Journey</TableHead>
-                  <TableHead>Touches</TableHead>
+                  <TableHead>Last touch</TableHead>
                   <TableHead>Date witnessed</TableHead>
                   <TableHead className="w-[40px]"></TableHead>
                 </TableRow>
@@ -651,13 +651,8 @@ function EvangelismAdmin() {
                   </TableRow>
                 ) : (
                   filtered.map((c) => {
-                    const fu = followUpByContact[c.id] || {
-                      total: 0,
-                      done: 0,
-                      overdue: 0,
-                      nextDue: null,
-                    };
                     const witness = c.witness_id ? witnessById[c.witness_id] : null;
+                    const lastTouch = lastContact.get(c.id);
                     return (
                       <TableRow key={c.id} className="group">
                         <TableCell>
@@ -722,16 +717,21 @@ function EvangelismAdmin() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm">
-                          {fu.total > 0 ? (
-                            <span
-                              className={fu.overdue ? "text-destructive" : "text-muted-foreground"}
-                            >
-                              {fu.done}/{fu.total} done
-                              {fu.overdue ? ` · ${fu.overdue} overdue` : ""}
-                            </span>
+                        {/* When anyone last reached this soul, from the activity
+                            timeline — a text, a call, an invite, or a note being
+                            written or revised. Reads against Date witnessed in the
+                            next column: met in March, last touched in March, and
+                            the gap speaks for itself. Scheduled touches are a plan;
+                            this is what actually happened. */}
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                          {lastTouch ? (
+                            new Date(lastTouch).toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              year: "2-digit",
+                            })
                           ) : (
-                            <span className="text-muted-foreground">—</span>
+                            <span className="italic">Never</span>
                           )}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
