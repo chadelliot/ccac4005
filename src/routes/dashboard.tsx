@@ -58,7 +58,15 @@ function DashboardLayout() {
             <DashLink to="/dashboard" exact icon={<LayoutDashboard className="h-4 w-4" />}>Overview</DashLink>
             <DashLink to="/dashboard/events" icon={<Calendar className="h-4 w-4" />}>Events</DashLink>
             <DashLink to="/dashboard/groups" icon={<UsersRound className="h-4 w-4" />}>Groups</DashLink>
-            <DashLink to="/dashboard/evangelism" icon={<Users className="h-4 w-4" />}>Evangelism</DashLink>
+            <DashLink
+              // Evangelism leads land on the Executive View, everyone else on
+              // Contacts. Choosing the destination here rather than redirecting
+              // from the page keeps both reachable and refreshable.
+              to={hasCapability("evangelism_management") ? "/dashboard/evangelism/admin" : "/dashboard/evangelism"}
+              icon={<Users className="h-4 w-4" />}
+            >
+              Evangelism
+            </DashLink>
             <DashLink to="/dashboard/follow-ups" icon={<Bell className="h-4 w-4" />}>Follow-ups</DashLink>
             <DashLink to="/dashboard/bible" icon={<BookOpen className="h-4 w-4" />}>Bible</DashLink>
             <DashLink to="/dashboard/programs" icon={<BookMarked className="h-4 w-4" />}>Reading Programs</DashLink>
@@ -94,7 +102,7 @@ function DashboardLayout() {
             <DashLinkPill to="/dashboard" exact>Overview</DashLinkPill>
             <DashLinkPill to="/dashboard/events">Events</DashLinkPill>
             <DashLinkPill to="/dashboard/groups">Groups</DashLinkPill>
-            <DashLinkPill to="/dashboard/evangelism">Evangelism</DashLinkPill>
+            <DashLinkPill to={hasCapability("evangelism_management") ? "/dashboard/evangelism/admin" : "/dashboard/evangelism"}>Evangelism</DashLinkPill>
             <DashLinkPill to="/dashboard/follow-ups">Follow-ups</DashLinkPill>
             <DashLinkPill to="/dashboard/bible">Bible</DashLinkPill>
             <DashLinkPill to="/dashboard/programs">Programs</DashLinkPill>

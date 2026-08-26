@@ -337,7 +337,7 @@ function EvangelismAdmin() {
             geocode control moved down beside the map where its effect is
             visible and its name means something in context. */}
         <Button asChild className="rounded-none eyebrow">
-          <Link to="/dashboard/evangelism">
+          <Link to="/dashboard/evangelism" search={{ add: "1" }}>
             <Plus className="h-4 w-4" /> Add contact
           </Link>
         </Button>

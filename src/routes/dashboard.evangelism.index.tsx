@@ -18,6 +18,14 @@ import { listWitnesses, resolveWitnessId, splitWitnessNames, type Witness } from
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
 
 export const Route = createFileRoute("/dashboard/evangelism/")({
+  // ?add=1 opens the form on arrival, so "Add contact" elsewhere is one click
+  // rather than landing here and asking the person to press it again.
+  //
+  // Returns {} rather than { add: undefined } when absent: the latter makes the
+  // parameter part of the route's required shape, and every existing link to
+  // this page then fails to typecheck for not passing a search object.
+  validateSearch: (search: Record<string, unknown>): { add?: "1" } =>
+    search.add === "1" || search.add === 1 ? { add: "1" } : {},
   head: () => ({ meta: [{ title: "Evangelism — CCAC" }] }),
   component: EvangelismPage,
 });
@@ -68,7 +76,8 @@ function EvangelismPage() {
   const navigate = useNavigate();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [q, setQ] = useState("");
-  const [open, setOpen] = useState(false);
+  const { add } = Route.useSearch();
+  const [open, setOpen] = useState(add === "1");
   const [busy, setBusy] = useState(false);
   const [witnessOptions, setWitnessOptions] = useState<Witness[]>([]);
   const [witnessName, setWitnessName] = useState("");
@@ -98,9 +107,13 @@ function EvangelismPage() {
       });
   }, [user]);
 
-  useEffect(() => {
-    if (isAdmin) navigate({ to: "/dashboard/evangelism/admin", replace: true });
-  }, [isAdmin, navigate]);
+  // Deliberately no redirect here.
+  //
+  // This used to send every admin straight to the Executive View, which made
+  // the Contacts page unreachable for them: the Add contact button bounced
+  // back, and refreshing any tab landed somewhere else. Where an admin starts
+  // is a job for the navigation link, not for the page they asked for —
+  // a route that refuses to display itself is a trap.
 
   useEffect(() => {
     load();
