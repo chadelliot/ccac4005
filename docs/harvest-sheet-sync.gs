@@ -54,6 +54,14 @@ function doPost(e) {
       body.notes || ''
     ]]);
 
+    // Gender is written separately, into whichever column carries that header.
+    // Not assumed to be column 7: if someone has since inserted a column, the
+    // header is the truth and a fixed index would quietly overwrite it.
+    if (body.gender) {
+      var gcol = genderColumn(sheet, headerRow, true);
+      if (gcol) sheet.getRange(row, gcol).setValue(titleCase(body.gender));
+    }
+
     return json({ ok: true, tab: sheet.getName(), row: row, created: created });
   } catch (err) {
     return json({ ok: false, error: String(err) });
@@ -209,6 +217,153 @@ function json(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+function titleCase(s) {
+  var t = String(s || '').trim();
+  if (!t) return '';
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+}
+
+/* ===========================================================================
+ * GENDER COLUMN
+ *
+ * Run "Harvest list -> Set up the Gender column" once from the sheet menu. It
+ * is safe to run again: it finds an existing Gender column rather than adding
+ * a second one, and never overwrites a value already chosen by hand.
+ * ========================================================================= */
+
+var GENDER_HEADER = 'Gender';
+var GENDER_ROWS = 500;   // how far down the dropdown is applied
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Harvest list')
+    .addItem('Set up the Gender column', 'setUpGenderColumn')
+    .addItem('Fill blank genders from names', 'fillGenderFromNames')
+    .addToUi();
+}
+
+/**
+ * The column carrying the Gender header, optionally creating it.
+ *
+ * Found by header text rather than position, so inserting a column somewhere
+ * to the left cannot turn this into a writer of somebody else's data.
+ */
+function genderColumn(sheet, headerRow, createIfMissing) {
+  var lastCol = Math.max(sheet.getLastColumn(), 6);
+  var headers = sheet.getRange(headerRow, 1, 1, lastCol).getValues()[0];
+  for (var i = 0; i < headers.length; i++) {
+    if (String(headers[i]).trim().toLowerCase() === GENDER_HEADER.toLowerCase()) return i + 1;
+  }
+  if (!createIfMissing) return null;
+
+  // Prefer column 7 — immediately after notes — but only while it is genuinely
+  // free. Otherwise go to the end rather than displacing anything.
+  var col = (String(headers[6] || '').trim() === '') ? 7 : lastCol + 1;
+  sheet.getRange(headerRow, col).setValue(GENDER_HEADER);
+  return col;
+}
+
+function setUpGenderColumn() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var tabs = ss.getSheets();
+  var touched = 0;
+
+  var rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['Male', 'Female'], true)
+    .setAllowInvalid(false)
+    .setHelpText('Choose Male or Female, or leave blank if it was never asked.')
+    .build();
+
+  for (var i = 0; i < tabs.length; i++) {
+    var sheet = tabs[i];
+    if (monthIndexOf(sheet.getName()) === -1) continue;   // skip non-month tabs
+
+    var headerRow = findHeaderRow(sheet);
+    if (!headerRow) continue;
+
+    var col = genderColumn(sheet, headerRow, true);
+    if (!col) continue;
+
+    // Match the header row's own formatting so the new column doesn't announce
+    // itself as an afterthought.
+    var header = sheet.getRange(headerRow, col);
+    sheet.getRange(headerRow, 1).copyTo(header, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+    header.setValue(GENDER_HEADER);
+
+    sheet.getRange(headerRow + 1, col, GENDER_ROWS, 1).setDataValidation(rule);
+    touched++;
+  }
+
+  SpreadsheetApp.getUi().alert(
+    'Gender column ready on ' + touched + ' month tab' + (touched === 1 ? '' : 's') + '.\n\n' +
+    'Each cell is now a Male / Female dropdown. Blank means nobody has recorded it.'
+  );
+}
+
+/**
+ * Fill blank gender cells from the soul's first name.
+ *
+ * Only blanks are touched — anything a person has already chosen is left
+ * exactly as it is, so running this after correcting a few by hand cannot
+ * undo that work.
+ *
+ * Names not in the list below are left blank on purpose. A guess sitting in a
+ * record looks like a fact and gets acted on; a blank asks the question.
+ */
+var MALE_NAMES = ['anthony','antoine','bernard','dwayne','elijah','ernest','john','kameron',
+  'keon','king','marquis','mike','pete','phil','reese','ricky','ronald','ryen','tay','theron',
+  'kavon','tommy','travis','brian','eian','ryan','cymon','tim','deshawn','michael'];
+
+var FEMALE_NAMES = ['adrianna','arletta','brianca','brittany','dajai','dejah','icis','jakeelah',
+  'kacey','kadija','konstance','mira','natalie','nicole','pam','raya','samia','saron','tierra',
+  'treyana','valerie','deasia','janay','kayla','rukia','shay','tammy','tina','whitney','jasmine',
+  'kiera','kirah','kristen','petra','rachel','rokea','sasha','shamia','tiara','veronica',
+  'vondelier','zella','rayshawna','destiny'];
+
+function fillGenderFromNames() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var tabs = ss.getSheets();
+  var filled = 0;
+  var skipped = 0;
+
+  for (var i = 0; i < tabs.length; i++) {
+    var sheet = tabs[i];
+    if (monthIndexOf(sheet.getName()) === -1) continue;
+
+    var headerRow = findHeaderRow(sheet);
+    if (!headerRow) continue;
+    var col = genderColumn(sheet, headerRow, true);
+    if (!col) continue;
+
+    var last = sheet.getLastRow();
+    if (last <= headerRow) continue;
+    var count = last - headerRow;
+
+    var names = sheet.getRange(headerRow + 1, 4, count, 1).getValues();
+    var range = sheet.getRange(headerRow + 1, col, count, 1);
+    var current = range.getValues();
+    var changed = false;
+
+    for (var r = 0; r < count; r++) {
+      var name = String(names[r][0]).trim();
+      if (!name) continue;
+      if (String(current[r][0]).trim() !== '') continue;   // never overwrite a choice
+
+      var first = name.split(/\s+/)[0].toLowerCase().replace(/[^a-z]/g, '');
+      if (MALE_NAMES.indexOf(first) !== -1) { current[r][0] = 'Male'; filled++; changed = true; }
+      else if (FEMALE_NAMES.indexOf(first) !== -1) { current[r][0] = 'Female'; filled++; changed = true; }
+      else skipped++;
+    }
+    if (changed) range.setValues(current);
+  }
+
+  SpreadsheetApp.getUi().alert(
+    'Filled ' + filled + ' blank gender cell' + (filled === 1 ? '' : 's') + '.\n\n' +
+    skipped + ' left blank because the name was not one this could judge. Pick those from ' +
+    'the dropdown — the site has the same three unresolved.'
+  );
+}
+
 /* ---------------------------------------------------------------------------
  * SETUP
  *
@@ -236,4 +391,15 @@ function json(obj) {
  * 5. In a terminal, give both values to Supabase:
  *      supabase secrets set HARVEST_SHEET_WEBHOOK=<the URL from step 4>
  *      supabase secrets set HARVEST_SHEET_SECRET=<the string from step 2>
+ *
+ * 6. GENDER COLUMN (only needed once, after pasting this version in)
+ *    Reload the sheet. A "Harvest list" menu appears next to Help.
+ *      Harvest list -> Set up the Gender column
+ *        Adds a Gender header and a Male / Female dropdown to every month tab.
+ *      Harvest list -> Fill blank genders from names
+ *        Fills the blanks it can judge from the first name. It never changes a
+ *        cell someone has already set, so run it whenever you like.
+ *
+ *    Google will ask for authorisation the first time a menu item runs — it is
+ *    the same script you already deployed, now allowed to edit the sheet.
  * ------------------------------------------------------------------------- */

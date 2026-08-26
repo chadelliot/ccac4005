@@ -9,10 +9,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 import { listWitnesses, resolveWitnessId, splitWitnessNames, type Witness } from "@/lib/witnesses";
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
@@ -51,6 +64,7 @@ type Contact = {
   met_on: string;
   co_witness: string | null;
   witness_id: string | null;
+  gender: string | null;
 };
 
 const contactSchema = z.object({
@@ -62,6 +76,7 @@ const contactSchema = z.object({
   notes: z.string().trim().max(2000).optional(),
   met_on: z.string().trim().min(1, "Date met required"),
   co_witness: z.string().trim().max(120).optional(),
+  gender: z.enum(["male", "female"]).optional(),
 });
 
 function today() {
@@ -97,6 +112,12 @@ function EvangelismPage() {
   const [witnessOptions, setWitnessOptions] = useState<Witness[]>([]);
   const [witnessName, setWitnessName] = useState("");
   const [followUp, setFollowUp] = useState(false);
+  // "unknown" rather than "" so the placeholder is a real choice someone can
+  // return to, and so an unanswered question is never recorded as an answer.
+  const [gender, setGender] = useState<string>("unknown");
+  const [genderFilter, setGenderFilter] = useState<string>("all");
+  // contact id -> when anyone last reached them, from the activity timeline.
+  const [lastContact, setLastContact] = useState<Map<string, string>>(new Map());
 
   const load = async () => {
     if (!user) return;
@@ -113,6 +134,20 @@ function EvangelismPage() {
     const { data, error } = await (canManage ? base : base.eq("added_by", user.id));
     if (error) toast.error(error.message);
     setContacts((data ?? []) as Contact[]);
+
+    // One grouped read rather than a query per row. The view is security_invoker,
+    // so it returns dates computed only from the activity this person may read —
+    // a member is not told that an admin's note exists by way of its date.
+    const { data: activity } = await supabase
+      .from("contact_last_activity")
+      .select("contact_id, last_activity_at");
+    setLastContact(
+      new Map(
+        (activity ?? [])
+          .filter((r) => r.contact_id && r.last_activity_at)
+          .map((r) => [r.contact_id as string, r.last_activity_at as string]),
+      ),
+    );
   };
 
   // Default the witness to whoever is logging it — most souls are logged by the
@@ -159,6 +194,7 @@ function EvangelismPage() {
       notes: fd.get("notes") || undefined,
       met_on: fd.get("met_on"),
       co_witness: fd.get("co_witness") || undefined,
+      gender: gender === "unknown" ? undefined : gender,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
@@ -194,6 +230,7 @@ function EvangelismPage() {
     );
     setOpen(false);
     setFollowUp(false);
+    setGender("unknown");
     (e.target as HTMLFormElement).reset();
     listWitnesses().then(setWitnessOptions);
 
@@ -210,9 +247,16 @@ function EvangelismPage() {
           name: [parsed.data.first_name, parsed.data.last_name].filter(Boolean).join(" "),
           phone: parsed.data.phone ?? "",
           notes: parsed.data.notes ?? "",
+          gender: parsed.data.gender ?? "",
         },
       });
-      const r = sheetRes as { ok?: boolean; configured?: boolean; tab?: string; created?: boolean; error?: string } | null;
+      const r = sheetRes as {
+        ok?: boolean;
+        configured?: boolean;
+        tab?: string;
+        created?: boolean;
+        error?: string;
+      } | null;
       if (r?.ok) {
         toast.success(`Added to the ${r.tab} tab of the harvest list.`);
       } else if (r && r.configured !== false) {
@@ -262,14 +306,28 @@ function EvangelismPage() {
   };
 
   const matchesSearch = (c: Contact) => {
-    const text = `${c.first_name} ${c.last_name ?? ""} ${c.phone ?? ""} ${c.where_met ?? ""}`.toLowerCase();
+    const text =
+      `${c.first_name} ${c.last_name ?? ""} ${c.phone ?? ""} ${c.where_met ?? ""}`.toLowerCase();
     return text.includes(q.toLowerCase());
+  };
+
+  // Segmenting the harvest is how the men's and women's ministries find the
+  // souls that are theirs to follow up. "Not recorded" is a segment of its own
+  // rather than a leftover, because it is the list someone has to work through.
+  const matchesGender = (c: Contact) => {
+    if (genderFilter === "all") return true;
+    if (genderFilter === "unknown") return c.gender == null;
+    return c.gender === genderFilter;
   };
 
   const nowKey = monthKey(new Date().toISOString());
   const currentMonthContacts = useMemo(
-    () => contacts.filter((c) => monthKey(c.met_on) === nowKey).filter(matchesSearch),
-    [contacts, q, nowKey],
+    () =>
+      contacts
+        .filter((c) => monthKey(c.met_on) === nowKey)
+        .filter(matchesSearch)
+        .filter(matchesGender),
+    [contacts, q, nowKey, genderFilter],
   );
 
   const monthKeys = useMemo(() => {
@@ -278,9 +336,7 @@ function EvangelismPage() {
   }, [contacts]);
 
   const locationOptions = useMemo(() => {
-    const set = new Set(
-      contacts.map((c) => (c.where_met ?? "").trim()).filter(Boolean),
-    );
+    const set = new Set(contacts.map((c) => (c.where_met ?? "").trim()).filter(Boolean));
     return Array.from(set).sort();
   }, [contacts]);
 
@@ -288,17 +344,19 @@ function EvangelismPage() {
   const [monthFilter, setMonthFilter] = useState<string>("all");
 
   const allFiltered = useMemo(() => {
-    let list = contacts.filter(matchesSearch);
+    let list = contacts.filter(matchesSearch).filter(matchesGender);
     if (monthFilter !== "all") list = list.filter((c) => monthKey(c.met_on) === monthFilter);
     if (sortMode === "alpha") {
       list = [...list].sort((a, b) =>
-        `${a.first_name} ${a.last_name ?? ""}`.localeCompare(`${b.first_name} ${b.last_name ?? ""}`),
+        `${a.first_name} ${a.last_name ?? ""}`.localeCompare(
+          `${b.first_name} ${b.last_name ?? ""}`,
+        ),
       );
     } else {
       list = [...list].sort((a, b) => b.met_on.localeCompare(a.met_on));
     }
     return list;
-  }, [contacts, q, monthFilter, sortMode]);
+  }, [contacts, q, monthFilter, sortMode, genderFilter]);
 
   // One dialog, two homes: leadership opens it from the Contacts header,
   // members from their briefing. Members keep the ability to log a soul —
@@ -306,126 +364,142 @@ function EvangelismPage() {
   // work — so the form must not live inside the leadership branch.
   const addContactDialog = (triggerLabel: string) => (
     <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button className="bg-night text-night-foreground hover:bg-night/90 rounded-none px-6 py-6 eyebrow">
-            <Plus className="h-4 w-4" /> {triggerLabel}
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="font-display text-3xl">New Contact</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleAdd} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>First name</Label>
-                <Input name="first_name" required maxLength={80} />
-              </div>
-              <div>
-                <Label>Last name</Label>
-                <Input name="last_name" maxLength={80} />
-              </div>
+      <DialogTrigger asChild>
+        <Button className="bg-night text-night-foreground hover:bg-night/90 rounded-none px-6 py-6 eyebrow">
+          <Plus className="h-4 w-4" /> {triggerLabel}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-display text-3xl">New Contact</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleAdd} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>First name</Label>
+              <Input name="first_name" required maxLength={80} />
             </div>
             <div>
-              <Label>Phone</Label>
-              <Input name="phone" type="tel" maxLength={40} />
+              <Label>Last name</Label>
+              <Input name="last_name" maxLength={80} />
             </div>
+          </div>
+          <div>
+            <Label>Phone</Label>
+            <Input name="phone" type="tel" maxLength={40} />
+          </div>
+          <div>
+            <Label>Address</Label>
+            <Input name="address" maxLength={200} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Address</Label>
-              <Input name="address" maxLength={200} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Where we met</Label>
-                <Input
-                  name="where_met"
-                  maxLength={120}
-                  list="outreach-locations"
-                  placeholder="Eastpoint Mall"
-                />
-                {/* Suggests locations already in use so the same place doesn't
+              <Label>Where we met</Label>
+              <Input
+                name="where_met"
+                maxLength={120}
+                list="outreach-locations"
+                placeholder="Eastpoint Mall"
+              />
+              {/* Suggests locations already in use so the same place doesn't
                     get logged three different ways and split the reporting. */}
-                <datalist id="outreach-locations">
-                  {locationOptions.map((l) => (
-                    <option key={l} value={l} />
-                  ))}
-                </datalist>
-              </div>
-              <div>
-                <Label>Date met</Label>
-                <Input name="met_on" type="date" required defaultValue={today()} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Who witnessed</Label>
-                <Input
-                  name="witness_name"
-                  maxLength={120}
-                  list="witness-names"
-                  value={witnessName}
-                  onChange={(e) => setWitnessName(e.target.value)}
-                  placeholder="Your name"
-                />
-                <datalist id="witness-names">
-                  {witnessOptions.map((w) => (
-                    <option key={w.id} value={w.name} />
-                  ))}
-                </datalist>
-              </div>
-              <div>
-                <Label>Alongside (optional)</Label>
-                <Input name="co_witness" maxLength={120} placeholder="Second witness" />
-              </div>
+              <datalist id="outreach-locations">
+                {locationOptions.map((l) => (
+                  <option key={l} value={l} />
+                ))}
+              </datalist>
             </div>
             <div>
-              <Label>Notes</Label>
-              <Textarea name="notes" rows={3} maxLength={2000} placeholder="What stood out? Prayer needs?" />
+              <Label>Date met</Label>
+              <Input name="met_on" type="date" required defaultValue={today()} />
             </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Who witnessed</Label>
+              <Input
+                name="witness_name"
+                maxLength={120}
+                list="witness-names"
+                value={witnessName}
+                onChange={(e) => setWitnessName(e.target.value)}
+                placeholder="Your name"
+              />
+              <datalist id="witness-names">
+                {witnessOptions.map((w) => (
+                  <option key={w.id} value={w.name} />
+                ))}
+              </datalist>
+            </div>
+            <div>
+              <Label>Alongside (optional)</Label>
+              <Input name="co_witness" maxLength={120} placeholder="Second witness" />
+            </div>
+            <div>
+              <Label>Gender</Label>
+              <Select value={gender} onValueChange={setGender}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unknown">Not recorded</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <Label>Notes</Label>
+            <Textarea
+              name="notes"
+              rows={3}
+              maxLength={2000}
+              placeholder="What stood out? Prayer needs?"
+            />
+          </div>
 
-            <div className="border border-border p-4 space-y-3">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={followUp}
-                  onChange={(e) => setFollowUp(e.target.checked)}
-                  className="h-4 w-4 accent-current"
-                />
-                <span className="eyebrow">Set follow-up reminders</span>
-              </label>
-              {followUp && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>How many touches</Label>
-                    <Input
-                      name="follow_up_touches"
-                      type="number"
-                      min={1}
-                      max={12}
-                      defaultValue={3}
-                    />
-                  </div>
-                  <div>
-                    <Label>Every (days)</Label>
-                    <Input
-                      name="follow_up_interval_days"
-                      type="number"
-                      min={1}
-                      max={90}
-                      defaultValue={3}
-                    />
-                  </div>
+          <div className="border border-border p-4 space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={followUp}
+                onChange={(e) => setFollowUp(e.target.checked)}
+                className="h-4 w-4 accent-current"
+              />
+              <span className="eyebrow">Set follow-up reminders</span>
+            </label>
+            {followUp && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>How many touches</Label>
+                  <Input name="follow_up_touches" type="number" min={1} max={12} defaultValue={3} />
                 </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={busy} className="w-full bg-night text-night-foreground hover:bg-night/90 rounded-none py-6 eyebrow">
-                {busy ? "Saving..." : "Save Contact"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+                <div>
+                  <Label>Every (days)</Label>
+                  <Input
+                    name="follow_up_interval_days"
+                    type="number"
+                    min={1}
+                    max={90}
+                    defaultValue={3}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              type="submit"
+              disabled={busy}
+              className="w-full bg-night text-night-foreground hover:bg-night/90 rounded-none py-6 eyebrow"
+            >
+              {busy ? "Saving..." : "Save Contact"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 
   // Held until roles and capabilities are known. Rendering the leadership
@@ -474,6 +548,7 @@ function EvangelismPage() {
 
           <ContactList
             contacts={allFiltered}
+            lastContact={lastContact}
             emptyText={
               q ? "No contacts match that search." : "No souls logged yet. Add the first one above."
             }
@@ -491,14 +566,34 @@ function EvangelismPage() {
         <div>
           <div className="eyebrow text-accent mb-2">— Evangelism</div>
           <h1 className="font-display text-5xl">Contacts</h1>
-          <p className="text-muted-foreground mt-2">People we've met, prayed with, and are following up on.</p>
+          <p className="text-muted-foreground mt-2">
+            People we've met, prayed with, and are following up on.
+          </p>
         </div>
         <div className="flex gap-2">{addContactDialog("Add Contact")}</div>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search contacts..." className="pl-9" />
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1 min-w-[15rem] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search contacts..."
+            className="pl-9"
+          />
+        </div>
+        <Select value={genderFilter} onValueChange={setGenderFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Everyone</SelectItem>
+            <SelectItem value="male">Men</SelectItem>
+            <SelectItem value="female">Women</SelectItem>
+            <SelectItem value="unknown">Not recorded</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Tabs defaultValue="month" className="space-y-6">
@@ -509,7 +604,11 @@ function EvangelismPage() {
 
         <TabsContent value="month" className="space-y-4">
           <div className="eyebrow text-muted-foreground text-xs">— {monthLabel(nowKey)}</div>
-          <ContactList contacts={currentMonthContacts} emptyText="No contacts added this month yet." />
+          <ContactList
+            contacts={currentMonthContacts}
+            lastContact={lastContact}
+            emptyText="No contacts added this month yet."
+          />
         </TabsContent>
 
         <TabsContent value="all" className="space-y-4">
@@ -521,7 +620,9 @@ function EvangelismPage() {
               <SelectContent>
                 <SelectItem value="all">All months</SelectItem>
                 {monthKeys.map((k) => (
-                  <SelectItem key={k} value={k}>{monthLabel(k)}</SelectItem>
+                  <SelectItem key={k} value={k}>
+                    {monthLabel(k)}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -535,14 +636,38 @@ function EvangelismPage() {
               </SelectContent>
             </Select>
           </div>
-          <ContactList contacts={allFiltered} emptyText="No contacts match these filters." />
+          <ContactList
+            contacts={allFiltered}
+            lastContact={lastContact}
+            emptyText="No contacts match these filters."
+          />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-function ContactList({ contacts, emptyText }: { contacts: Contact[]; emptyText: string }) {
+function lastContactLabel(iso: string | undefined) {
+  if (!iso) return null;
+  const then = new Date(iso);
+  const days = Math.floor((Date.now() - then.getTime()) / 86_400_000);
+  // Days for the recent past, a date once that stops being the useful unit —
+  // "11 days ago" answers the question, "Jun 3" answers it for June.
+  if (days <= 0) return "Contacted today";
+  if (days === 1) return "Contacted yesterday";
+  if (days < 30) return `Contacted ${days} days ago`;
+  return `Contacted ${then.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+}
+
+function ContactList({
+  contacts,
+  lastContact,
+  emptyText,
+}: {
+  contacts: Contact[];
+  lastContact: Map<string, string>;
+  emptyText: string;
+}) {
   if (contacts.length === 0) {
     return (
       <div className="border border-dashed border-border p-16 text-center">
@@ -561,15 +686,54 @@ function ContactList({ contacts, emptyText }: { contacts: Contact[]; emptyText: 
         >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
-              <div className="font-display text-xl underline-offset-4 group-hover:underline">{c.first_name} {c.last_name}</div>
-              {c.baptized && <Badge variant="secondary" className="bg-accent/20 text-accent-foreground">Baptized</Badge>}
-              {c.holy_ghost && <Badge variant="secondary" className="bg-night text-night-foreground">Holy Ghost</Badge>}
+              <div className="font-display text-xl underline-offset-4 group-hover:underline">
+                {c.first_name} {c.last_name}
+              </div>
+              {c.baptized && (
+                <Badge variant="secondary" className="bg-accent/20 text-accent-foreground">
+                  Baptized
+                </Badge>
+              )}
+              {c.holy_ghost && (
+                <Badge variant="secondary" className="bg-night text-night-foreground">
+                  Holy Ghost
+                </Badge>
+              )}
               {c.visited && <Badge variant="outline">Visited</Badge>}
             </div>
             <div className="flex flex-wrap gap-4 mt-2 text-xs text-muted-foreground">
-              {c.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone}</span>}
-              {c.where_met && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{c.where_met}</span>}
-              <span>{new Date(c.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
+              {c.phone && (
+                <span className="flex items-center gap-1">
+                  <Phone className="h-3 w-3" />
+                  {c.phone}
+                </span>
+              )}
+              {c.where_met && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {c.where_met}
+                </span>
+              )}
+              {/* The day they were witnessed to — the date the harvest list
+                  keeps and the one that decides which month they belong to.
+                  The record's creation date is bookkeeping, not ministry. */}
+              <span>
+                {new Date(c.met_on + "T12:00:00").toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+              {/* Whether anyone has been back since. A soul met in March and
+                  never called again should not look like one called yesterday. */}
+              {(() => {
+                const label = lastContactLabel(lastContact.get(c.id));
+                return label ? (
+                  <span className="text-foreground/70">{label}</span>
+                ) : (
+                  <span className="italic">Not contacted yet</span>
+                );
+              })()}
             </div>
           </div>
           <div className="flex items-center gap-1 text-xs eyebrow text-muted-foreground group-hover:text-foreground shrink-0">
@@ -581,4 +745,3 @@ function ContactList({ contacts, emptyText }: { contacts: Contact[]; emptyText: 
     </div>
   );
 }
-

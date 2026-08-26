@@ -692,6 +692,7 @@ export type Database = {
           follow_up_interval_days: number
           follow_up_opt_in: boolean
           follow_up_touches: number
+          gender: string | null
           geocoded_at: string | null
           gospel_shared: boolean
           holy_ghost: boolean
@@ -723,6 +724,7 @@ export type Database = {
           follow_up_interval_days?: number
           follow_up_opt_in?: boolean
           follow_up_touches?: number
+          gender?: string | null
           geocoded_at?: string | null
           gospel_shared?: boolean
           holy_ghost?: boolean
@@ -754,6 +756,7 @@ export type Database = {
           follow_up_interval_days?: number
           follow_up_opt_in?: boolean
           follow_up_touches?: number
+          gender?: string | null
           geocoded_at?: string | null
           gospel_shared?: boolean
           holy_ghost?: boolean
@@ -1888,7 +1891,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      contact_last_activity: {
+        Row: {
+          activity_count: number | null
+          contact_id: string | null
+          last_activity_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_activity_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "evangelism_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       announce_virtual_service: {

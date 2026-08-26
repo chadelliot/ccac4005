@@ -63,6 +63,7 @@ serve(async (req) => {
         name: c.name,
         phone: c.phone ?? "",
         notes: c.notes ?? "",
+        gender: c.gender ?? "",
       }),
       // Apps Script answers a deployment URL with a redirect to its runtime.
       redirect: "follow",
