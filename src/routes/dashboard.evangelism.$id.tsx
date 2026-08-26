@@ -22,9 +22,7 @@ import { DeleteContactDialog } from "@/components/evangelism/DeleteContactDialog
 import { ContactActions } from "@/components/evangelism/ContactActions";
 import { ContactActivityPanel } from "@/components/evangelism/ContactActivityPanel";
 import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
-
-const STATUS_OPTIONS = ["new", "contacted", "visiting", "member", "cold"] as const;
-type ContactStatus = (typeof STATUS_OPTIONS)[number];
+import { STATUS_OPTIONS, statusLabel, type ContactStatus } from "@/lib/contactStatus";
 
 export const Route = createFileRoute("/dashboard/evangelism/$id")({
   head: () => ({ meta: [{ title: "Contact — CCAC" }] }),
@@ -228,6 +226,7 @@ function ContactDetail() {
               contactId={contact.id}
               phone={contact.phone}
               firstName={contact.first_name}
+              status={contact.status}
               className="mt-5"
               onLogged={() => setActivityKey((k) => k + 1)}
             />
@@ -413,8 +412,8 @@ function ContactDetail() {
                   </SelectTrigger>
                   <SelectContent>
                     {STATUS_OPTIONS.map((s) => (
-                      <SelectItem key={s} value={s} className="capitalize">
-                        {s}
+                      <SelectItem key={s} value={s}>
+                        {statusLabel(s)}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -25,6 +25,7 @@ type FollowUpRow = {
     last_name: string | null;
     phone: string | null;
     where_met: string | null;
+    status: string | null;
   } | null;
 };
 
@@ -37,14 +38,16 @@ function FollowUpsPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("contact_follow_ups")
-      .select("*, evangelism_contacts(id, first_name, last_name, phone, where_met)")
+      .select("*, evangelism_contacts(id, first_name, last_name, phone, where_met, status)")
       .eq("assigned_to", user.id)
       .order("due_date");
     if (error) return toast.error(error.message);
     setRows((data ?? []) as FollowUpRow[]);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [user]);
+  useEffect(() => {
+    load(); /* eslint-disable-next-line */
+  }, [user]);
 
   const today = new Date().toISOString().slice(0, 10);
   const filtered = rows.filter((r) => {
@@ -54,7 +57,10 @@ function FollowUpsPage() {
   });
 
   const markDone = async (id: string) => {
-    const { error } = await supabase.from("contact_follow_ups").update({ completed: true, completed_at: new Date().toISOString() }).eq("id", id);
+    const { error } = await supabase
+      .from("contact_follow_ups")
+      .update({ completed: true, completed_at: new Date().toISOString() })
+      .eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Touch complete — well done!");
     load();
@@ -65,13 +71,21 @@ function FollowUpsPage() {
       <div>
         <div className="eyebrow text-accent mb-2">— Follow-ups</div>
         <h1 className="font-display text-5xl">Your reminders</h1>
-        <p className="text-muted-foreground mt-2">Three touches per contact, scheduled for Mondays and Thursdays.</p>
+        <p className="text-muted-foreground mt-2">
+          Three touches per contact, scheduled for Mondays and Thursdays.
+        </p>
       </div>
 
       <div className="flex gap-2">
-        <FilterBtn active={filter === "due"} onClick={() => setFilter("due")}>Due now</FilterBtn>
-        <FilterBtn active={filter === "upcoming"} onClick={() => setFilter("upcoming")}>Upcoming</FilterBtn>
-        <FilterBtn active={filter === "done"} onClick={() => setFilter("done")}>Completed</FilterBtn>
+        <FilterBtn active={filter === "due"} onClick={() => setFilter("due")}>
+          Due now
+        </FilterBtn>
+        <FilterBtn active={filter === "upcoming"} onClick={() => setFilter("upcoming")}>
+          Upcoming
+        </FilterBtn>
+        <FilterBtn active={filter === "done"} onClick={() => setFilter("done")}>
+          Completed
+        </FilterBtn>
       </div>
 
       {filtered.length === 0 ? (
@@ -106,7 +120,11 @@ function FollowUpsPage() {
                   <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {new Date(r.due_date).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+                      {new Date(r.due_date).toLocaleDateString(undefined, {
+                        weekday: "long",
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </span>
                     {r.evangelism_contacts?.phone && <span>{r.evangelism_contacts.phone}</span>}
                   </div>
@@ -118,6 +136,7 @@ function FollowUpsPage() {
                 contactId={r.contact_id}
                 phone={r.evangelism_contacts?.phone}
                 firstName={r.evangelism_contacts?.first_name}
+                status={r.evangelism_contacts?.status}
                 size="sm"
                 className="mt-4"
               />
@@ -129,7 +148,11 @@ function FollowUpsPage() {
                   </Link>
                 </Button>
                 {!r.completed && (
-                  <Button onClick={() => markDone(r.id)} size="sm" className="bg-night text-night-foreground hover:bg-night/90 rounded-none eyebrow h-8 px-3">
+                  <Button
+                    onClick={() => markDone(r.id)}
+                    size="sm"
+                    className="bg-night text-night-foreground hover:bg-night/90 rounded-none eyebrow h-8 px-3"
+                  >
                     Mark Complete
                   </Button>
                 )}
@@ -142,7 +165,15 @@ function FollowUpsPage() {
   );
 }
 
-function FilterBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function FilterBtn({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <button
       onClick={onClick}

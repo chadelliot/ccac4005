@@ -1,7 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AlertCircle, ArrowLeft, CheckCircle2, ChevronRight, Loader2, MapPin, Plus, Search, Users } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  ChevronRight,
+  Loader2,
+  MapPin,
+  Plus,
+  Search,
+  Users,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -71,7 +81,6 @@ type FollowUp = {
 type Profile = { id: string; display_name: string | null };
 type Witness = { id: string; name: string; linked_user_id: string | null };
 
-
 function fullName(c: Contact) {
   return `${c.first_name}${c.last_name ? " " + c.last_name : ""}`.trim();
 }
@@ -118,7 +127,9 @@ function EvangelismAdmin() {
     setLoadingData(true);
     const [{ data: c }, { data: f }, { data: p }, { data: w }] = await Promise.all([
       supabase.from("evangelism_contacts").select("*").order("created_at", { ascending: false }),
-      supabase.from("contact_follow_ups").select("id, contact_id, due_date, touch_number, completed"),
+      supabase
+        .from("contact_follow_ups")
+        .select("id, contact_id, due_date, touch_number, completed"),
       supabase.from("profiles").select("id, display_name"),
       supabase.from("witnesses").select("id, name, linked_user_id").order("name"),
     ]);
@@ -133,16 +144,13 @@ function EvangelismAdmin() {
     setLoadingData(false);
   };
 
-
   useEffect(() => {
     if (!sessionLoading && !rolesLoading && user && isAdmin) load();
   }, [sessionLoading, rolesLoading, user, isAdmin]);
 
   // backfill geocoding for contacts missing coords
   const backfillGeocodes = async () => {
-    const missing = contacts.filter(
-      (c) => c.latitude == null && (c.address || c.where_met),
-    );
+    const missing = contacts.filter((c) => c.latitude == null && (c.address || c.where_met));
     if (missing.length === 0) {
       toast.info("All contacts already mapped");
       return;
@@ -188,7 +196,6 @@ function EvangelismAdmin() {
     return Array.from(set).sort((a, b) => b.localeCompare(a));
   }, [contacts]);
 
-
   const whereMetOptions = useMemo(() => {
     const set = new Set(contacts.map((c) => c.where_met).filter(Boolean) as string[]);
     return Array.from(set).sort();
@@ -216,9 +223,11 @@ function EvangelismAdmin() {
     return m;
   }, [contacts]);
 
-
   const followUpByContact = useMemo(() => {
-    const m: Record<string, { total: number; done: number; overdue: number; nextDue: string | null }> = {};
+    const m: Record<
+      string,
+      { total: number; done: number; overdue: number; nextDue: string | null }
+    > = {};
     const today = new Date().toISOString().slice(0, 10);
     for (const f of followUps) {
       const slot = (m[f.contact_id] ??= { total: 0, done: 0, overdue: 0, nextDue: null });
@@ -300,8 +309,10 @@ function EvangelismAdmin() {
     if (journeyFilter !== "all") {
       list = list.filter((c) => (c as any)[journeyFilter] === true);
     }
-    if (sortMode === "alpha") list = [...list].sort((a, b) => fullName(a).localeCompare(fullName(b)));
-    else if (sortMode === "oldest") list = [...list].sort((a, b) => metOn(a).localeCompare(metOn(b)));
+    if (sortMode === "alpha")
+      list = [...list].sort((a, b) => fullName(a).localeCompare(fullName(b)));
+    else if (sortMode === "oldest")
+      list = [...list].sort((a, b) => metOn(a).localeCompare(metOn(b)));
     else list = [...list].sort((a, b) => metOn(b).localeCompare(metOn(a)));
     return list;
   }, [contacts, q, monthFilter, whereFilter, witnessFilter, journeyFilter, sortMode]);
@@ -310,7 +321,10 @@ function EvangelismAdmin() {
   const [touchFilter, setTouchFilter] = useState<"all" | "overdue" | "awaiting">("all");
   const trackerContacts = useMemo(() => {
     return contacts
-      .map((c) => ({ contact: c, fu: followUpByContact[c.id] || { total: 0, done: 0, overdue: 0, nextDue: null } }))
+      .map((c) => ({
+        contact: c,
+        fu: followUpByContact[c.id] || { total: 0, done: 0, overdue: 0, nextDue: null },
+      }))
       .filter(({ fu }) => {
         if (touchFilter === "overdue") return fu.overdue > 0;
         if (touchFilter === "awaiting") return fu.done === 0;
@@ -370,7 +384,6 @@ function EvangelismAdmin() {
           <TabsTrigger value="witnesses">Witnesses ({witnesses.length})</TabsTrigger>
         </TabsList>
 
-
         {/* MAP */}
         <TabsContent value="map" className="space-y-5">
           <div className="flex justify-end">
@@ -382,7 +395,11 @@ function EvangelismAdmin() {
               className="rounded-none eyebrow text-xs text-muted-foreground"
               title="Look up coordinates for contacts recorded without them, so they appear on the map"
             >
-              {backfilling ? <Loader2 className="h-3 w-3 animate-spin" /> : <MapPin className="h-3 w-3" />}
+              {backfilling ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <MapPin className="h-3 w-3" />
+              )}
               {backfilling ? "Mapping…" : "Plot missing contacts on the map"}
             </Button>
           </div>
@@ -417,7 +434,9 @@ function EvangelismAdmin() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <div className="text-sm font-medium truncate">{name}</div>
-                            <div className="text-sm tabular-nums text-muted-foreground">{count}</div>
+                            <div className="text-sm tabular-nums text-muted-foreground">
+                              {count}
+                            </div>
                           </div>
                           <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                             <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
@@ -433,12 +452,13 @@ function EvangelismAdmin() {
               <div className="eyebrow text-accent mb-4">— Snapshot</div>
               <p className="text-sm text-muted-foreground mb-3">
                 <strong className="text-foreground">{stats.mapped}</strong> of{" "}
-                <strong className="text-foreground">{stats.total}</strong> souls are pinned on the map.
+                <strong className="text-foreground">{stats.total}</strong> souls are pinned on the
+                map.
               </p>
               {stats.total > stats.mapped && (
                 <p className="text-xs text-muted-foreground">
-                  {stats.total - stats.mapped} contact{stats.total - stats.mapped === 1 ? "" : "s"} need
-                  geocoding.
+                  {stats.total - stats.mapped} contact{stats.total - stats.mapped === 1 ? "" : "s"}{" "}
+                  need geocoding.
                 </p>
               )}
             </div>
@@ -458,30 +478,50 @@ function EvangelismAdmin() {
               />
             </div>
             <Select value={monthFilter} onValueChange={setMonthFilter}>
-              <SelectTrigger><SelectValue placeholder="Month" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All months</SelectItem>
-                {monthKeys.map((k) => <SelectItem key={k} value={k}>{monthLabel(k)}</SelectItem>)}
+                {monthKeys.map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {monthLabel(k)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={whereFilter} onValueChange={setWhereFilter}>
-              <SelectTrigger><SelectValue placeholder="Where met" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Where met" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All locations</SelectItem>
-                {whereMetOptions.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
+                {whereMetOptions.map((w) => (
+                  <SelectItem key={w} value={w}>
+                    {w}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-              <Select value={witnessFilter} onValueChange={setWitnessFilter}>
-                <SelectTrigger><SelectValue placeholder="Who witnessed" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All witnesses</SelectItem>
-                  {witnessOptions.map((w) => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <Select value={witnessFilter} onValueChange={setWitnessFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Who witnessed" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All witnesses</SelectItem>
+                {witnessOptions.map((w) => (
+                  <SelectItem key={w.id} value={w.id}>
+                    {w.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex flex-wrap gap-3">
             <Select value={journeyFilter} onValueChange={setJourneyFilter}>
-              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Journey" /></SelectTrigger>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Journey" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All journey stages</SelectItem>
                 <SelectItem value="gospel_shared">Gospel shared</SelectItem>
@@ -491,7 +531,9 @@ function EvangelismAdmin() {
               </SelectContent>
             </Select>
             <Select value={sortMode} onValueChange={(v) => setSortMode(v as typeof sortMode)}>
-              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="recent">Most recent</SelectItem>
                 <SelectItem value="oldest">Oldest first</SelectItem>
@@ -519,56 +561,123 @@ function EvangelismAdmin() {
               </TableHeader>
               <TableBody>
                 {loadingData ? (
-                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Loading…</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                      Loading…
+                    </TableCell>
+                  </TableRow>
                 ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No contacts match these filters.</TableCell></TableRow>
-                ) : filtered.map((c) => {
-                  const fu = followUpByContact[c.id] || { total: 0, done: 0, overdue: 0, nextDue: null };
-                  const witness = c.witness_id ? witnessById[c.witness_id] : null;
-                  return (
-                    <TableRow key={c.id} className="group">
-                      <TableCell>
-                        <Link to="/dashboard/evangelism/$id" params={{ id: c.id }} className="font-medium hover:underline">
-                          {fullName(c)}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-sm">{witness ? witness.name : <span className="text-muted-foreground">—</span>}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{profiles[c.added_by]?.display_name ?? "—"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{c.where_met ?? "—"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {/* Number shown exactly as typed; the buttons carry the
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                      No contacts match these filters.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filtered.map((c) => {
+                    const fu = followUpByContact[c.id] || {
+                      total: 0,
+                      done: 0,
+                      overdue: 0,
+                      nextDue: null,
+                    };
+                    const witness = c.witness_id ? witnessById[c.witness_id] : null;
+                    return (
+                      <TableRow key={c.id} className="group">
+                        <TableCell>
+                          <Link
+                            to="/dashboard/evangelism/$id"
+                            params={{ id: c.id }}
+                            className="font-medium hover:underline"
+                          >
+                            {fullName(c)}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {witness ? (
+                            witness.name
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {profiles[c.added_by]?.display_name ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {c.where_met ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {/* Number shown exactly as typed; the buttons carry the
                             normalised form. */}
-                        <div className="space-y-1.5">
-                          <div>{c.phone ?? "—"}</div>
-                          <ContactActions contactId={c.id} phone={c.phone} firstName={c.first_name} size="sm" showInvite={false} />
-                        </div>
-                      </TableCell>
+                          <div className="space-y-1.5">
+                            <div>{c.phone ?? "—"}</div>
+                            <ContactActions
+                              contactId={c.id}
+                              phone={c.phone}
+                              firstName={c.first_name}
+                              status={c.status}
+                              size="sm"
+                              showInvite={false}
+                            />
+                          </div>
+                        </TableCell>
 
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {c.gospel_shared && <Badge variant="outline" className="text-[10px]">Gospel</Badge>}
-                          {c.visited && <Badge variant="outline" className="text-[10px]">Visited</Badge>}
-                          {c.baptized && <Badge className="text-[10px] bg-accent/20 text-accent-foreground">Baptized</Badge>}
-                          {c.holy_ghost && <Badge className="text-[10px] bg-night text-night-foreground">HG</Badge>}
-                          {!c.gospel_shared && !c.visited && !c.baptized && !c.holy_ghost && <span className="text-xs text-muted-foreground">—</span>}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {fu.total > 0 ? (
-                          <span className={fu.overdue ? "text-destructive" : "text-muted-foreground"}>
-                            {fu.done}/{fu.total} done{fu.overdue ? ` · ${fu.overdue} overdue` : ""}
-                          </span>
-                        ) : <span className="text-muted-foreground">—</span>}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        {new Date(metOn(c)).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "2-digit" })}
-                      </TableCell>
-                      <TableCell>
-                        <DeleteContactDialog contactId={c.id} contactName={fullName(c)} onDeleted={load} />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {c.gospel_shared && (
+                              <Badge variant="outline" className="text-[10px]">
+                                Gospel
+                              </Badge>
+                            )}
+                            {c.visited && (
+                              <Badge variant="outline" className="text-[10px]">
+                                Visited
+                              </Badge>
+                            )}
+                            {c.baptized && (
+                              <Badge className="text-[10px] bg-accent/20 text-accent-foreground">
+                                Baptized
+                              </Badge>
+                            )}
+                            {c.holy_ghost && (
+                              <Badge className="text-[10px] bg-night text-night-foreground">
+                                HG
+                              </Badge>
+                            )}
+                            {!c.gospel_shared && !c.visited && !c.baptized && !c.holy_ghost && (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {fu.total > 0 ? (
+                            <span
+                              className={fu.overdue ? "text-destructive" : "text-muted-foreground"}
+                            >
+                              {fu.done}/{fu.total} done
+                              {fu.overdue ? ` · ${fu.overdue} overdue` : ""}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                          {new Date(metOn(c)).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "2-digit",
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <DeleteContactDialog
+                            contactId={c.id}
+                            contactName={fullName(c)}
+                            onDeleted={load}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </div>
@@ -577,49 +686,67 @@ function EvangelismAdmin() {
         {/* FOLLOW-UPS */}
         <TabsContent value="touches" className="space-y-4">
           <div className="flex gap-2">
-            <FilterChip active={touchFilter === "all"} onClick={() => setTouchFilter("all")}>All</FilterChip>
-            <FilterChip active={touchFilter === "overdue"} onClick={() => setTouchFilter("overdue")}>Overdue</FilterChip>
-            <FilterChip active={touchFilter === "awaiting"} onClick={() => setTouchFilter("awaiting")}>Awaiting first touch</FilterChip>
+            <FilterChip active={touchFilter === "all"} onClick={() => setTouchFilter("all")}>
+              All
+            </FilterChip>
+            <FilterChip
+              active={touchFilter === "overdue"}
+              onClick={() => setTouchFilter("overdue")}
+            >
+              Overdue
+            </FilterChip>
+            <FilterChip
+              active={touchFilter === "awaiting"}
+              onClick={() => setTouchFilter("awaiting")}
+            >
+              Awaiting first touch
+            </FilterChip>
           </div>
           <div className="space-y-2">
             {trackerContacts.length === 0 ? (
               <div className="border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
                 Nothing matches this filter.
               </div>
-            ) : trackerContacts.map(({ contact: c, fu }) => (
-              <Link
-                key={c.id}
-                to="/dashboard/evangelism/$id"
-                params={{ id: c.id }}
-                className="flex items-center justify-between gap-4 bg-card border border-border p-4 hover:border-foreground/30 hover:bg-muted/30 transition-colors"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3">
-                    <div className="font-medium">{fullName(c)}</div>
-                    <span className="text-xs text-muted-foreground">{profiles[c.added_by]?.display_name ?? ""}</span>
+            ) : (
+              trackerContacts.map(({ contact: c, fu }) => (
+                <Link
+                  key={c.id}
+                  to="/dashboard/evangelism/$id"
+                  params={{ id: c.id }}
+                  className="flex items-center justify-between gap-4 bg-card border border-border p-4 hover:border-foreground/30 hover:bg-muted/30 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3">
+                      <div className="font-medium">{fullName(c)}</div>
+                      <span className="text-xs text-muted-foreground">
+                        {profiles[c.added_by]?.display_name ?? ""}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {fu.done}/{fu.total || 0} touches complete
+                      {fu.nextDue && (
+                        <> · next due {new Date(fu.nextDue + "T00:00:00").toLocaleDateString()}</>
+                      )}
+                      {c.where_met && <> · {c.where_met}</>}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {fu.done}/{fu.total || 0} touches complete
-                    {fu.nextDue && <> · next due {new Date(fu.nextDue + "T00:00:00").toLocaleDateString()}</>}
-                    {c.where_met && <> · {c.where_met}</>}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {fu.overdue > 0 ? (
+                      <Badge variant="outline" className="text-destructive border-destructive/40">
+                        <AlertCircle className="h-3 w-3" /> {fu.overdue} overdue
+                      </Badge>
+                    ) : fu.done === fu.total && fu.total > 0 ? (
+                      <Badge className="bg-accent/20 text-accent-foreground">
+                        <CheckCircle2 className="h-3 w-3" /> Complete
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">In progress</Badge>
+                    )}
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {fu.overdue > 0 ? (
-                    <Badge variant="outline" className="text-destructive border-destructive/40">
-                      <AlertCircle className="h-3 w-3" /> {fu.overdue} overdue
-                    </Badge>
-                  ) : fu.done === fu.total && fu.total > 0 ? (
-                    <Badge className="bg-accent/20 text-accent-foreground">
-                      <CheckCircle2 className="h-3 w-3" /> Complete
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">In progress</Badge>
-                  )}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))
+            )}
           </div>
         </TabsContent>
 
@@ -633,7 +760,6 @@ function EvangelismAdmin() {
           />
         </TabsContent>
       </Tabs>
-
     </div>
   );
 }
@@ -647,12 +773,22 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-function FilterChip({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
+function FilterChip({
+  children,
+  active,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}
       className={`eyebrow text-xs px-3 py-1.5 border transition-colors ${
-        active ? "bg-night text-night-foreground border-night" : "bg-card border-border text-muted-foreground hover:text-foreground"
+        active
+          ? "bg-night text-night-foreground border-night"
+          : "bg-card border-border text-muted-foreground hover:text-foreground"
       }`}
     >
       {children}
@@ -693,7 +829,10 @@ function WitnessesPanel({
 
   const setLink = async (id: string, userId: string | null) => {
     setBusy(id);
-    const { error } = await supabase.from("witnesses").update({ linked_user_id: userId }).eq("id", id);
+    const { error } = await supabase
+      .from("witnesses")
+      .update({ linked_user_id: userId })
+      .eq("id", id);
     setBusy(null);
     if (error) return toast.error(error.message);
     toast.success(userId ? "Linked to user — past souls now visible to them" : "Unlinked");
@@ -701,7 +840,12 @@ function WitnessesPanel({
   };
 
   const remove = async (id: string, name: string) => {
-    if (!confirm(`Delete witness "${name}"? Souls credited to them will keep their record but lose the credit link.`)) return;
+    if (
+      !confirm(
+        `Delete witness "${name}"? Souls credited to them will keep their record but lose the credit link.`,
+      )
+    )
+      return;
     setBusy(id);
     const { error } = await supabase.from("witnesses").delete().eq("id", id);
     setBusy(null);
@@ -744,41 +888,51 @@ function WitnessesPanel({
           </TableHeader>
           <TableBody>
             {witnesses.length === 0 ? (
-              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No witnesses yet.</TableCell></TableRow>
-            ) : witnesses.map((w) => (
-              <TableRow key={w.id}>
-                <TableCell className="font-medium">{w.name}</TableCell>
-                <TableCell className="text-sm text-muted-foreground tabular-nums">{soulsByWitness[w.id] ?? 0}</TableCell>
-                <TableCell>
-                  <Select
-                    value={w.linked_user_id ?? "none"}
-                    onValueChange={(v) => setLink(w.id, v === "none" ? null : v)}
-                    disabled={busy === w.id}
-                  >
-                    <SelectTrigger className="w-[240px]">
-                      <SelectValue placeholder="Not linked" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">— Not linked —</SelectItem>
-                      {sortedProfiles.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.display_name ?? "Unnamed user"}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={busy === w.id}
-                    onClick={() => remove(w.id, w.name)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    Delete
-                  </Button>
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                  No witnesses yet.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              witnesses.map((w) => (
+                <TableRow key={w.id}>
+                  <TableCell className="font-medium">{w.name}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground tabular-nums">
+                    {soulsByWitness[w.id] ?? 0}
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={w.linked_user_id ?? "none"}
+                      onValueChange={(v) => setLink(w.id, v === "none" ? null : v)}
+                      disabled={busy === w.id}
+                    >
+                      <SelectTrigger className="w-[240px]">
+                        <SelectValue placeholder="Not linked" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— Not linked —</SelectItem>
+                        {sortedProfiles.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.display_name ?? "Unnamed user"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={busy === w.id}
+                      onClick={() => remove(w.id, w.name)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Phone, MessageSquare, CalendarHeart } from "lucide-react";
+import { Phone, MessageSquare, CalendarHeart, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { telHref, smsHref, isDialable } from "@/lib/phone";
 import { logContactActivity } from "@/lib/contactActivity";
+import { isDoNotContact } from "@/lib/contactStatus";
 import { InviteToEventDialog } from "./InviteToEventDialog";
 
 /**
@@ -21,6 +22,7 @@ export function ContactActions({
   contactId,
   phone,
   firstName,
+  status,
   size = "default",
   showInvite = true,
   className = "",
@@ -29,6 +31,7 @@ export function ContactActions({
   contactId: string;
   phone: string | null | undefined;
   firstName: string | null | undefined;
+  status?: string | null;
   size?: "default" | "sm";
   showInvite?: boolean;
   className?: string;
@@ -46,6 +49,22 @@ export function ContactActions({
       if (ok) onLogged?.();
     });
   };
+
+  // Someone asked to be left alone. Said rather than silently omitted: a blank
+  // space reads as "no phone number on file" and invites someone to go add one,
+  // where a stated reason closes the question. Every surface that shows contact
+  // actions renders them through this component, so this is the one place the
+  // rule has to hold.
+  if (isDoNotContact(status)) {
+    return (
+      <div
+        className={`inline-flex items-center gap-1.5 text-xs text-muted-foreground ${className}`}
+      >
+        <Ban className="h-3.5 w-3.5" />
+        <span>Do not contact</span>
+      </div>
+    );
+  }
 
   // No number, no actions — a Call button that cannot dial is worse than none.
   if (!isDialable(phone)) return null;

@@ -769,6 +769,7 @@ function ContactList({
               contactId={c.id}
               phone={c.phone}
               firstName={c.first_name}
+              status={c.status}
               size="sm"
               className="mt-3"
             />
