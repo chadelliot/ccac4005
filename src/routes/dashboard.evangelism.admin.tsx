@@ -28,6 +28,7 @@ import { DeleteContactDialog } from "@/components/evangelism/DeleteContactDialog
 import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
 import { ContactActions } from "@/components/evangelism/ContactActions";
+import { useStickyState, useStickyScroll } from "@/hooks/useStickyState";
 
 export const Route = createFileRoute("/dashboard/evangelism/admin")({
   head: () => ({ meta: [{ title: "Evangelism Admin — CCAC" }] }),
@@ -90,6 +91,8 @@ function EvangelismAdmin() {
   const navigate = useNavigate();
 
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [execTab, setExecTab] = useStickyState<string>("evg.exec.tab", "map");
+  useStickyScroll("evg.exec.scroll", contacts.length > 0);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [witnesses, setWitnesses] = useState<Witness[]>([]);
@@ -272,11 +275,16 @@ function EvangelismAdmin() {
 
   // ---- all-contacts table filters ----
   const [q, setQ] = useState("");
-  const [monthFilter, setMonthFilter] = useState<string>("all");
-  const [whereFilter, setWhereFilter] = useState<string>("all");
-  const [witnessFilter, setWitnessFilter] = useState<string>("all");
-  const [journeyFilter, setJourneyFilter] = useState<string>("all");
-  const [sortMode, setSortMode] = useState<"recent" | "oldest" | "alpha">("recent");
+  // The filters that decide which rows are on screen survive a reload, so
+  // returning from Messages does not mean rebuilding the view by hand.
+  const [monthFilter, setMonthFilter] = useStickyState<string>("evg.exec.month", "all");
+  const [whereFilter, setWhereFilter] = useStickyState<string>("evg.exec.where", "all");
+  const [witnessFilter, setWitnessFilter] = useStickyState<string>("evg.exec.witness", "all");
+  const [journeyFilter, setJourneyFilter] = useStickyState<string>("evg.exec.journey", "all");
+  const [sortMode, setSortMode] = useStickyState<"recent" | "oldest" | "alpha">(
+    "evg.exec.sort",
+    "recent",
+  );
 
   const filtered = useMemo(() => {
     let list = contacts;
@@ -354,7 +362,7 @@ function EvangelismAdmin() {
         <Stat label="On the map" value={stats.mapped} />
       </div>
 
-      <Tabs defaultValue="map" className="space-y-6">
+      <Tabs value={execTab} onValueChange={setExecTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="map">Map</TabsTrigger>
           <TabsTrigger value="all">All Contacts ({contacts.length})</TabsTrigger>

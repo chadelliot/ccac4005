@@ -33,6 +33,7 @@ import { EvangelismFocusSummary } from "@/components/evangelism/EvangelismFocusS
 import { ContactActions } from "@/components/evangelism/ContactActions";
 import { useCapabilities } from "@/lib/adminCapabilities";
 import { addContactNote } from "@/lib/contactActivity";
+import { useStickyState, useStickyScroll } from "@/hooks/useStickyState";
 
 export const Route = createFileRoute("/dashboard/evangelism/")({
   // ?add=1 opens the form on arrival, so "Add contact" elsewhere is one click
@@ -106,7 +107,11 @@ function EvangelismPage() {
   const canManage = has("evangelism_management") || isLeader;
 
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [q, setQ] = useState("");
+  // Everything that decides what you are looking at is remembered for the
+  // session. Pressing Text can cost you the page — iOS may discard the tab
+  // while you are in Messages — and coming back to an empty search box and
+  // the top of 84 contacts means finding the same person by hand again.
+  const [q, setQ] = useStickyState("evg.contacts.q", "");
   const { add } = Route.useSearch();
   const [open, setOpen] = useState(add === "1");
   const [busy, setBusy] = useState(false);
@@ -116,9 +121,14 @@ function EvangelismPage() {
   // "unknown" rather than "" so the placeholder is a real choice someone can
   // return to, and so an unanswered question is never recorded as an answer.
   const [gender, setGender] = useState<string>("unknown");
-  const [genderFilter, setGenderFilter] = useState<string>("all");
+  const [genderFilter, setGenderFilter] = useStickyState<string>("evg.contacts.gender", "all");
   // contact id -> when anyone last reached them, from the activity timeline.
   const [lastContact, setLastContact] = useState<Map<string, string>>(new Map());
+  const [tab, setTab] = useStickyState<string>("evg.contacts.tab", "month");
+
+  // Held until the rows exist — a scroll offset applied to a page that is
+  // still one "Loading…" line tall gets clamped to the top.
+  useStickyScroll("evg.contacts.scroll", contacts.length > 0);
 
   const load = async () => {
     if (!user) return;
@@ -349,8 +359,8 @@ function EvangelismPage() {
     return Array.from(set).sort();
   }, [contacts]);
 
-  const [sortMode, setSortMode] = useState<"alpha" | "recent">("recent");
-  const [monthFilter, setMonthFilter] = useState<string>("all");
+  const [sortMode, setSortMode] = useStickyState<"alpha" | "recent">("evg.contacts.sort", "recent");
+  const [monthFilter, setMonthFilter] = useStickyState<string>("evg.contacts.month", "all");
 
   const allFiltered = useMemo(() => {
     let list = contacts.filter(matchesSearch).filter(matchesGender);
@@ -605,7 +615,7 @@ function EvangelismPage() {
         </Select>
       </div>
 
-      <Tabs defaultValue="month" className="space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="month">This Month ({currentMonthContacts.length})</TabsTrigger>
           <TabsTrigger value="all">All Contacts ({segmentTotal})</TabsTrigger>
