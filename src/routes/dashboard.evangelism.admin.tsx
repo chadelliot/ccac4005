@@ -532,7 +532,7 @@ function EvangelismAdmin() {
                             normalised form. */}
                         <div className="space-y-1.5">
                           <div>{c.phone ?? "—"}</div>
-                          <ContactActions phone={c.phone} firstName={c.first_name} size="sm" showInvite={false} />
+                          <ContactActions contactId={c.id} phone={c.phone} firstName={c.first_name} size="sm" showInvite={false} />
                         </div>
                       </TableCell>
 

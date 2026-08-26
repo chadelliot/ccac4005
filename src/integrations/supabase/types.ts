@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.17"
   }
   graphql_public: {
     Tables: {
@@ -500,6 +500,58 @@ export type Database = {
             columns: ["program_id"]
             isOneToOne: false
             referencedRelation: "reading_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_activity: {
+        Row: {
+          actor_id: string | null
+          contact_id: string
+          created_at: string
+          event_id: string | null
+          event_title: string | null
+          id: string
+          kind: Database["public"]["Enums"]["contact_activity_kind"]
+        }
+        Insert: {
+          actor_id?: string | null
+          contact_id: string
+          created_at?: string
+          event_id?: string | null
+          event_title?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["contact_activity_kind"]
+        }
+        Update: {
+          actor_id?: string | null
+          contact_id?: string
+          created_at?: string
+          event_id?: string | null
+          event_title?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["contact_activity_kind"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_activity_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activity_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "evangelism_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activity_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
@@ -2004,6 +2056,7 @@ export type Database = {
         | "host_arranges"
         | "bishop_arranges"
         | "not_required"
+      contact_activity_kind: "text" | "call" | "invite"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2180,6 +2233,7 @@ export const Constants = {
         "bishop_arranges",
         "not_required",
       ],
+      contact_activity_kind: ["text", "call", "invite"],
     },
   },
 } as const

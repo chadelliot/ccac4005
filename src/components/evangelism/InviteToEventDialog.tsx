@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { smsHref, copyText } from "@/lib/phone";
 import { loadInvitableEvents, buildInvite, type InvitableEvent } from "@/lib/eventInvite";
+import { logContactActivity } from "@/lib/contactActivity";
 
 /**
  * Pick an event, then hand the invitation to the phone's Messages app.
@@ -23,13 +24,17 @@ import { loadInvitableEvents, buildInvite, type InvitableEvent } from "@/lib/eve
 export function InviteToEventDialog({
   open,
   onOpenChange,
+  contactId,
   phone,
   firstName,
+  onLogged,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  contactId: string;
   phone: string | null | undefined;
   firstName: string | null | undefined;
+  onLogged?: () => void;
 }) {
   const [events, setEvents] = useState<InvitableEvent[] | null>(null);
   const [sending, setSending] = useState<string | null>(null);
@@ -47,6 +52,17 @@ export function InviteToEventDialog({
     // Body included as an enhancement where the platform honours it; the
     // clipboard is what makes this dependable.
     const href = smsHref(phone, message);
+
+    // Logged with the event's own title rather than a reference to it, so the
+    // record still reads correctly if the event is later renamed or removed.
+    void logContactActivity({
+      contactId,
+      kind: "invite",
+      event: { id: event.id, title: event.title },
+    }).then((ok) => {
+      if (ok) onLogged?.();
+    });
+
     setSending(null);
     onOpenChange(false);
 

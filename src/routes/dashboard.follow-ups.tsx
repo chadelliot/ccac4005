@@ -115,6 +115,7 @@ function FollowUpsPage() {
               </div>
 
               <ContactActions
+                contactId={r.contact_id}
                 phone={r.evangelism_contacts?.phone}
                 firstName={r.evangelism_contacts?.first_name}
                 size="sm"
