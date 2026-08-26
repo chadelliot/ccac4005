@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Phone, MapPin, Calendar, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
+import { useCapabilities } from "@/lib/adminCapabilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { DeleteContactDialog } from "@/components/evangelism/DeleteContactDialog";
 import { ContactActions } from "@/components/evangelism/ContactActions";
+import { FocusToggle, canFocusContact } from "@/components/evangelism/FocusToggle";
 import { ContactActivityPanel } from "@/components/evangelism/ContactActivityPanel";
 import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 import { STATUS_OPTIONS, statusLabel, type ContactStatus } from "@/lib/contactStatus";
@@ -47,6 +49,7 @@ type Contact = {
   created_at: string;
   met_on: string | null;
   gender: string | null;
+  is_focus: boolean;
 };
 
 type FollowUp = {
@@ -76,6 +79,7 @@ function ContactDetail() {
   const { id } = Route.useParams();
   const { user } = useSession();
   const { isAdmin } = useRoles(user);
+  const { has } = useCapabilities(user);
   const navigate = useNavigate();
   const [contact, setContact] = useState<Contact | null>(null);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
@@ -222,14 +226,25 @@ function ContactDetail() {
 
             {/* Directly under the name, where a thumb lands: reaching this soul
                 is the point of opening their profile. */}
-            <ContactActions
-              contactId={contact.id}
-              phone={contact.phone}
-              firstName={contact.first_name}
-              status={contact.status}
-              className="mt-5"
-              onLogged={() => setActivityKey((k) => k + 1)}
-            />
+            <div className="mt-5 flex flex-wrap items-center gap-4">
+              <ContactActions
+                contactId={contact.id}
+                phone={contact.phone}
+                firstName={contact.first_name}
+                status={contact.status}
+                onLogged={() => setActivityKey((k) => k + 1)}
+              />
+              {/* Beside the actions, because deciding to concentrate on someone
+                  and reaching out to them are the same moment. */}
+              {canFocusContact(contact.added_by, user?.id, has("evangelism_management")) && (
+                <FocusToggle
+                  contactId={contact.id}
+                  value={contact.is_focus}
+                  withLabel
+                  onChange={(next) => setContact({ ...contact, is_focus: next })}
+                />
+              )}
+            </div>
           </div>
 
           {/* Spiritual journey */}

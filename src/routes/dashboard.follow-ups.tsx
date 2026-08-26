@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Calendar, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Calendar, ChevronRight, CheckCircle2, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ type FollowUpRow = {
     phone: string | null;
     where_met: string | null;
     status: string | null;
+    is_focus: boolean | null;
   } | null;
 };
 
@@ -38,7 +39,9 @@ function FollowUpsPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("contact_follow_ups")
-      .select("*, evangelism_contacts(id, first_name, last_name, phone, where_met, status)")
+      .select(
+        "*, evangelism_contacts(id, first_name, last_name, phone, where_met, status, is_focus)",
+      )
       .eq("assigned_to", user.id)
       .order("due_date");
     if (error) return toast.error(error.message);
@@ -114,6 +117,12 @@ function FollowUpsPage() {
                     params={{ id: r.contact_id }}
                     className="font-display text-xl hover:text-accent inline-flex items-center gap-2"
                   >
+                    {/* Marked, not toggleable: this queue is for working the
+                        list, and choosing who to concentrate on belongs with
+                        the contact itself. */}
+                    {r.evangelism_contacts?.is_focus && (
+                      <Star className="h-4 w-4 text-accent" fill="currentColor" />
+                    )}
                     {r.evangelism_contacts?.first_name} {r.evangelism_contacts?.last_name}
                     <ChevronRight className="h-4 w-4" />
                   </Link>

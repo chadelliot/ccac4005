@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Search, Phone, MapPin, ChevronRight } from "lucide-react";
+import { Plus, Search, Phone, MapPin, ChevronRight, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import { listWitnesses, resolveWitnessId, splitWitnessNames, type Witness } from
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
 import { EvangelismFocusSummary } from "@/components/evangelism/EvangelismFocusSummary";
 import { ContactActions } from "@/components/evangelism/ContactActions";
+import { FocusToggle, canFocusContact } from "@/components/evangelism/FocusToggle";
 import { useCapabilities } from "@/lib/adminCapabilities";
 import { addContactNote } from "@/lib/contactActivity";
 import { useStickyState, useStickyScroll } from "@/hooks/useStickyState";
@@ -67,6 +68,7 @@ type Contact = {
   co_witness: string | null;
   witness_id: string | null;
   gender: string | null;
+  is_focus: boolean;
 };
 
 const contactSchema = z.object({
@@ -122,6 +124,7 @@ function EvangelismPage() {
   // return to, and so an unanswered question is never recorded as an answer.
   const [gender, setGender] = useState<string>("unknown");
   const [genderFilter, setGenderFilter] = useStickyState<string>("evg.contacts.gender", "all");
+  const [focusOnly, setFocusOnly] = useStickyState<boolean>("evg.contacts.focus", false);
   // contact id -> when anyone last reached them, from the activity timeline.
   const [lastContact, setLastContact] = useState<Map<string, string>>(new Map());
   const [tab, setTab] = useStickyState<string>("evg.contacts.tab", "month");
@@ -129,6 +132,9 @@ function EvangelismPage() {
   // Held until the rows exist — a scroll offset applied to a page that is
   // still one "Loading…" line tall gets clamped to the top.
   useStickyScroll("evg.contacts.scroll", contacts.length > 0);
+
+  const setFocusLocally = (id: string, next: boolean) =>
+    setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, is_focus: next } : c)));
 
   const load = async () => {
     if (!user) return;
@@ -331,14 +337,19 @@ function EvangelismPage() {
     return c.gender === genderFilter;
   };
 
+  // Focus narrows whatever else is selected rather than replacing it, so
+  // "focus + women" is a question the page can answer.
+  const matchesFocus = (c: Contact) => !focusOnly || c.is_focus;
+
   const nowKey = monthKey(new Date().toISOString());
   const currentMonthContacts = useMemo(
     () =>
       contacts
         .filter((c) => monthKey(c.met_on) === nowKey)
         .filter(matchesSearch)
-        .filter(matchesGender),
-    [contacts, q, nowKey, genderFilter],
+        .filter(matchesGender)
+        .filter(matchesFocus),
+    [contacts, q, nowKey, genderFilter, focusOnly],
   );
 
   // Counts the segment, not the whole table. "All Contacts (84)" sitting above
@@ -363,7 +374,7 @@ function EvangelismPage() {
   const [monthFilter, setMonthFilter] = useStickyState<string>("evg.contacts.month", "all");
 
   const allFiltered = useMemo(() => {
-    let list = contacts.filter(matchesSearch).filter(matchesGender);
+    let list = contacts.filter(matchesSearch).filter(matchesGender).filter(matchesFocus);
     if (monthFilter !== "all") list = list.filter((c) => monthKey(c.met_on) === monthFilter);
     if (sortMode === "alpha") {
       list = [...list].sort((a, b) =>
@@ -375,7 +386,7 @@ function EvangelismPage() {
       list = [...list].sort((a, b) => b.met_on.localeCompare(a.met_on));
     }
     return list;
-  }, [contacts, q, monthFilter, sortMode, genderFilter]);
+  }, [contacts, q, monthFilter, sortMode, genderFilter, focusOnly]);
 
   // One dialog, two homes: leadership opens it from the Contacts header,
   // members from their briefing. Members keep the ability to log a soul —
@@ -569,8 +580,15 @@ function EvangelismPage() {
             contacts={allFiltered}
             lastContact={lastContact}
             emptyText={
-              q ? "No contacts match that search." : "No souls logged yet. Add the first one above."
+              focusOnly
+                ? "None of your contacts are in focus yet."
+                : q
+                  ? "No contacts match that search."
+                  : "No souls logged yet. Add the first one above."
             }
+            userId={user?.id}
+            canManageEvangelism={has("evangelism_management")}
+            onFocusChange={setFocusLocally}
           />
         </div>
       </div>
@@ -602,6 +620,19 @@ function EvangelismPage() {
             className="pl-9"
           />
         </div>
+        <button
+          type="button"
+          onClick={() => setFocusOnly(!focusOnly)}
+          aria-pressed={focusOnly}
+          className={`eyebrow inline-flex items-center gap-2 border px-4 py-2 text-xs transition-colors ${
+            focusOnly
+              ? "border-night bg-night text-night-foreground"
+              : "border-border bg-card text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Star className="h-3.5 w-3.5" fill={focusOnly ? "currentColor" : "none"} />
+          Focus only
+        </button>
         <Select value={genderFilter} onValueChange={setGenderFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue />
@@ -627,6 +658,9 @@ function EvangelismPage() {
             contacts={currentMonthContacts}
             lastContact={lastContact}
             emptyText="No contacts added this month yet."
+            userId={user?.id}
+            canManageEvangelism={has("evangelism_management")}
+            onFocusChange={setFocusLocally}
           />
         </TabsContent>
 
@@ -659,6 +693,9 @@ function EvangelismPage() {
             contacts={allFiltered}
             lastContact={lastContact}
             emptyText="No contacts match these filters."
+            userId={user?.id}
+            canManageEvangelism={has("evangelism_management")}
+            onFocusChange={setFocusLocally}
           />
         </TabsContent>
       </Tabs>
@@ -682,10 +719,16 @@ function ContactList({
   contacts,
   lastContact,
   emptyText,
+  userId,
+  canManageEvangelism,
+  onFocusChange,
 }: {
   contacts: Contact[];
   lastContact: Map<string, string>;
   emptyText: string;
+  userId: string | undefined;
+  canManageEvangelism: boolean;
+  onFocusChange: (id: string, next: boolean) => void;
 }) {
   if (contacts.length === 0) {
     return (
@@ -709,6 +752,18 @@ function ContactList({
         >
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-3">
+              {/* The star leads the row: scanning for the few souls in focus is
+                  the reason to open this list at all. */}
+              {canFocusContact(c.added_by, userId, canManageEvangelism) ? (
+                <FocusToggle
+                  contactId={c.id}
+                  value={c.is_focus}
+                  size="sm"
+                  onChange={(next) => onFocusChange(c.id, next)}
+                />
+              ) : (
+                c.is_focus && <Star className="h-4 w-4 shrink-0 text-accent" fill="currentColor" />
+              )}
               <Link
                 to="/dashboard/evangelism/$id"
                 params={{ id: c.id }}

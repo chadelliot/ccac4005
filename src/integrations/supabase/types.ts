@@ -697,6 +697,7 @@ export type Database = {
           gospel_shared: boolean
           holy_ghost: boolean
           id: string
+          is_focus: boolean
           last_name: string | null
           latitude: number | null
           longitude: number | null
@@ -729,6 +730,7 @@ export type Database = {
           gospel_shared?: boolean
           holy_ghost?: boolean
           id?: string
+          is_focus?: boolean
           last_name?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -761,6 +763,7 @@ export type Database = {
           gospel_shared?: boolean
           holy_ghost?: boolean
           id?: string
+          is_focus?: boolean
           last_name?: string | null
           latitude?: number | null
           longitude?: number | null
