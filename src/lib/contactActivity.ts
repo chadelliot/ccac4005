@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type ActivityKind = "text" | "call" | "invite";
+export type ActivityKind = "text" | "call" | "invite" | "note";
 
 export type ContactActivityRow = {
   id: string;
@@ -10,6 +10,9 @@ export type ContactActivityRow = {
   created_at: string;
   actor_id: string | null;
   actor_name: string | null;
+  note: string | null;
+  /** Null until the note has been revised; the panel marks the difference. */
+  updated_at: string | null;
 };
 
 /**
@@ -53,7 +56,9 @@ export async function logContactActivity(input: {
 export async function loadContactActivity(contactId: string): Promise<ContactActivityRow[]> {
   const { data, error } = await supabase
     .from("contact_activity")
-    .select("id, kind, event_id, event_title, created_at, actor_id, profiles(display_name)")
+    .select(
+      "id, kind, event_id, event_title, note, updated_at, created_at, actor_id, profiles(display_name)",
+    )
     .eq("contact_id", contactId)
     .order("created_at", { ascending: false })
     .limit(50);
@@ -75,8 +80,59 @@ export async function loadContactActivity(contactId: string): Promise<ContactAct
       event_id: row.event_id,
       event_title: row.event_title,
       created_at: row.created_at,
+      note: row.note,
+      updated_at: row.updated_at,
       actor_id: row.actor_id,
       actor_name: resolved?.display_name ?? null,
     };
   });
+}
+
+/**
+ * Write a note onto the timeline.
+ *
+ * A note is an entry like any other, which is the point: the panel can answer
+ * "when did anyone last speak to this man, and how did it go?" in one column
+ * instead of a date in one place and a paragraph in another. The old single
+ * textarea overwrote last month's conversation with this week's and left no
+ * sign either had happened.
+ *
+ * Notes are admins-only, in the database as well as the interface — the insert
+ * policy checks the role, so a member's browser cannot write one whatever the
+ * page decides to render.
+ */
+export async function addContactNote(contactId: string, note: string): Promise<boolean> {
+  const text = note.trim();
+  if (!text) return false;
+  try {
+    const { data } = await supabase.auth.getSession();
+    const actorId = data.session?.user?.id;
+    if (!actorId) return false;
+
+    const { error } = await supabase
+      .from("contact_activity")
+      .insert({ contact_id: contactId, actor_id: actorId, kind: "note", note: text });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Correct a note already on the timeline.
+ *
+ * Only the note text moves. The database refuses everything else on a note row
+ * — its date, its author, which contact it belongs to — so a correction cannot
+ * turn into a rewrite of when the conversation happened. The edited stamp is
+ * set by a trigger rather than sent from here, so it cannot be suppressed by
+ * whoever is doing the editing.
+ */
+export async function updateContactNote(activityId: string, note: string): Promise<boolean> {
+  const text = note.trim();
+  if (!text) return false;
+  const { error } = await supabase
+    .from("contact_activity")
+    .update({ note: text })
+    .eq("id", activityId);
+  return !error;
 }

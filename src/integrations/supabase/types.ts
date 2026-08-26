@@ -513,6 +513,8 @@ export type Database = {
           event_title: string | null
           id: string
           kind: Database["public"]["Enums"]["contact_activity_kind"]
+          note: string | null
+          updated_at: string | null
         }
         Insert: {
           actor_id?: string | null
@@ -522,6 +524,8 @@ export type Database = {
           event_title?: string | null
           id?: string
           kind: Database["public"]["Enums"]["contact_activity_kind"]
+          note?: string | null
+          updated_at?: string | null
         }
         Update: {
           actor_id?: string | null
@@ -531,6 +535,8 @@ export type Database = {
           event_title?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["contact_activity_kind"]
+          note?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -2056,7 +2062,7 @@ export type Database = {
         | "host_arranges"
         | "bishop_arranges"
         | "not_required"
-      contact_activity_kind: "text" | "call" | "invite"
+      contact_activity_kind: "text" | "call" | "invite" | "note"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2233,7 +2239,7 @@ export const Constants = {
         "bishop_arranges",
         "not_required",
       ],
-      contact_activity_kind: ["text", "call", "invite"],
+      contact_activity_kind: ["text", "call", "invite", "note"],
     },
   },
 } as const

@@ -18,6 +18,7 @@ import { listWitnesses, resolveWitnessId, splitWitnessNames, type Witness } from
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
 import { EvangelismFocusSummary } from "@/components/evangelism/EvangelismFocusSummary";
 import { useCapabilities } from "@/lib/adminCapabilities";
+import { addContactNote } from "@/lib/contactActivity";
 
 export const Route = createFileRoute("/dashboard/evangelism/")({
   // ?add=1 opens the form on arrival, so "Add contact" elsewhere is one click
@@ -218,6 +219,14 @@ function EvangelismPage() {
         toast.error(`Saved here, but not written to the sheet: ${r.error ?? "unknown reason"}`);
       }
     })();
+
+    // A note typed while logging the contact starts the timeline, so the first
+    // entry is what was said at the door rather than the first follow-up days
+    // later. Fire-and-forget, and a no-op for members — writing notes is an
+    // admin act and the insert policy enforces that regardless of who asks.
+    if (inserted?.id && parsed.data.notes) {
+      void addContactNote(inserted.id, parsed.data.notes);
+    }
 
     // fire-and-forget geocoding
     const query = parsed.data.address || parsed.data.where_met;
