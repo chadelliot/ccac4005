@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 import { listWitnesses, resolveWitnessId, splitWitnessNames, type Witness } from "@/lib/witnesses";
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
+import { EvangelismFocusSummary } from "@/components/evangelism/EvangelismFocusSummary";
+import { useCapabilities } from "@/lib/adminCapabilities";
 
 export const Route = createFileRoute("/dashboard/evangelism/")({
   // ?add=1 opens the form on arrival, so "Add contact" elsewhere is one click
@@ -72,8 +74,20 @@ function today() {
 
 function EvangelismPage() {
   const { user } = useSession();
-  const { isAdmin, loading: rolesLoading } = useRoles(user);
-  const navigate = useNavigate();
+  const { isLeader, loading: rolesLoading } = useRoles(user);
+  const { has, loading: capLoading } = useCapabilities(user);
+
+  // Who sees the harvest, and who sees only the week's brief.
+  //
+  // This mirrors the RLS policy on evangelism_contacts exactly — leaders (which
+  // includes admins) and evangelism managers are the accounts the database will
+  // return the full list to. Matching it here means the page never asks for
+  // rows it would be refused, and an ordinary member's browser never receives
+  // other people's names, numbers or addresses at all: the query is gated, not
+  // the rendering. Souls are personal details of people who never signed up for
+  // this site, and hiding a table client-side would still have shipped them.
+  const canManage = has("evangelism_management") || isLeader;
+
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [q, setQ] = useState("");
   const { add } = Route.useSearch();
@@ -84,6 +98,13 @@ function EvangelismPage() {
   const [followUp, setFollowUp] = useState(false);
 
   const load = async () => {
+    // Members never make this request. Their own contacts would come back under
+    // RLS, but this page has no list for them and downloading rows in order to
+    // not draw them is the mistake this guard exists to prevent.
+    if (!canManage) {
+      setContacts([]);
+      return;
+    }
     const { data, error } = await supabase
       .from("evangelism_contacts")
       .select("*")
@@ -115,9 +136,13 @@ function EvangelismPage() {
   // is a job for the navigation link, not for the page they asked for —
   // a route that refuses to display itself is a trap.
 
+  // Waits for roles and capabilities before loading: firing on mount would run
+  // while canManage is still false and leave a manager looking at an empty list.
   useEffect(() => {
+    if (rolesLoading || capLoading) return;
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rolesLoading, capLoading, canManage]);
 
   const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -265,6 +290,156 @@ function EvangelismPage() {
     return list;
   }, [contacts, q, monthFilter, sortMode]);
 
+  // One dialog, two homes: leadership opens it from the Contacts header,
+  // members from their briefing. Members keep the ability to log a soul —
+  // the point of the restriction is other people's contacts, not their own
+  // work — so the form must not live inside the leadership branch.
+  const addContactDialog = (triggerLabel: string) => (
+    <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button className="bg-night text-night-foreground hover:bg-night/90 rounded-none px-6 py-6 eyebrow">
+            <Plus className="h-4 w-4" /> {triggerLabel}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display text-3xl">New Contact</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAdd} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>First name</Label>
+                <Input name="first_name" required maxLength={80} />
+              </div>
+              <div>
+                <Label>Last name</Label>
+                <Input name="last_name" maxLength={80} />
+              </div>
+            </div>
+            <div>
+              <Label>Phone</Label>
+              <Input name="phone" type="tel" maxLength={40} />
+            </div>
+            <div>
+              <Label>Address</Label>
+              <Input name="address" maxLength={200} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Where we met</Label>
+                <Input
+                  name="where_met"
+                  maxLength={120}
+                  list="outreach-locations"
+                  placeholder="Eastpoint Mall"
+                />
+                {/* Suggests locations already in use so the same place doesn't
+                    get logged three different ways and split the reporting. */}
+                <datalist id="outreach-locations">
+                  {locationOptions.map((l) => (
+                    <option key={l} value={l} />
+                  ))}
+                </datalist>
+              </div>
+              <div>
+                <Label>Date met</Label>
+                <Input name="met_on" type="date" required defaultValue={today()} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Who witnessed</Label>
+                <Input
+                  name="witness_name"
+                  maxLength={120}
+                  list="witness-names"
+                  value={witnessName}
+                  onChange={(e) => setWitnessName(e.target.value)}
+                  placeholder="Your name"
+                />
+                <datalist id="witness-names">
+                  {witnessOptions.map((w) => (
+                    <option key={w.id} value={w.name} />
+                  ))}
+                </datalist>
+              </div>
+              <div>
+                <Label>Alongside (optional)</Label>
+                <Input name="co_witness" maxLength={120} placeholder="Second witness" />
+              </div>
+            </div>
+            <div>
+              <Label>Notes</Label>
+              <Textarea name="notes" rows={3} maxLength={2000} placeholder="What stood out? Prayer needs?" />
+            </div>
+
+            <div className="border border-border p-4 space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={followUp}
+                  onChange={(e) => setFollowUp(e.target.checked)}
+                  className="h-4 w-4 accent-current"
+                />
+                <span className="eyebrow">Set follow-up reminders</span>
+              </label>
+              {followUp && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>How many touches</Label>
+                    <Input
+                      name="follow_up_touches"
+                      type="number"
+                      min={1}
+                      max={12}
+                      defaultValue={3}
+                    />
+                  </div>
+                  <div>
+                    <Label>Every (days)</Label>
+                    <Input
+                      name="follow_up_interval_days"
+                      type="number"
+                      min={1}
+                      max={90}
+                      defaultValue={3}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={busy} className="w-full bg-night text-night-foreground hover:bg-night/90 rounded-none py-6 eyebrow">
+                {busy ? "Saving..." : "Save Contact"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+  );
+
+  // An ordinary member's page: the week's brief and a way to log a soul.
+  //
+  // Everything leadership-only is absent from this branch rather than disabled
+  // within it — no territory map, no quadrant coverage, no soul counts, no
+  // contact list. None of it is rendered and none of it is fetched.
+  // Held until roles and capabilities are known. Rendering the leadership
+  // branch optimistically would mount TerritoryPanel for a member and fire its
+  // boundary and coverage queries before the branch flipped — the leak this
+  // whole split exists to prevent, delivered in the first 200ms.
+  if (rolesLoading || capLoading) {
+    return <div className="eyebrow text-muted-foreground">Loading…</div>;
+  }
+
+  if (!canManage) {
+    return (
+      <div className="space-y-8">
+        <EvangelismFocusSummary />
+        <div className="max-w-3xl">{addContactDialog("Add a Soul")}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 max-w-6xl">
       <TerritoryPanel />
@@ -275,129 +450,7 @@ function EvangelismPage() {
           <h1 className="font-display text-5xl">Contacts</h1>
           <p className="text-muted-foreground mt-2">People we've met, prayed with, and are following up on.</p>
         </div>
-        <div className="flex gap-2">
-          <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-night text-night-foreground hover:bg-night/90 rounded-none px-6 py-6 eyebrow">
-              <Plus className="h-4 w-4" /> Add Contact
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="font-display text-3xl">New Contact</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleAdd} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>First name</Label>
-                  <Input name="first_name" required maxLength={80} />
-                </div>
-                <div>
-                  <Label>Last name</Label>
-                  <Input name="last_name" maxLength={80} />
-                </div>
-              </div>
-              <div>
-                <Label>Phone</Label>
-                <Input name="phone" type="tel" maxLength={40} />
-              </div>
-              <div>
-                <Label>Address</Label>
-                <Input name="address" maxLength={200} />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Where we met</Label>
-                  <Input
-                    name="where_met"
-                    maxLength={120}
-                    list="outreach-locations"
-                    placeholder="Eastpoint Mall"
-                  />
-                  {/* Suggests locations already in use so the same place doesn't
-                      get logged three different ways and split the reporting. */}
-                  <datalist id="outreach-locations">
-                    {locationOptions.map((l) => (
-                      <option key={l} value={l} />
-                    ))}
-                  </datalist>
-                </div>
-                <div>
-                  <Label>Date met</Label>
-                  <Input name="met_on" type="date" required defaultValue={today()} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Who witnessed</Label>
-                  <Input
-                    name="witness_name"
-                    maxLength={120}
-                    list="witness-names"
-                    value={witnessName}
-                    onChange={(e) => setWitnessName(e.target.value)}
-                    placeholder="Your name"
-                  />
-                  <datalist id="witness-names">
-                    {witnessOptions.map((w) => (
-                      <option key={w.id} value={w.name} />
-                    ))}
-                  </datalist>
-                </div>
-                <div>
-                  <Label>Alongside (optional)</Label>
-                  <Input name="co_witness" maxLength={120} placeholder="Second witness" />
-                </div>
-              </div>
-              <div>
-                <Label>Notes</Label>
-                <Textarea name="notes" rows={3} maxLength={2000} placeholder="What stood out? Prayer needs?" />
-              </div>
-
-              <div className="border border-border p-4 space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={followUp}
-                    onChange={(e) => setFollowUp(e.target.checked)}
-                    className="h-4 w-4 accent-current"
-                  />
-                  <span className="eyebrow">Set follow-up reminders</span>
-                </label>
-                {followUp && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label>How many touches</Label>
-                      <Input
-                        name="follow_up_touches"
-                        type="number"
-                        min={1}
-                        max={12}
-                        defaultValue={3}
-                      />
-                    </div>
-                    <div>
-                      <Label>Every (days)</Label>
-                      <Input
-                        name="follow_up_interval_days"
-                        type="number"
-                        min={1}
-                        max={90}
-                        defaultValue={3}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={busy} className="w-full bg-night text-night-foreground hover:bg-night/90 rounded-none py-6 eyebrow">
-                  {busy ? "Saving..." : "Save Contact"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-        </div>
+        <div className="flex gap-2">{addContactDialog("Add Contact")}</div>
       </div>
 
       <div className="relative max-w-md">

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ContactActions } from "@/components/evangelism/ContactActions";
 
 export const Route = createFileRoute("/dashboard/follow-ups")({
   head: () => ({ meta: [{ title: "Follow-ups — CCAC" }] }),
@@ -81,36 +82,57 @@ function FollowUpsPage() {
         </div>
       ) : (
         <div className="space-y-2">
+          {/* Stacked rather than a single row: at iPhone width the name, the due
+              date and three labelled buttons cannot share a line, and this page
+              is used standing on a doorstep. Marking complete stays a deliberate
+              press — texting or calling never completes a touch by itself, since
+              a call that went to voicemail is not a follow-up made. */}
           {filtered.map((r) => (
-            <div key={r.id} className="flex items-center gap-4 bg-card border border-border p-5">
-              <div className="flex-shrink-0 text-center w-16">
-                <div className="eyebrow text-accent text-[10px]">Touch</div>
-                <div className="font-display text-3xl">{r.touch_number}</div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <Link
-                  to="/dashboard/evangelism/$id"
-                  params={{ id: r.contact_id }}
-                  className="font-display text-xl hover:text-accent inline-flex items-center gap-2"
-                >
-                  {r.evangelism_contacts?.first_name} {r.evangelism_contacts?.last_name}
-                  <ChevronRight className="h-4 w-4" />
-                </Link>
-                <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(r.due_date).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
-                  </span>
-                  {r.evangelism_contacts?.phone && <span>{r.evangelism_contacts.phone}</span>}
+            <div key={r.id} className="bg-card border border-border p-5">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 text-center w-14">
+                  <div className="eyebrow text-accent text-[10px]">Touch</div>
+                  <div className="font-display text-3xl">{r.touch_number}</div>
                 </div>
+                <div className="flex-1 min-w-0">
+                  <Link
+                    to="/dashboard/evangelism/$id"
+                    params={{ id: r.contact_id }}
+                    className="font-display text-xl hover:text-accent inline-flex items-center gap-2"
+                  >
+                    {r.evangelism_contacts?.first_name} {r.evangelism_contacts?.last_name}
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                  <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(r.due_date).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+                    </span>
+                    {r.evangelism_contacts?.phone && <span>{r.evangelism_contacts.phone}</span>}
+                  </div>
+                </div>
+                {r.completed && <Badge variant="secondary">Done</Badge>}
               </div>
-              {!r.completed ? (
-                <Button onClick={() => markDone(r.id)} size="sm" className="bg-night text-night-foreground hover:bg-night/90 rounded-none eyebrow">
-                  Mark Done
+
+              <ContactActions
+                phone={r.evangelism_contacts?.phone}
+                firstName={r.evangelism_contacts?.first_name}
+                size="sm"
+                className="mt-4"
+              />
+
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <Button asChild size="sm" variant="ghost" className="rounded-none h-8 px-3 text-xs">
+                  <Link to="/dashboard/evangelism/$id" params={{ id: r.contact_id }}>
+                    View profile
+                  </Link>
                 </Button>
-              ) : (
-                <Badge variant="secondary">Done</Badge>
-              )}
+                {!r.completed && (
+                  <Button onClick={() => markDone(r.id)} size="sm" className="bg-night text-night-foreground hover:bg-night/90 rounded-none eyebrow h-8 px-3">
+                    Mark Complete
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </div>

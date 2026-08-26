@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DeleteContactDialog } from "@/components/evangelism/DeleteContactDialog";
+import { ContactActions } from "@/components/evangelism/ContactActions";
 import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 
 const STATUS_OPTIONS = ["new", "contacted", "visiting", "member", "cold"] as const;
@@ -176,6 +177,10 @@ function ContactDetail() {
           {/* The date they were met, not the date the record was typed. */}
           <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />Met {new Date(contact.met_on ?? contact.created_at).toLocaleDateString()}</span>
         </div>
+
+        {/* Directly under the name, where a thumb lands: reaching this soul
+            is the point of opening their profile. */}
+        <ContactActions phone={contact.phone} firstName={contact.first_name} className="mt-5" />
       </div>
 
       {/* Spiritual journey */}

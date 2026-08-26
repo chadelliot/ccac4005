@@ -27,6 +27,7 @@ import { EvangelismMap, type MapContact } from "@/components/evangelism/Evangeli
 import { DeleteContactDialog } from "@/components/evangelism/DeleteContactDialog";
 import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
+import { ContactActions } from "@/components/evangelism/ContactActions";
 
 export const Route = createFileRoute("/dashboard/evangelism/admin")({
   head: () => ({ meta: [{ title: "Evangelism Admin — CCAC" }] }),
@@ -526,7 +527,14 @@ function EvangelismAdmin() {
                       <TableCell className="text-sm">{witness ? witness.name : <span className="text-muted-foreground">—</span>}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{profiles[c.added_by]?.display_name ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{c.where_met ?? "—"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{c.phone ?? "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {/* Number shown exactly as typed; the buttons carry the
+                            normalised form. */}
+                        <div className="space-y-1.5">
+                          <div>{c.phone ?? "—"}</div>
+                          <ContactActions phone={c.phone} firstName={c.first_name} size="sm" showInvite={false} />
+                        </div>
+                      </TableCell>
 
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
