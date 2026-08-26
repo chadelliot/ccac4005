@@ -98,17 +98,18 @@ function EvangelismPage() {
   const [followUp, setFollowUp] = useState(false);
 
   const load = async () => {
-    // Members never make this request. Their own contacts would come back under
-    // RLS, but this page has no list for them and downloading rows in order to
-    // not draw them is the mistake this guard exists to prevent.
-    if (!canManage) {
-      setContacts([]);
-      return;
-    }
-    const { data, error } = await supabase
+    if (!user) return;
+
+    // Leadership gets the whole harvest; a member gets only the souls they
+    // logged. The scope is in the query rather than in the rendering — RLS
+    // would also hand a member their own rows, but asking narrowly means their
+    // browser never holds anyone else's name, number or address even briefly.
+    const base = supabase
       .from("evangelism_contacts")
       .select("*")
       .order("met_on", { ascending: false });
+
+    const { data, error } = await (canManage ? base : base.eq("added_by", user.id));
     if (error) toast.error(error.message);
     setContacts((data ?? []) as Contact[]);
   };
@@ -139,10 +140,10 @@ function EvangelismPage() {
   // Waits for roles and capabilities before loading: firing on mount would run
   // while canManage is still false and leave a manager looking at an empty list.
   useEffect(() => {
-    if (rolesLoading || capLoading) return;
+    if (rolesLoading || capLoading || !user) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rolesLoading, capLoading, canManage]);
+  }, [rolesLoading, capLoading, canManage, user]);
 
   const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -418,11 +419,6 @@ function EvangelismPage() {
       </Dialog>
   );
 
-  // An ordinary member's page: the week's brief and a way to log a soul.
-  //
-  // Everything leadership-only is absent from this branch rather than disabled
-  // within it — no territory map, no quadrant coverage, no soul counts, no
-  // contact list. None of it is rendered and none of it is fetched.
   // Held until roles and capabilities are known. Rendering the leadership
   // branch optimistically would mount TerritoryPanel for a member and fire its
   // boundary and coverage queries before the branch flipped — the leak this
@@ -431,11 +427,49 @@ function EvangelismPage() {
     return <div className="eyebrow text-muted-foreground">Loading…</div>;
   }
 
+  // An ordinary member's page: the week's brief, a way to log a soul, and the
+  // souls they logged themselves.
+  //
+  // Their own harvest is theirs to keep track of — who they met, whether that
+  // person has been baptized since. What stays absent is everyone else's work:
+  // no territory map, no quadrant coverage, no soul counts, no church-wide
+  // list. None of that is rendered here and none of it is fetched.
   if (!canManage) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-8 max-w-3xl">
         <EvangelismFocusSummary />
-        <div className="max-w-3xl">{addContactDialog("Add a Soul")}</div>
+
+        <div>{addContactDialog("Add a Soul")}</div>
+
+        <div className="space-y-4">
+          <div className="flex items-end justify-between gap-4 flex-wrap">
+            <div>
+              <div className="eyebrow text-accent mb-2">— Your harvest</div>
+              <h2 className="font-display text-3xl">Souls you've logged ({contacts.length})</h2>
+            </div>
+          </div>
+
+          {/* Search earns its place once a member has logged a season's worth
+              and is trying to remember one name. */}
+          {contacts.length > 6 && (
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search your contacts..."
+                className="pl-9"
+              />
+            </div>
+          )}
+
+          <ContactList
+            contacts={allFiltered}
+            emptyText={
+              q ? "No contacts match that search." : "No souls logged yet. Add the first one above."
+            }
+          />
+        </div>
       </div>
     );
   }

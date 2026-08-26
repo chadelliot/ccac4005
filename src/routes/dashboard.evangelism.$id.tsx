@@ -122,7 +122,7 @@ function ContactDetail() {
       phone: (fd.get("phone") as string) || null,
       address: (fd.get("address") as string) || null,
       where_met: (fd.get("where_met") as string) || null,
-      notes: (fd.get("notes") as string) || null,
+      notes: isAdmin ? (fd.get("notes") as string) || null : null,
       prayer_request: (fd.get("prayer_request") as string) || null,
       met_on: fd.get("met_on") as string,
       status,
@@ -132,7 +132,13 @@ function ContactDetail() {
     const addressChanged =
       (parsed.data.address ?? null) !== (contact?.address ?? null) ||
       (parsed.data.where_met ?? null) !== (contact?.where_met ?? null);
-    const { error } = await supabase.from("evangelism_contacts").update(parsed.data).eq("id", id);
+    // The notes column is dropped from a member's payload rather than written
+    // back. The field isn't rendered for them, so sending it would blank
+    // leadership's notes the first time a member corrected a phone number.
+    const payload = { ...parsed.data };
+    if (!isAdmin) delete (payload as Partial<typeof payload>).notes;
+
+    const { error } = await supabase.from("evangelism_contacts").update(payload).eq("id", id);
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Saved");
@@ -316,10 +322,18 @@ function ContactDetail() {
             <Label>Prayer request</Label>
             <Textarea name="prayer_request" defaultValue={contact.prayer_request ?? ""} rows={2} maxLength={1000} />
           </div>
-          <div>
-            <Label>Notes</Label>
-            <Textarea name="notes" defaultValue={contact.notes ?? ""} rows={4} maxLength={2000} />
-          </div>
+          {/* Notes are leadership's record, not the congregation's.
+              They carry what was said at the door — circumstances, prayer
+              needs, why someone hasn't come back — about people who never
+              signed up for this site, so they stay with the admins who
+              shepherd the follow-up. The witness still writes them when the
+              contact is logged; they just aren't theirs to read back. */}
+          {isAdmin && (
+            <div>
+              <Label>Notes</Label>
+              <Textarea name="notes" defaultValue={contact.notes ?? ""} rows={4} maxLength={2000} />
+            </div>
+          )}
           <div className="flex gap-3 pt-2">
             <Button type="submit" disabled={busy} className="bg-night text-night-foreground hover:bg-night/90 rounded-none px-8 eyebrow">
               {busy ? "Saving..." : "Save Changes"}
