@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Search, Phone, MapPin, ChevronRight, Star } from "lucide-react";
+import { Plus, Search, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,6 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Select,
@@ -30,8 +29,7 @@ import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 import { listWitnesses, resolveWitnessId, splitWitnessNames, type Witness } from "@/lib/witnesses";
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
 import { EvangelismFocusSummary } from "@/components/evangelism/EvangelismFocusSummary";
-import { ContactActions } from "@/components/evangelism/ContactActions";
-import { FocusToggle, canFocusContact } from "@/components/evangelism/FocusToggle";
+import { ContactCard } from "@/components/evangelism/ContactCard";
 import { useCapabilities } from "@/lib/adminCapabilities";
 import { addContactNote } from "@/lib/contactActivity";
 import { useStickyState, useStickyScroll } from "@/hooks/useStickyState";
@@ -703,18 +701,6 @@ function EvangelismPage() {
   );
 }
 
-function lastContactLabel(iso: string | undefined) {
-  if (!iso) return null;
-  const then = new Date(iso);
-  const days = Math.floor((Date.now() - then.getTime()) / 86_400_000);
-  // Days for the recent past, a date once that stops being the useful unit —
-  // "11 days ago" answers the question, "Jun 3" answers it for June.
-  if (days <= 0) return "Contacted today";
-  if (days === 1) return "Contacted yesterday";
-  if (days < 30) return `Contacted ${days} days ago`;
-  return `Contacted ${then.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
-}
-
 function ContactList({
   contacts,
   lastContact,
@@ -739,106 +725,15 @@ function ContactList({
   }
   return (
     <div className="space-y-2">
-      {/* The card is no longer one big link.
-          Text and Call are anchors themselves (tel:, sms:), and an anchor
-          inside an anchor is invalid HTML that browsers resolve by unnesting —
-          which is why these buttons could not live here before. The name and
-          the View chevron carry the navigation instead, and the row gets to
-          hold real actions. */}
       {contacts.map((c) => (
-        <div
+        <ContactCard
           key={c.id}
-          className="group flex flex-wrap items-start justify-between gap-4 border border-border bg-card p-5 transition-colors hover:border-foreground/30"
-        >
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-3">
-              {/* The star leads the row: scanning for the few souls in focus is
-                  the reason to open this list at all. */}
-              {canFocusContact(c.added_by, userId, canManageEvangelism) ? (
-                <FocusToggle
-                  contactId={c.id}
-                  value={c.is_focus}
-                  size="sm"
-                  onChange={(next) => onFocusChange(c.id, next)}
-                />
-              ) : (
-                c.is_focus && <Star className="h-4 w-4 shrink-0 text-accent" fill="currentColor" />
-              )}
-              <Link
-                to="/dashboard/evangelism/$id"
-                params={{ id: c.id }}
-                className="font-display text-xl underline-offset-4 hover:underline"
-              >
-                {c.first_name} {c.last_name}
-              </Link>
-              {c.baptized && (
-                <Badge variant="secondary" className="bg-accent/20 text-accent-foreground">
-                  Baptized
-                </Badge>
-              )}
-              {c.holy_ghost && (
-                <Badge variant="secondary" className="bg-night text-night-foreground">
-                  Holy Ghost
-                </Badge>
-              )}
-              {c.visited && <Badge variant="outline">Visited</Badge>}
-            </div>
-            <div className="flex flex-wrap gap-4 mt-2 text-xs text-muted-foreground">
-              {c.phone && (
-                <span className="flex items-center gap-1">
-                  <Phone className="h-3 w-3" />
-                  {c.phone}
-                </span>
-              )}
-              {c.where_met && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {c.where_met}
-                </span>
-              )}
-              {/* The day they were witnessed to — the date the harvest list
-                  keeps and the one that decides which month they belong to.
-                  The record's creation date is bookkeeping, not ministry. */}
-              <span>
-                {new Date(c.met_on + "T12:00:00").toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </span>
-              {/* Whether anyone has been back since. A soul met in March and
-                  never called again should not look like one called yesterday. */}
-              {(() => {
-                const label = lastContactLabel(lastContact.get(c.id));
-                return label ? (
-                  <span className="text-foreground/70">{label}</span>
-                ) : (
-                  <span className="italic">Not contacted yet</span>
-                );
-              })()}
-            </div>
-
-            {/* Reaching them is the point of the list, so it takes one tap from
-                here rather than a trip through the profile. */}
-            <ContactActions
-              contactId={c.id}
-              phone={c.phone}
-              firstName={c.first_name}
-              status={c.status}
-              size="sm"
-              className="mt-3"
-            />
-          </div>
-
-          <Link
-            to="/dashboard/evangelism/$id"
-            params={{ id: c.id }}
-            className="eyebrow flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <span className="hidden sm:inline">View</span>
-            <ChevronRight className="h-5 w-5" />
-          </Link>
-        </div>
+          contact={c}
+          lastContactAt={lastContact.get(c.id)}
+          userId={userId}
+          canManageEvangelism={canManageEvangelism}
+          onFocusChange={onFocusChange}
+        />
       ))}
     </div>
   );

@@ -10,6 +10,7 @@ import {
   MapPin,
   Plus,
   Search,
+  SlidersHorizontal,
   Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +39,8 @@ import { DeleteContactDialog } from "@/components/evangelism/DeleteContactDialog
 import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
 import { ContactActions } from "@/components/evangelism/ContactActions";
+import { ContactCard } from "@/components/evangelism/ContactCard";
+import { useCapabilities } from "@/lib/adminCapabilities";
 import { useStickyState, useStickyScroll } from "@/hooks/useStickyState";
 
 export const Route = createFileRoute("/dashboard/evangelism/admin")({
@@ -68,6 +71,8 @@ type Contact = {
   country: string | null;
   geocoded_at: string | null;
   witness_id: string | null;
+  gender: string | null;
+  is_focus: boolean;
 };
 
 type FollowUp = {
@@ -105,6 +110,13 @@ function EvangelismAdmin() {
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [witnesses, setWitnesses] = useState<Witness[]>([]);
+  // Same source the contact list uses, so the card shows the same
+  // "contacted N days ago" here as it does there.
+  const [lastContact, setLastContact] = useState<Map<string, string>>(new Map());
+  const { has } = useCapabilities(user);
+
+  const setFocusLocally = (id: string, next: boolean) =>
+    setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, is_focus: next } : c)));
 
   // The date a soul was actually met, not the date somebody typed them in.
   // Eighty-three of these were entered in one sitting during the harvest-list
@@ -133,6 +145,16 @@ function EvangelismAdmin() {
       supabase.from("profiles").select("id, display_name"),
       supabase.from("witnesses").select("id, name, linked_user_id").order("name"),
     ]);
+    const { data: activity } = await supabase
+      .from("contact_last_activity")
+      .select("contact_id, last_activity_at");
+    setLastContact(
+      new Map(
+        (activity ?? [])
+          .filter((r) => r.contact_id && r.last_activity_at)
+          .map((r) => [r.contact_id as string, r.last_activity_at as string]),
+      ),
+    );
     setContacts((c ?? []) as Contact[]);
     setFollowUps((f ?? []) as FollowUp[]);
     const map: Record<string, Profile> = {};
@@ -290,6 +312,18 @@ function EvangelismAdmin() {
   const [whereFilter, setWhereFilter] = useStickyState<string>("evg.exec.where", "all");
   const [witnessFilter, setWitnessFilter] = useStickyState<string>("evg.exec.witness", "all");
   const [journeyFilter, setJourneyFilter] = useStickyState<string>("evg.exec.journey", "all");
+  const [genderFilter, setGenderFilter] = useStickyState<string>("evg.exec.gender", "all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Shown on the collapsed button so a filter left on from last week is
+  // visible rather than a mystery about why the list looks short.
+  const activeFilterCount = [
+    monthFilter,
+    whereFilter,
+    witnessFilter,
+    journeyFilter,
+    genderFilter,
+  ].filter((f) => f !== "all").length;
   const [sortMode, setSortMode] = useStickyState<"recent" | "oldest" | "alpha">(
     "evg.exec.sort",
     "recent",
@@ -305,9 +339,19 @@ function EvangelismAdmin() {
     }
     if (monthFilter !== "all") list = list.filter((c) => monthKey(metOn(c)) === monthFilter);
     if (whereFilter !== "all") list = list.filter((c) => c.where_met === whereFilter);
+    // Alongside the other filters, not instead of them.
+    if (genderFilter !== "all") {
+      list = list.filter((c) =>
+        genderFilter === "unknown" ? c.gender == null : c.gender === genderFilter,
+      );
+    }
     if (witnessFilter !== "all") list = list.filter((c) => c.witness_id === witnessFilter);
     if (journeyFilter !== "all") {
-      list = list.filter((c) => (c as any)[journeyFilter] === true);
+      // Typed rather than cast through any: these four are the boolean columns
+      // on the contact, and naming them means a renamed column fails the build
+      // instead of silently filtering nothing.
+      const field = journeyFilter as "gospel_shared" | "visited" | "baptized" | "holy_ghost";
+      list = list.filter((c) => c[field] === true);
     }
     if (sortMode === "alpha")
       list = [...list].sort((a, b) => fullName(a).localeCompare(fullName(b)));
@@ -315,7 +359,7 @@ function EvangelismAdmin() {
       list = [...list].sort((a, b) => metOn(a).localeCompare(metOn(b)));
     else list = [...list].sort((a, b) => metOn(b).localeCompare(metOn(a)));
     return list;
-  }, [contacts, q, monthFilter, whereFilter, witnessFilter, journeyFilter, sortMode]);
+  }, [contacts, q, monthFilter, whereFilter, witnessFilter, journeyFilter, genderFilter, sortMode]);
 
   // ---- follow-up tracker filters ----
   const [touchFilter, setTouchFilter] = useState<"all" | "overdue" | "awaiting">("all");
@@ -467,8 +511,10 @@ function EvangelismAdmin() {
 
         {/* ALL CONTACTS */}
         <TabsContent value="all" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-            <div className="relative lg:col-span-2">
+          {/* Search always visible; the rest folds away on a phone so the
+              first contact is not four dropdowns down the page. */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 value={q}
@@ -477,75 +523,106 @@ function EvangelismAdmin() {
                 className="pl-9"
               />
             </div>
-            <Select value={monthFilter} onValueChange={setMonthFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Month" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All months</SelectItem>
-                {monthKeys.map((k) => (
-                  <SelectItem key={k} value={k}>
-                    {monthLabel(k)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={whereFilter} onValueChange={setWhereFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Where met" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All locations</SelectItem>
-                {whereMetOptions.map((w) => (
-                  <SelectItem key={w} value={w}>
-                    {w}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={witnessFilter} onValueChange={setWitnessFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Who witnessed" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All witnesses</SelectItem>
-                {witnessOptions.map((w) => (
-                  <SelectItem key={w.id} value={w.id}>
-                    {w.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className="eyebrow shrink-0 rounded-none md:hidden"
+              aria-expanded={filtersOpen}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+            </Button>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Select value={journeyFilter} onValueChange={setJourneyFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Journey" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All journey stages</SelectItem>
-                <SelectItem value="gospel_shared">Gospel shared</SelectItem>
-                <SelectItem value="visited">Visited church</SelectItem>
-                <SelectItem value="baptized">Baptized</SelectItem>
-                <SelectItem value="holy_ghost">Holy Ghost</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortMode} onValueChange={(v) => setSortMode(v as typeof sortMode)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Most recent</SelectItem>
-                <SelectItem value="oldest">Oldest first</SelectItem>
-                <SelectItem value="alpha">A–Z</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="text-sm text-muted-foreground self-center">
-              Showing {filtered.length} of {contacts.length}
+
+          <div className={`${filtersOpen ? "block" : "hidden"} space-y-3 md:block`}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <Select value={monthFilter} onValueChange={setMonthFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Month" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All months</SelectItem>
+                  {monthKeys.map((k) => (
+                    <SelectItem key={k} value={k}>
+                      {monthLabel(k)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={whereFilter} onValueChange={setWhereFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Where met" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All locations</SelectItem>
+                  {whereMetOptions.map((w) => (
+                    <SelectItem key={w} value={w}>
+                      {w}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={witnessFilter} onValueChange={setWitnessFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Who witnessed" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All witnesses</SelectItem>
+                  {witnessOptions.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Select value={journeyFilter} onValueChange={setJourneyFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Journey" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All journey stages</SelectItem>
+                  <SelectItem value="gospel_shared">Gospel shared</SelectItem>
+                  <SelectItem value="visited">Visited church</SelectItem>
+                  <SelectItem value="baptized">Baptized</SelectItem>
+                  <SelectItem value="holy_ghost">Holy Ghost</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={genderFilter} onValueChange={setGenderFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Everyone</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="unknown">Not recorded</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortMode} onValueChange={(v) => setSortMode(v as typeof sortMode)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Most recent</SelectItem>
+                  <SelectItem value="oldest">Oldest first</SelectItem>
+                  <SelectItem value="alpha">A–Z</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="text-sm text-muted-foreground self-center">
+                Showing {filtered.length} of {contacts.length}
+              </div>
             </div>
           </div>
 
-          <div className="border border-border bg-card overflow-x-auto">
+          {/* One contacts experience, two presentations of it.
+              Both render `filtered` — the same array, the same filters, the same
+              handlers. A phone gets the cards the Contacts page already uses
+              rather than a seven-column table squeezed to 390px, and nothing
+              about the data or the logic is duplicated to achieve that. */}
+          <div className="hidden border border-border bg-card overflow-x-auto md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -562,13 +639,13 @@ function EvangelismAdmin() {
               <TableBody>
                 {loadingData ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       Loading…
                     </TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       No contacts match these filters.
                     </TableCell>
                   </TableRow>
@@ -598,9 +675,6 @@ function EvangelismAdmin() {
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {profiles[c.added_by]?.display_name ?? "—"}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {c.where_met ?? "—"}
@@ -680,6 +754,38 @@ function EvangelismAdmin() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          <div className="space-y-2 md:hidden">
+            {loadingData ? (
+              <div className="border border-dashed border-border p-12 text-center">
+                <div className="eyebrow text-muted-foreground">Loading contacts...</div>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="border border-dashed border-border p-12 text-center">
+                <div className="eyebrow text-muted-foreground">
+                  No contacts match these filters.
+                </div>
+              </div>
+            ) : (
+              filtered.map((c) => (
+                <ContactCard
+                  key={c.id}
+                  contact={c}
+                  lastContactAt={lastContact.get(c.id)}
+                  userId={user?.id}
+                  canManageEvangelism={has("evangelism_management")}
+                  onFocusChange={setFocusLocally}
+                  trailing={
+                    <DeleteContactDialog
+                      contactId={c.id}
+                      contactName={fullName(c)}
+                      onDeleted={load}
+                    />
+                  }
+                />
+              ))
+            )}
           </div>
         </TabsContent>
 
