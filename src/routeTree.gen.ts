@@ -27,7 +27,6 @@ import { Route as EventsIdRouteImport } from './routes/events_.$id'
 import { Route as DashboardServicesRouteImport } from './routes/dashboard.services'
 import { Route as DashboardProgramsRouteImport } from './routes/dashboard.programs'
 import { Route as DashboardGroupsRouteImport } from './routes/dashboard.groups'
-import { Route as DashboardFollowUpsRouteImport } from './routes/dashboard.follow-ups'
 import { Route as DashboardFinanceRouteImport } from './routes/dashboard.finance'
 import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
 import { Route as DashboardEvangelismRouteImport } from './routes/dashboard.evangelism'
@@ -42,6 +41,7 @@ import { Route as DashboardEngagementsIndexRouteImport } from './routes/dashboar
 import { Route as DashboardProgramsIdRouteImport } from './routes/dashboard.programs.$id'
 import { Route as DashboardGroupsIdRouteImport } from './routes/dashboard.groups.$id'
 import { Route as DashboardEventsIdRouteImport } from './routes/dashboard.events.$id'
+import { Route as DashboardEvangelismFollowUpsRouteImport } from './routes/dashboard.evangelism.follow-ups'
 import { Route as DashboardEvangelismAdminRouteImport } from './routes/dashboard.evangelism.admin'
 import { Route as DashboardEvangelismIdRouteImport } from './routes/dashboard.evangelism.$id'
 import { Route as DashboardEngagementsSettingsRouteImport } from './routes/dashboard.engagements.settings'
@@ -138,11 +138,6 @@ const DashboardGroupsRoute = DashboardGroupsRouteImport.update({
   path: '/groups',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardFollowUpsRoute = DashboardFollowUpsRouteImport.update({
-  id: '/follow-ups',
-  path: '/follow-ups',
-  getParentRoute: () => DashboardRoute,
-} as any)
 const DashboardFinanceRoute = DashboardFinanceRouteImport.update({
   id: '/finance',
   path: '/finance',
@@ -215,6 +210,12 @@ const DashboardEventsIdRoute = DashboardEventsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => DashboardEventsRoute,
 } as any)
+const DashboardEvangelismFollowUpsRoute =
+  DashboardEvangelismFollowUpsRouteImport.update({
+    id: '/follow-ups',
+    path: '/follow-ups',
+    getParentRoute: () => DashboardEvangelismRoute,
+  } as any)
 const DashboardEvangelismAdminRoute =
   DashboardEvangelismAdminRouteImport.update({
     id: '/admin',
@@ -266,7 +267,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
   '/dashboard/events': typeof DashboardEventsRouteWithChildren
   '/dashboard/finance': typeof DashboardFinanceRoute
-  '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/groups': typeof DashboardGroupsRouteWithChildren
   '/dashboard/programs': typeof DashboardProgramsRouteWithChildren
   '/dashboard/services': typeof DashboardServicesRoute
@@ -277,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/engagements/settings': typeof DashboardEngagementsSettingsRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
   '/dashboard/evangelism/admin': typeof DashboardEvangelismAdminRoute
+  '/dashboard/evangelism/follow-ups': typeof DashboardEvangelismFollowUpsRoute
   '/dashboard/events/$id': typeof DashboardEventsIdRoute
   '/dashboard/groups/$id': typeof DashboardGroupsIdRoute
   '/dashboard/programs/$id': typeof DashboardProgramsIdRoute
@@ -302,7 +303,6 @@ export interface FileRoutesByTo {
   '/dashboard/admin': typeof DashboardAdminRouteWithChildren
   '/dashboard/bible': typeof DashboardBibleRoute
   '/dashboard/finance': typeof DashboardFinanceRoute
-  '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/groups': typeof DashboardGroupsRouteWithChildren
   '/dashboard/services': typeof DashboardServicesRoute
   '/events/$id': typeof EventsIdRoute
@@ -312,6 +312,7 @@ export interface FileRoutesByTo {
   '/dashboard/engagements/settings': typeof DashboardEngagementsSettingsRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
   '/dashboard/evangelism/admin': typeof DashboardEvangelismAdminRoute
+  '/dashboard/evangelism/follow-ups': typeof DashboardEvangelismFollowUpsRoute
   '/dashboard/events/$id': typeof DashboardEventsIdRoute
   '/dashboard/groups/$id': typeof DashboardGroupsIdRoute
   '/dashboard/programs/$id': typeof DashboardProgramsIdRoute
@@ -342,7 +343,6 @@ export interface FileRoutesById {
   '/dashboard/evangelism': typeof DashboardEvangelismRouteWithChildren
   '/dashboard/events': typeof DashboardEventsRouteWithChildren
   '/dashboard/finance': typeof DashboardFinanceRoute
-  '/dashboard/follow-ups': typeof DashboardFollowUpsRoute
   '/dashboard/groups': typeof DashboardGroupsRouteWithChildren
   '/dashboard/programs': typeof DashboardProgramsRouteWithChildren
   '/dashboard/services': typeof DashboardServicesRoute
@@ -353,6 +353,7 @@ export interface FileRoutesById {
   '/dashboard/engagements/settings': typeof DashboardEngagementsSettingsRoute
   '/dashboard/evangelism/$id': typeof DashboardEvangelismIdRoute
   '/dashboard/evangelism/admin': typeof DashboardEvangelismAdminRoute
+  '/dashboard/evangelism/follow-ups': typeof DashboardEvangelismFollowUpsRoute
   '/dashboard/events/$id': typeof DashboardEventsIdRoute
   '/dashboard/groups/$id': typeof DashboardGroupsIdRoute
   '/dashboard/programs/$id': typeof DashboardProgramsIdRoute
@@ -384,7 +385,6 @@ export interface FileRouteTypes {
     | '/dashboard/evangelism'
     | '/dashboard/events'
     | '/dashboard/finance'
-    | '/dashboard/follow-ups'
     | '/dashboard/groups'
     | '/dashboard/programs'
     | '/dashboard/services'
@@ -395,6 +395,7 @@ export interface FileRouteTypes {
     | '/dashboard/engagements/settings'
     | '/dashboard/evangelism/$id'
     | '/dashboard/evangelism/admin'
+    | '/dashboard/evangelism/follow-ups'
     | '/dashboard/events/$id'
     | '/dashboard/groups/$id'
     | '/dashboard/programs/$id'
@@ -420,7 +421,6 @@ export interface FileRouteTypes {
     | '/dashboard/admin'
     | '/dashboard/bible'
     | '/dashboard/finance'
-    | '/dashboard/follow-ups'
     | '/dashboard/groups'
     | '/dashboard/services'
     | '/events/$id'
@@ -430,6 +430,7 @@ export interface FileRouteTypes {
     | '/dashboard/engagements/settings'
     | '/dashboard/evangelism/$id'
     | '/dashboard/evangelism/admin'
+    | '/dashboard/evangelism/follow-ups'
     | '/dashboard/events/$id'
     | '/dashboard/groups/$id'
     | '/dashboard/programs/$id'
@@ -459,7 +460,6 @@ export interface FileRouteTypes {
     | '/dashboard/evangelism'
     | '/dashboard/events'
     | '/dashboard/finance'
-    | '/dashboard/follow-ups'
     | '/dashboard/groups'
     | '/dashboard/programs'
     | '/dashboard/services'
@@ -470,6 +470,7 @@ export interface FileRouteTypes {
     | '/dashboard/engagements/settings'
     | '/dashboard/evangelism/$id'
     | '/dashboard/evangelism/admin'
+    | '/dashboard/evangelism/follow-ups'
     | '/dashboard/events/$id'
     | '/dashboard/groups/$id'
     | '/dashboard/programs/$id'
@@ -625,13 +626,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardGroupsRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/follow-ups': {
-      id: '/dashboard/follow-ups'
-      path: '/follow-ups'
-      fullPath: '/dashboard/follow-ups'
-      preLoaderRoute: typeof DashboardFollowUpsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
     '/dashboard/finance': {
       id: '/dashboard/finance'
       path: '/finance'
@@ -730,6 +724,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardEventsIdRouteImport
       parentRoute: typeof DashboardEventsRoute
     }
+    '/dashboard/evangelism/follow-ups': {
+      id: '/dashboard/evangelism/follow-ups'
+      path: '/follow-ups'
+      fullPath: '/dashboard/evangelism/follow-ups'
+      preLoaderRoute: typeof DashboardEvangelismFollowUpsRouteImport
+      parentRoute: typeof DashboardEvangelismRoute
+    }
     '/dashboard/evangelism/admin': {
       id: '/dashboard/evangelism/admin'
       path: '/admin'
@@ -798,12 +799,14 @@ const DashboardEngagementsRouteWithChildren =
 interface DashboardEvangelismRouteChildren {
   DashboardEvangelismIdRoute: typeof DashboardEvangelismIdRoute
   DashboardEvangelismAdminRoute: typeof DashboardEvangelismAdminRoute
+  DashboardEvangelismFollowUpsRoute: typeof DashboardEvangelismFollowUpsRoute
   DashboardEvangelismIndexRoute: typeof DashboardEvangelismIndexRoute
 }
 
 const DashboardEvangelismRouteChildren: DashboardEvangelismRouteChildren = {
   DashboardEvangelismIdRoute: DashboardEvangelismIdRoute,
   DashboardEvangelismAdminRoute: DashboardEvangelismAdminRoute,
+  DashboardEvangelismFollowUpsRoute: DashboardEvangelismFollowUpsRoute,
   DashboardEvangelismIndexRoute: DashboardEvangelismIndexRoute,
 }
 
@@ -856,7 +859,6 @@ interface DashboardRouteChildren {
   DashboardEvangelismRoute: typeof DashboardEvangelismRouteWithChildren
   DashboardEventsRoute: typeof DashboardEventsRouteWithChildren
   DashboardFinanceRoute: typeof DashboardFinanceRoute
-  DashboardFollowUpsRoute: typeof DashboardFollowUpsRoute
   DashboardGroupsRoute: typeof DashboardGroupsRouteWithChildren
   DashboardProgramsRoute: typeof DashboardProgramsRouteWithChildren
   DashboardServicesRoute: typeof DashboardServicesRoute
@@ -870,7 +872,6 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardEvangelismRoute: DashboardEvangelismRouteWithChildren,
   DashboardEventsRoute: DashboardEventsRouteWithChildren,
   DashboardFinanceRoute: DashboardFinanceRoute,
-  DashboardFollowUpsRoute: DashboardFollowUpsRoute,
   DashboardGroupsRoute: DashboardGroupsRouteWithChildren,
   DashboardProgramsRoute: DashboardProgramsRouteWithChildren,
   DashboardServicesRoute: DashboardServicesRoute,

@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useSession, useRoles } from "@/lib/auth";
 import { useBishopDesk } from "@/hooks/useBishopDesk";
 import { useCapabilities } from "@/lib/adminCapabilities";
-import { LayoutDashboard, Users, Bell, ArrowLeft, Calendar, UsersRound, BookOpen, BookMarked, CalendarCheck, ShieldCheck, Church, Receipt } from "lucide-react";
+import { LayoutDashboard, Users, ArrowLeft, Calendar, UsersRound, BookOpen, BookMarked, CalendarCheck, ShieldCheck, Church, Receipt } from "lucide-react";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,7 +67,6 @@ function DashboardLayout() {
             >
               Evangelism
             </DashLink>
-            <DashLink to="/dashboard/follow-ups" icon={<Bell className="h-4 w-4" />}>Follow-ups</DashLink>
             <DashLink to="/dashboard/bible" icon={<BookOpen className="h-4 w-4" />}>Bible</DashLink>
             <DashLink to="/dashboard/programs" icon={<BookMarked className="h-4 w-4" />}>Reading Programs</DashLink>
             {desk.hasAccess && (
@@ -103,7 +102,6 @@ function DashboardLayout() {
             <DashLinkPill to="/dashboard/events">Events</DashLinkPill>
             <DashLinkPill to="/dashboard/groups">Groups</DashLinkPill>
             <DashLinkPill to={hasCapability("evangelism_management") ? "/dashboard/evangelism/admin" : "/dashboard/evangelism"}>Evangelism</DashLinkPill>
-            <DashLinkPill to="/dashboard/follow-ups">Follow-ups</DashLinkPill>
             <DashLinkPill to="/dashboard/bible">Bible</DashLinkPill>
             <DashLinkPill to="/dashboard/programs">Programs</DashLinkPill>
             {desk.hasAccess && <DashLinkPill to="/dashboard/engagements">Engagements</DashLinkPill>}

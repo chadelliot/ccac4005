@@ -280,9 +280,11 @@ function ContactDetail() {
 
           {/* Follow-ups */}
           <div className="bg-card border border-border p-6">
-            <div className="eyebrow text-accent mb-5">— Follow-ups (3 touches)</div>
+            <div className="eyebrow text-accent mb-5">— Follow-ups</div>
             {followUps.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No follow-ups scheduled.</p>
+              <p className="text-sm text-muted-foreground">
+                No follow-ups yet. Tick "Set a follow-up" when you add a note to create one.
+              </p>
             ) : (
               <div className="space-y-2">
                 {followUps.map((f) => (
@@ -291,7 +293,7 @@ function ContactDetail() {
                     className={`flex flex-wrap items-center justify-between gap-3 p-3 border ${f.completed ? "bg-muted border-border opacity-60" : "border-border"}`}
                   >
                     <div className="min-w-0">
-                      <div className="font-medium">Touch {f.touch_number}</div>
+                      <div className="font-medium">Follow-up {f.touch_number}</div>
                       <div className="text-xs text-muted-foreground">
                         {new Date(f.due_date + "T00:00:00").toLocaleDateString(undefined, {
                           weekday: "long",

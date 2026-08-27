@@ -101,17 +101,63 @@ export async function loadContactActivity(contactId: string): Promise<ContactAct
  * policy checks the role, so a member's browser cannot write one whatever the
  * page decides to render.
  */
-export async function addContactNote(contactId: string, note: string): Promise<boolean> {
+export async function addContactNote(contactId: string, note: string): Promise<string | null> {
   const text = note.trim();
-  if (!text) return false;
+  if (!text) return null;
   try {
     const { data } = await supabase.auth.getSession();
     const actorId = data.session?.user?.id;
-    if (!actorId) return false;
+    if (!actorId) return null;
 
-    const { error } = await supabase
+    // Returns the id rather than a bare success flag: a follow-up created from
+    // this note has to point back at it, and the caller cannot ask for the row
+    // afterwards without guessing which one it was.
+    const { data: row, error } = await supabase
       .from("contact_activity")
-      .insert({ contact_id: contactId, actor_id: actorId, kind: "note", note: text });
+      .insert({ contact_id: contactId, actor_id: actorId, kind: "note", note: text })
+      .select("id")
+      .single();
+    return error ? null : (row?.id ?? null);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Commit to coming back to this soul, about this note.
+ *
+ * The note travels with the task. On the day, the queue can say what the
+ * follow-up is actually about instead of "Touch 2, due Thursday" — which tells
+ * you to ring someone and nothing about why.
+ *
+ * touch_number continues that contact's sequence rather than being capped at
+ * three: follow-ups are created by hand now, as often as the work needs.
+ */
+export async function createFollowUpFromNote(input: {
+  contactId: string;
+  activityId: string | null;
+  dueDate: string;
+}): Promise<boolean> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const userId = data.session?.user?.id;
+    if (!userId) return false;
+
+    const { data: existing } = await supabase
+      .from("contact_follow_ups")
+      .select("touch_number")
+      .eq("contact_id", input.contactId)
+      .order("touch_number", { ascending: false })
+      .limit(1);
+    const next = ((existing?.[0]?.touch_number as number | undefined) ?? 0) + 1;
+
+    const { error } = await supabase.from("contact_follow_ups").insert({
+      contact_id: input.contactId,
+      assigned_to: userId,
+      due_date: input.dueDate,
+      touch_number: next,
+      activity_id: input.activityId,
+    });
     return !error;
   } catch {
     return false;

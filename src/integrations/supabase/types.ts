@@ -564,6 +564,7 @@ export type Database = {
       }
       contact_follow_ups: {
         Row: {
+          activity_id: string | null
           assigned_to: string
           completed: boolean
           completed_at: string | null
@@ -574,6 +575,7 @@ export type Database = {
           touch_number: number
         }
         Insert: {
+          activity_id?: string | null
           assigned_to: string
           completed?: boolean
           completed_at?: string | null
@@ -584,6 +586,7 @@ export type Database = {
           touch_number: number
         }
         Update: {
+          activity_id?: string | null
           assigned_to?: string
           completed?: boolean
           completed_at?: string | null
@@ -594,6 +597,13 @@ export type Database = {
           touch_number?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "contact_follow_ups_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "contact_activity"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contact_follow_ups_contact_id_fkey"
             columns: ["contact_id"]

@@ -8,9 +8,28 @@ import {
   loadContactActivity,
   addContactNote,
   updateContactNote,
+  createFollowUpFromNote,
   type ContactActivityRow,
   type ActivityKind,
 } from "@/lib/contactActivity";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+
+/** Local date, not UTC — after ~7pm Eastern toISOString() is already tomorrow. */
+function isoDaysFromNow(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
 
 const ICONS: Record<ActivityKind, typeof Phone> = {
   text: MessageSquare,
@@ -59,9 +78,12 @@ function when(iso: string) {
 export function ContactActivityPanel({
   contactId,
   refreshKey = 0,
+  onFollowUpCreated,
 }: {
   contactId: string;
   refreshKey?: number;
+  /** Lets the host page refresh its follow-up list when one is created here. */
+  onFollowUpCreated?: () => void;
 }) {
   const { user } = useSession();
   const { isAdmin } = useRoles(user);
@@ -71,6 +93,12 @@ export function ContactActivityPanel({
   const [busy, setBusy] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
+
+  // Ticked before writing the note, answered after: the date dialog opens once
+  // the note is safely saved, so a cancelled date never costs the note itself.
+  const [wantFollowUp, setWantFollowUp] = useState(false);
+  const [pendingNoteId, setPendingNoteId] = useState<string | null>(null);
+  const [dueDate, setDueDate] = useState(isoDaysFromNow(3));
 
   const refresh = useCallback(async () => {
     const r = await loadContactActivity(contactId);
@@ -90,12 +118,43 @@ export function ContactActivityPanel({
   const submitNote = async () => {
     if (!draft.trim()) return;
     setBusy(true);
-    const ok = await addContactNote(contactId, draft);
+    const noteId = await addContactNote(contactId, draft);
     setBusy(false);
-    if (!ok) return toast.error("Couldn't save that note.");
+    if (!noteId) return toast.error("Couldn't save that note.");
+
     setDraft("");
-    toast.success("Note added");
     refresh();
+
+    if (wantFollowUp) {
+      // The note is already saved. Asking for the date now means backing out of
+      // the dialog loses the reminder, never the note.
+      setPendingNoteId(noteId);
+      setDueDate(isoDaysFromNow(3));
+    } else {
+      toast.success("Note added");
+    }
+  };
+
+  const saveFollowUp = async () => {
+    if (!dueDate) return;
+    setBusy(true);
+    const ok = await createFollowUpFromNote({
+      contactId,
+      activityId: pendingNoteId,
+      dueDate,
+    });
+    setBusy(false);
+    setPendingNoteId(null);
+    setWantFollowUp(false);
+    if (!ok) return toast.error("Note saved, but the follow-up couldn't be created.");
+    onFollowUpCreated?.();
+    toast.success(
+      `Follow-up set for ${new Date(dueDate + "T12:00:00").toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+      })}`,
+    );
   };
 
   const saveEdit = async (id: string) => {
@@ -124,6 +183,15 @@ export function ContactActivityPanel({
             maxLength={2000}
             placeholder="How did it go? What did they say?"
           />
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              checked={wantFollowUp}
+              onChange={(e) => setWantFollowUp(e.target.checked)}
+              className="h-4 w-4 accent-current"
+            />
+            <span>Set a follow-up</span>
+          </label>
           <Button
             onClick={submitNote}
             disabled={busy || !draft.trim()}
@@ -225,6 +293,79 @@ export function ContactActivityPanel({
           phone, so delivery isn't confirmed here.
         </p>
       )}
+
+      <Dialog
+        open={pendingNoteId !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            // Dismissed without a date. The note stands; only the reminder was
+            // declined, and saying so beats silence.
+            setPendingNoteId(null);
+            setWantFollowUp(false);
+            toast.success("Note added — no follow-up set");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">When will you follow up?</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-1">
+            <p className="text-sm text-muted-foreground">
+              The note you just wrote will be attached, so you'll see what this is about when the
+              reminder comes up.
+            </p>
+
+            {/* Presets first: most follow-ups are "in a few days" or "next week",
+                and picking a day from a calendar for that is three taps too many
+                on a phone. */}
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: "In 3 days", days: 3 },
+                { label: "Next week", days: 7 },
+                { label: "In 2 weeks", days: 14 },
+              ].map((p) => {
+                const iso = isoDaysFromNow(p.days);
+                return (
+                  <button
+                    key={p.days}
+                    type="button"
+                    onClick={() => setDueDate(iso)}
+                    className={`eyebrow border px-3 py-1.5 text-xs transition-colors ${
+                      dueDate === iso
+                        ? "border-night bg-night text-night-foreground"
+                        : "border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div>
+              <Label>Or pick a date</Label>
+              <Input
+                type="date"
+                value={dueDate}
+                min={isoDaysFromNow(0)}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={saveFollowUp}
+              disabled={busy || !dueDate}
+              className="w-full rounded-none bg-night py-6 eyebrow text-night-foreground hover:bg-night/90"
+            >
+              Set follow-up
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

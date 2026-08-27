@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContactActions } from "@/components/evangelism/ContactActions";
 
-export const Route = createFileRoute("/dashboard/follow-ups")({
+export const Route = createFileRoute("/dashboard/evangelism/follow-ups")({
   head: () => ({ meta: [{ title: "Follow-ups — CCAC" }] }),
   component: FollowUpsPage,
 });
@@ -19,6 +19,8 @@ type FollowUpRow = {
   touch_number: number;
   completed: boolean;
   contact_id: string;
+  activity_id: string | null;
+  contact_activity: { note: string | null } | null;
   evangelism_contacts: {
     id: string;
     first_name: string;
@@ -40,7 +42,7 @@ function FollowUpsPage() {
     const { data, error } = await supabase
       .from("contact_follow_ups")
       .select(
-        "*, evangelism_contacts(id, first_name, last_name, phone, where_met, status, is_focus)",
+        "*, evangelism_contacts(id, first_name, last_name, phone, where_met, status, is_focus), contact_activity(note)",
       )
       .eq("assigned_to", user.id)
       .order("due_date");
@@ -65,7 +67,7 @@ function FollowUpsPage() {
       .update({ completed: true, completed_at: new Date().toISOString() })
       .eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Touch complete — well done!");
+    toast.success("Follow-up complete — well done!");
     load();
   };
 
@@ -75,7 +77,7 @@ function FollowUpsPage() {
         <div className="eyebrow text-accent mb-2">— Follow-ups</div>
         <h1 className="font-display text-5xl">Your reminders</h1>
         <p className="text-muted-foreground mt-2">
-          Three touches per contact, scheduled for Mondays and Thursdays.
+          Follow-ups you set for yourself, with the note that prompted each one.
         </p>
       </div>
 
@@ -107,9 +109,16 @@ function FollowUpsPage() {
           {filtered.map((r) => (
             <div key={r.id} className="bg-card border border-border p-5">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 text-center w-14">
-                  <div className="eyebrow text-accent text-[10px]">Touch</div>
-                  <div className="font-display text-3xl">{r.touch_number}</div>
+                <div className="w-14 flex-shrink-0 text-center">
+                  <div className="eyebrow text-accent text-[10px]">Due</div>
+                  <div className="font-display text-2xl leading-none">
+                    {new Date(r.due_date + "T12:00:00").getDate()}
+                  </div>
+                  <div className="text-[10px] uppercase text-muted-foreground">
+                    {new Date(r.due_date + "T12:00:00").toLocaleDateString(undefined, {
+                      month: "short",
+                    })}
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <Link
@@ -140,6 +149,15 @@ function FollowUpsPage() {
                 </div>
                 {r.completed && <Badge variant="secondary">Done</Badge>}
               </div>
+
+              {/* Why this follow-up exists. Written when the commitment was
+                  made, read on the day it comes due — "Touch 2, due Thursday"
+                  tells you to ring someone and nothing about what to say. */}
+              {r.contact_activity?.note && (
+                <p className="mt-3 border-l-2 border-border pl-3 text-sm text-muted-foreground whitespace-pre-wrap">
+                  {r.contact_activity.note}
+                </p>
+              )}
 
               <ContactActions
                 contactId={r.contact_id}

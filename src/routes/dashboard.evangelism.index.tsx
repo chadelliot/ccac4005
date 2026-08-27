@@ -117,7 +117,6 @@ function EvangelismPage() {
   const [busy, setBusy] = useState(false);
   const [witnessOptions, setWitnessOptions] = useState<Witness[]>([]);
   const [witnessName, setWitnessName] = useState("");
-  const [followUp, setFollowUp] = useState(false);
   // "unknown" rather than "" so the placeholder is a real choice someone can
   // return to, and so an unanswered question is never recorded as an answer.
   const [gender, setGender] = useState<string>("unknown");
@@ -220,9 +219,6 @@ function EvangelismPage() {
     const { primary, coWitness } = splitWitnessNames(typed);
     const witness_id = await resolveWitnessId(primary);
 
-    const touches = Number(fd.get("follow_up_touches")) || 3;
-    const interval = Number(fd.get("follow_up_interval_days")) || 3;
-
     const { data: inserted, error } = await supabase
       .from("evangelism_contacts")
       .insert({
@@ -230,21 +226,13 @@ function EvangelismPage() {
         co_witness: parsed.data.co_witness || coWitness,
         witness_id,
         added_by: user.id,
-        follow_up_opt_in: followUp,
-        follow_up_touches: touches,
-        follow_up_interval_days: interval,
       })
       .select("id")
       .single();
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success(
-      followUp
-        ? `Contact added — ${touches} follow-up${touches === 1 ? "" : "s"} scheduled`
-        : "Contact added",
-    );
+    toast.success("Contact added");
     setOpen(false);
-    setFollowUp(false);
     setGender("unknown");
     (e.target as HTMLFormElement).reset();
     listWitnesses().then(setWitnessOptions);
@@ -485,36 +473,6 @@ function EvangelismPage() {
               maxLength={2000}
               placeholder="What stood out? Prayer needs?"
             />
-          </div>
-
-          <div className="border border-border p-4 space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={followUp}
-                onChange={(e) => setFollowUp(e.target.checked)}
-                className="h-4 w-4 accent-current"
-              />
-              <span className="eyebrow">Set follow-up reminders</span>
-            </label>
-            {followUp && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>How many touches</Label>
-                  <Input name="follow_up_touches" type="number" min={1} max={12} defaultValue={3} />
-                </div>
-                <div>
-                  <Label>Every (days)</Label>
-                  <Input
-                    name="follow_up_interval_days"
-                    type="number"
-                    min={1}
-                    max={90}
-                    defaultValue={3}
-                  />
-                </div>
-              </div>
-            )}
           </div>
           <DialogFooter>
             <Button
