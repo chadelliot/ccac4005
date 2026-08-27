@@ -1939,6 +1939,7 @@ export type Database = {
         Args: { _service_id: string }
         Returns: undefined
       }
+      create_stale_contact_reminders: { Args: never; Returns: number }
       current_evangelism_focus: {
         Args: never
         Returns: {
@@ -2038,10 +2039,6 @@ export type Database = {
           notified: number
           points: number
         }[]
-      }
-      schedule_followups_for_contact: {
-        Args: { _contact_id: string }
-        Returns: undefined
       }
       set_evangelism_focus: {
         Args: { _note?: string; _zone_id: string }
