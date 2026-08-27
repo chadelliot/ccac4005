@@ -8,13 +8,13 @@ import { FocusToggle, canFocusContact } from "./FocusToggle";
 /**
  * One soul as a card.
  *
- * Shared by the Contacts list and by the Executive View at phone widths, so
- * there is one card design rather than two that drift. The Executive View's
+ * Shared by the Contacts list and by the Evangelism Overview at phone widths,
+ * so there is one card design rather than two that drift. That page's
  * table and this card render the same filtered array — the presentation
  * changes with the viewport, the data and the filtering do not.
  *
  * The structural prop type is deliberate: the two pages carry different row
- * shapes (the Executive View also holds coordinates, the contact list does
+ * shapes (the Overview also holds coordinates, the contact list does
  * not) and neither needs to know about the other's extra columns.
  */
 export type ContactCardData = {
@@ -58,7 +58,7 @@ export function ContactCard({
   userId: string | undefined;
   canManageEvangelism: boolean;
   onFocusChange: (id: string, next: boolean) => void;
-  /** Anything the host page wants in the corner — the Executive View puts delete here. */
+  /** Anything the host page wants in the corner — the Overview puts delete here. */
   trailing?: ReactNode;
 }) {
   const label = lastContactLabel(lastContactAt);

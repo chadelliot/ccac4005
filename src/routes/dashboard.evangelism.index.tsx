@@ -181,7 +181,7 @@ function EvangelismPage() {
 
   // Deliberately no redirect here.
   //
-  // This used to send every admin straight to the Executive View, which made
+  // This used to send every admin straight to the Evangelism Overview, which made
   // the Contacts page unreachable for them: the Add contact button bounced
   // back, and refreshing any tab landed somewhere else. Where an admin starts
   // is a job for the navigation link, not for the page they asked for —

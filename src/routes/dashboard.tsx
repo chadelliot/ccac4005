@@ -59,7 +59,7 @@ function DashboardLayout() {
             <DashLink to="/dashboard/events" icon={<Calendar className="h-4 w-4" />}>Events</DashLink>
             <DashLink to="/dashboard/groups" icon={<UsersRound className="h-4 w-4" />}>Groups</DashLink>
             <DashLink
-              // Evangelism leads land on the Executive View, everyone else on
+              // Evangelism leads land on the Evangelism Overview, everyone else on
               // Contacts. Choosing the destination here rather than redirecting
               // from the page keeps both reachable and refreshable.
               to={hasCapability("evangelism_management") ? "/dashboard/evangelism/admin" : "/dashboard/evangelism"}

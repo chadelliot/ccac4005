@@ -44,7 +44,7 @@ import { useCapabilities } from "@/lib/adminCapabilities";
 import { useStickyState, useStickyScroll } from "@/hooks/useStickyState";
 
 export const Route = createFileRoute("/dashboard/evangelism/admin")({
-  head: () => ({ meta: [{ title: "Evangelism Admin — CCAC" }] }),
+  head: () => ({ meta: [{ title: "Evangelism Overview — CCAC" }] }),
   component: EvangelismAdmin,
 });
 
@@ -394,7 +394,7 @@ function EvangelismAdmin() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="eyebrow text-accent mb-2">— Evangelism Admin</div>
-          <h1 className="font-display text-5xl">Executive View</h1>
+          <h1 className="font-display text-5xl">Evangelism Overview</h1>
           <p className="text-muted-foreground mt-2">
             Every soul, every touch, every outreach — at a glance.
           </p>
