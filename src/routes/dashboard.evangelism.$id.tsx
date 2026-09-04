@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ArrowLeft, Phone, MapPin, Calendar, Trash2, X } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, Calendar, Trash2, X, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/lib/auth";
 import { useCapabilities } from "@/lib/adminCapabilities";
@@ -21,7 +21,9 @@ import {
 } from "@/components/ui/select";
 import { DeleteContactDialog } from "@/components/evangelism/DeleteContactDialog";
 import { ContactActions } from "@/components/evangelism/ContactActions";
-import { FocusToggle, canFocusContact } from "@/components/evangelism/FocusToggle";
+import { FocusToggle } from "@/components/evangelism/FocusToggle";
+import { WitnessField } from "@/components/evangelism/WitnessField";
+import { canEditContact } from "@/lib/contactPermissions";
 import { ContactActivityPanel } from "@/components/evangelism/ContactActivityPanel";
 import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 import { STATUS_OPTIONS, statusLabel, type ContactStatus } from "@/lib/contactStatus";
@@ -50,6 +52,7 @@ type Contact = {
   met_on: string | null;
   gender: string | null;
   is_focus: boolean;
+  witness_id: string | null;
 };
 
 type FollowUp = {
@@ -97,6 +100,8 @@ function ContactDetail() {
     }
   }, [contact]);
 
+  const [witnessName, setWitnessName] = useState<string | null>(null);
+
   const load = async () => {
     const [{ data: c }, { data: f }] = await Promise.all([
       supabase.from("evangelism_contacts").select("*").eq("id", id).maybeSingle(),
@@ -104,6 +109,20 @@ function ContactDetail() {
     ]);
     setContact(c as Contact | null);
     setFollowUps((f ?? []) as FollowUp[]);
+
+    // Looked up by id rather than embedded, so the field shows the current name
+    // even when it was changed on another screen a moment ago.
+    const wid = (c as Contact | null)?.witness_id ?? null;
+    if (wid) {
+      const { data: w } = await supabase
+        .from("witnesses")
+        .select("name")
+        .eq("id", wid)
+        .maybeSingle();
+      setWitnessName(w?.name ?? null);
+    } else {
+      setWitnessName(null);
+    }
   };
 
   useEffect(() => {
@@ -222,6 +241,16 @@ function ContactDetail() {
                 <Calendar className="h-4 w-4" />
                 Met {new Date(contact.met_on ?? contact.created_at).toLocaleDateString()}
               </span>
+              {/* Correctable here too — the same field the contact list uses. */}
+              <span className="flex items-center gap-1">
+                <UserCheck className="h-4 w-4" />
+                <WitnessField
+                  contactId={contact.id}
+                  witnessName={witnessName}
+                  canEdit={canEditContact(contact.added_by, user?.id, has("evangelism_management"))}
+                  onSaved={(name) => setWitnessName(name)}
+                />
+              </span>
             </div>
 
             {/* Directly under the name, where a thumb lands: reaching this soul
@@ -236,7 +265,7 @@ function ContactDetail() {
               />
               {/* Beside the actions, because deciding to concentrate on someone
                   and reaching out to them are the same moment. */}
-              {canFocusContact(contact.added_by, user?.id, has("evangelism_management")) && (
+              {canEditContact(contact.added_by, user?.id, has("evangelism_management")) && (
                 <FocusToggle
                   contactId={contact.id}
                   value={contact.is_focus}

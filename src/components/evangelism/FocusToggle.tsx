@@ -70,19 +70,3 @@ export function FocusToggle({
     </button>
   );
 }
-
-/**
- * Who may change focus, matching the RLS policy on evangelism_contacts exactly:
- * the person who logged the soul, or someone who oversees evangelism.
- *
- * Deliberately not the `leader` role. Leaders can read every contact but the
- * update policy does not include them, so offering them a star would produce a
- * button that fails every time it is pressed.
- */
-export function canFocusContact(
-  addedBy: string | null | undefined,
-  userId: string | null | undefined,
-  hasEvangelismManagement: boolean,
-): boolean {
-  return hasEvangelismManagement || (!!userId && addedBy === userId);
-}

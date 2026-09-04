@@ -40,6 +40,8 @@ import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
 import { ContactActions } from "@/components/evangelism/ContactActions";
 import { ContactCard } from "@/components/evangelism/ContactCard";
+import { WitnessField } from "@/components/evangelism/WitnessField";
+import { canEditContact } from "@/lib/contactPermissions";
 import { FollowUpQueue } from "@/components/evangelism/FollowUpQueue";
 import { useCapabilities } from "@/lib/adminCapabilities";
 import { useStickyState, useStickyScroll } from "@/hooks/useStickyState";
@@ -623,11 +625,20 @@ function EvangelismAdmin() {
                           </Link>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {witness ? (
-                            witness.name
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
+                          {/* Click to correct. Credit was fixed at the moment a
+                              contact was typed in, so a name logged as the
+                              account holder rather than how they are known in
+                              ministry stayed wrong on the harvest list. */}
+                          <WitnessField
+                            contactId={c.id}
+                            witnessName={witness?.name ?? null}
+                            canEdit={canEditContact(
+                              c.added_by,
+                              user?.id,
+                              has("evangelism_management"),
+                            )}
+                            onSaved={() => load()}
+                          />
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {c.where_met ?? "—"}
@@ -729,7 +740,11 @@ function EvangelismAdmin() {
               filtered.map((c) => (
                 <ContactCard
                   key={c.id}
-                  contact={c}
+                  contact={{
+                    ...c,
+                    witness_name: c.witness_id ? (witnessById[c.witness_id]?.name ?? null) : null,
+                  }}
+                  onWitnessChange={() => load()}
                   lastContactAt={lastContact.get(c.id)}
                   userId={user?.id}
                   canManageEvangelism={has("evangelism_management")}

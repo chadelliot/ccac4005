@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Phone, MapPin, ChevronRight, Star } from "lucide-react";
+import { Phone, MapPin, ChevronRight, Star, UserCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ContactActions } from "./ContactActions";
-import { FocusToggle, canFocusContact } from "./FocusToggle";
+import { FocusToggle } from "./FocusToggle";
+import { WitnessField } from "./WitnessField";
+import { canEditContact } from "@/lib/contactPermissions";
 
 /**
  * One soul as a card.
@@ -31,6 +33,7 @@ export type ContactCardData = {
   baptized: boolean;
   holy_ghost: boolean;
   is_focus: boolean;
+  witness_name?: string | null;
 };
 
 export function lastContactLabel(iso: string | undefined) {
@@ -51,6 +54,7 @@ export function ContactCard({
   userId,
   canManageEvangelism,
   onFocusChange,
+  onWitnessChange,
   trailing,
 }: {
   contact: ContactCardData;
@@ -58,6 +62,7 @@ export function ContactCard({
   userId: string | undefined;
   canManageEvangelism: boolean;
   onFocusChange: (id: string, next: boolean) => void;
+  onWitnessChange?: (id: string, name: string | null) => void;
   /** Anything the host page wants in the corner — the Overview puts delete here. */
   trailing?: ReactNode;
 }) {
@@ -70,7 +75,7 @@ export function ContactCard({
     <div className="group flex flex-wrap items-start justify-between gap-4 border border-border bg-card p-5 transition-colors hover:border-foreground/30">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-3">
-          {canFocusContact(c.added_by, userId, canManageEvangelism) ? (
+          {canEditContact(c.added_by, userId, canManageEvangelism) ? (
             <FocusToggle
               contactId={c.id}
               value={c.is_focus}
@@ -111,6 +116,20 @@ export function ContactCard({
             <span className="flex items-center gap-1">
               <MapPin className="h-3 w-3" />
               {c.where_met}
+            </span>
+          )}
+          {/* Correctable here as well: on a phone this card is the contact
+              list, and sending someone to the profile to fix a name they can
+              see in front of them is a trip for nothing. */}
+          {c.witness_name !== undefined && (
+            <span className="flex items-center gap-1">
+              <UserCheck className="h-3 w-3" />
+              <WitnessField
+                contactId={c.id}
+                witnessName={c.witness_name ?? null}
+                canEdit={canEditContact(c.added_by, userId, canManageEvangelism)}
+                onSaved={(name) => onWitnessChange?.(c.id, name)}
+              />
             </span>
           )}
           {/* The day they were witnessed to — the date the harvest list keeps

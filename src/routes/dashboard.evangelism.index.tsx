@@ -117,6 +117,13 @@ function EvangelismPage() {
   const [busy, setBusy] = useState(false);
   const [witnessOptions, setWitnessOptions] = useState<Witness[]>([]);
   const [witnessName, setWitnessName] = useState("");
+  // witness id -> name, so each card can show and correct who witnessed
+  // without every row fetching the roster for itself.
+  const witnessById = useMemo(() => {
+    const m: Record<string, string> = {};
+    witnessOptions.forEach((w) => (m[w.id] = w.name));
+    return m;
+  }, [witnessOptions]);
   // "unknown" rather than "" so the placeholder is a real choice someone can
   // return to, and so an unanswered question is never recorded as an answer.
   const [gender, setGender] = useState<string>("unknown");
@@ -545,6 +552,8 @@ function EvangelismPage() {
             userId={user?.id}
             canManageEvangelism={has("evangelism_management")}
             onFocusChange={setFocusLocally}
+            onWitnessChange={load}
+            witnessById={witnessById}
           />
         </div>
       </div>
@@ -617,6 +626,8 @@ function EvangelismPage() {
             userId={user?.id}
             canManageEvangelism={has("evangelism_management")}
             onFocusChange={setFocusLocally}
+            onWitnessChange={load}
+            witnessById={witnessById}
           />
         </TabsContent>
 
@@ -652,6 +663,8 @@ function EvangelismPage() {
             userId={user?.id}
             canManageEvangelism={has("evangelism_management")}
             onFocusChange={setFocusLocally}
+            onWitnessChange={load}
+            witnessById={witnessById}
           />
         </TabsContent>
       </Tabs>
@@ -666,6 +679,8 @@ function ContactList({
   userId,
   canManageEvangelism,
   onFocusChange,
+  onWitnessChange,
+  witnessById,
 }: {
   contacts: Contact[];
   lastContact: Map<string, string>;
@@ -673,6 +688,8 @@ function ContactList({
   userId: string | undefined;
   canManageEvangelism: boolean;
   onFocusChange: (id: string, next: boolean) => void;
+  onWitnessChange: () => void;
+  witnessById: Record<string, string>;
 }) {
   if (contacts.length === 0) {
     return (
@@ -686,11 +703,15 @@ function ContactList({
       {contacts.map((c) => (
         <ContactCard
           key={c.id}
-          contact={c}
+          contact={{
+            ...c,
+            witness_name: c.witness_id ? (witnessById[c.witness_id] ?? null) : null,
+          }}
           lastContactAt={lastContact.get(c.id)}
           userId={userId}
           canManageEvangelism={canManageEvangelism}
           onFocusChange={onFocusChange}
+          onWitnessChange={onWitnessChange}
         />
       ))}
     </div>
