@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Phone, MapPin, ChevronRight, Star, UserCheck } from "lucide-react";
+import { Phone, MapPin, ChevronRight, UserCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ContactActions } from "./ContactActions";
 import { FocusToggle } from "./FocusToggle";
@@ -32,7 +32,6 @@ export type ContactCardData = {
   visited: boolean;
   baptized: boolean;
   holy_ghost: boolean;
-  is_focus: boolean;
   witness_name?: string | null;
 };
 
@@ -51,6 +50,7 @@ export function lastContactLabel(iso: string | undefined) {
 export function ContactCard({
   contact: c,
   lastContactAt,
+  isFocus,
   userId,
   canManageEvangelism,
   onFocusChange,
@@ -59,6 +59,8 @@ export function ContactCard({
 }: {
   contact: ContactCardData;
   lastContactAt?: string;
+  /** Whether the person looking at this has starred them. Their list, not the soul's. */
+  isFocus: boolean;
   userId: string | undefined;
   canManageEvangelism: boolean;
   onFocusChange: (id: string, next: boolean) => void;
@@ -75,16 +77,14 @@ export function ContactCard({
     <div className="group flex flex-wrap items-start justify-between gap-4 border border-border bg-card p-5 transition-colors hover:border-foreground/30">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-3">
-          {canEditContact(c.added_by, userId, canManageEvangelism) ? (
-            <FocusToggle
-              contactId={c.id}
-              value={c.is_focus}
-              size="sm"
-              onChange={(next) => onFocusChange(c.id, next)}
-            />
-          ) : (
-            c.is_focus && <Star className="h-4 w-4 shrink-0 text-accent" fill="currentColor" />
-          )}
+          {/* Offered to everyone who can see the soul: starring is a note to
+              self, not a change to their record. */}
+          <FocusToggle
+            contactId={c.id}
+            value={isFocus}
+            size="sm"
+            onChange={(next) => onFocusChange(c.id, next)}
+          />
           <Link
             to="/dashboard/evangelism/$id"
             params={{ id: c.id }}

@@ -7,6 +7,7 @@ import { useSession } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContactActions } from "@/components/evangelism/ContactActions";
+import { loadMyFocusIds } from "@/components/evangelism/FocusToggle";
 
 /**
  * The follow-ups you have committed to, with the note behind each one.
@@ -34,7 +35,6 @@ type FollowUpRow = {
     phone: string | null;
     where_met: string | null;
     status: string | null;
-    is_focus: boolean | null;
   } | null;
 };
 
@@ -42,18 +42,22 @@ export function FollowUpQueue() {
   const { user } = useSession();
   const [rows, setRows] = useState<FollowUpRow[]>([]);
   const [filter, setFilter] = useState<"due" | "upcoming" | "done">("due");
+  // Your own starred souls, so the marker here means the same thing it
+  // means on the contact list.
+  const [focusIds, setFocusIds] = useState<Set<string>>(new Set());
 
   const load = async () => {
     if (!user) return;
     const { data, error } = await supabase
       .from("contact_follow_ups")
       .select(
-        "*, evangelism_contacts(id, first_name, last_name, phone, where_met, status, is_focus), contact_activity(note)",
+        "*, evangelism_contacts(id, first_name, last_name, phone, where_met, status), contact_activity(note)",
       )
       .eq("assigned_to", user.id)
       .order("due_date");
     if (error) return toast.error(error.message);
     setRows((data ?? []) as FollowUpRow[]);
+    setFocusIds(await loadMyFocusIds());
   };
 
   useEffect(() => {
@@ -127,7 +131,7 @@ export function FollowUpQueue() {
                     {/* Marked, not toggleable: this queue is for working the
                         list, and choosing who to concentrate on belongs with
                         the contact itself. */}
-                    {r.evangelism_contacts?.is_focus && (
+                    {focusIds.has(r.contact_id) && (
                       <Star className="h-4 w-4 text-accent" fill="currentColor" />
                     )}
                     {r.evangelism_contacts?.first_name} {r.evangelism_contacts?.last_name}

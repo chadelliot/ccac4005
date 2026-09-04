@@ -4,16 +4,22 @@ import { Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Mark a soul as one to concentrate on.
+ * Keep a soul on your own short list.
+ *
+ * The star is personal. Eighty-eight contacts is more than anyone works at
+ * once, and "these are the few I am pursuing" is a different answer for the
+ * sister running the women's follow-ups than for the pastor — so starring
+ * writes a row against your account rather than a flag on the contact, and
+ * nobody sees anyone else's list.
+ *
+ * Because it changes nothing about the soul's record, this is offered to
+ * anyone who can see them. It is not an edit, and it does not need the
+ * permission that editing needs.
  *
  * Optimistic: the star fills the instant it is pressed and rolls back if the
  * write fails. This gets used walking between doors on a phone, where waiting
- * on a round trip to see whether a tap registered is how you end up tapping
- * twice and turning it back off.
- *
- * The caller decides whether to render this at all — see canFocusContact. A
- * disabled star still reads as an invitation, and the honest answer for someone
- * who cannot change it is not to show a control.
+ * on a round trip to see whether a tap registered is how you tap twice and turn
+ * it back off.
  */
 export function FocusToggle({
   contactId,
@@ -31,21 +37,36 @@ export function FocusToggle({
   const [on, setOn] = useState(value);
   const [busy, setBusy] = useState(false);
 
+  // Rendered from the prop when the parent's set changes underneath us — a
+  // refetch after some other edit should not leave a stale star.
+  if (value !== on && !busy) setOn(value);
+
   const toggle = async () => {
     if (busy) return;
     const next = !on;
     setOn(next);
     setBusy(true);
 
-    const { error } = await supabase
-      .from("evangelism_contacts")
-      .update({ is_focus: next })
-      .eq("id", contactId);
+    const { data } = await supabase.auth.getSession();
+    const userId = data.session?.user?.id;
+    if (!userId) {
+      setOn(!next);
+      setBusy(false);
+      return;
+    }
+
+    const { error } = next
+      ? await supabase.from("contact_focus").insert({ contact_id: contactId, user_id: userId })
+      : await supabase
+          .from("contact_focus")
+          .delete()
+          .eq("contact_id", contactId)
+          .eq("user_id", userId);
 
     setBusy(false);
     if (error) {
       setOn(!next); // put the star back where it was
-      toast.error("Couldn't change focus — you may not have permission.");
+      toast.error("Couldn't change your focus list.");
       return;
     }
     onChange?.(next);
@@ -59,8 +80,8 @@ export function FocusToggle({
       onClick={toggle}
       aria-pressed={on}
       // Named for what pressing it does now, not for what the field is called.
-      aria-label={on ? "Remove from focus" : "Add to focus"}
-      title={on ? "In focus — press to remove" : "Mark as a focus contact"}
+      aria-label={on ? "Remove from my focus list" : "Add to my focus list"}
+      title={on ? "On your focus list — press to remove" : "Add to your focus list"}
       className={`inline-flex shrink-0 items-center gap-1.5 text-xs transition-colors ${
         on ? "text-accent" : "text-muted-foreground hover:text-foreground"
       } ${busy ? "opacity-60" : ""}`}
@@ -69,4 +90,10 @@ export function FocusToggle({
       {withLabel && <span className="eyebrow">{on ? "In focus" : "Focus"}</span>}
     </button>
   );
+}
+
+/** Every contact the signed-in person has starred. */
+export async function loadMyFocusIds(): Promise<Set<string>> {
+  const { data } = await supabase.from("contact_focus").select("contact_id");
+  return new Set((data ?? []).map((r) => r.contact_id as string));
 }

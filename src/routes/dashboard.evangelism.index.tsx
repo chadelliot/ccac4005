@@ -30,6 +30,7 @@ import { listWitnesses, resolveWitnessId, splitWitnessNames, type Witness } from
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
 import { EvangelismFocusSummary } from "@/components/evangelism/EvangelismFocusSummary";
 import { ContactCard } from "@/components/evangelism/ContactCard";
+import { loadMyFocusIds } from "@/components/evangelism/FocusToggle";
 import { useCapabilities } from "@/lib/adminCapabilities";
 import { addContactNote } from "@/lib/contactActivity";
 import { useStickyState, useStickyScroll } from "@/hooks/useStickyState";
@@ -66,7 +67,6 @@ type Contact = {
   co_witness: string | null;
   witness_id: string | null;
   gender: string | null;
-  is_focus: boolean;
 };
 
 const contactSchema = z.object({
@@ -137,8 +137,17 @@ function EvangelismPage() {
   // still one "Loading…" line tall gets clamped to the top.
   useStickyScroll("evg.contacts.scroll", contacts.length > 0);
 
+  // The signed-in person's own starred souls. Held here rather than on the
+  // contact rows because it belongs to the viewer, not to the record.
+  const [focusIds, setFocusIds] = useState<Set<string>>(new Set());
+
   const setFocusLocally = (id: string, next: boolean) =>
-    setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, is_focus: next } : c)));
+    setFocusIds((prev) => {
+      const s = new Set(prev);
+      if (next) s.add(id);
+      else s.delete(id);
+      return s;
+    });
 
   const load = async () => {
     if (!user) return;
@@ -169,6 +178,8 @@ function EvangelismPage() {
           .map((r) => [r.contact_id as string, r.last_activity_at as string]),
       ),
     );
+
+    setFocusIds(await loadMyFocusIds());
   };
 
   // Default the witness to whoever is logging it — most souls are logged by the
@@ -332,7 +343,7 @@ function EvangelismPage() {
 
   // Focus narrows whatever else is selected rather than replacing it, so
   // "focus + women" is a question the page can answer.
-  const matchesFocus = (c: Contact) => !focusOnly || c.is_focus;
+  const matchesFocus = (c: Contact) => !focusOnly || focusIds.has(c.id);
 
   const nowKey = monthKey(new Date().toISOString());
   const currentMonthContacts = useMemo(
@@ -342,7 +353,7 @@ function EvangelismPage() {
         .filter(matchesSearch)
         .filter(matchesGender)
         .filter(matchesFocus),
-    [contacts, q, nowKey, genderFilter, focusOnly],
+    [contacts, q, nowKey, genderFilter, focusOnly, focusIds],
   );
 
   // Counts the segment, not the whole table. "All Contacts (84)" sitting above
@@ -379,7 +390,7 @@ function EvangelismPage() {
       list = [...list].sort((a, b) => b.met_on.localeCompare(a.met_on));
     }
     return list;
-  }, [contacts, q, monthFilter, sortMode, genderFilter, focusOnly]);
+  }, [contacts, q, monthFilter, sortMode, genderFilter, focusOnly, focusIds]);
 
   // One dialog, two homes: leadership opens it from the Contacts header,
   // members from their briefing. Members keep the ability to log a soul —
@@ -554,6 +565,7 @@ function EvangelismPage() {
             onFocusChange={setFocusLocally}
             onWitnessChange={load}
             witnessById={witnessById}
+            focusIds={focusIds}
           />
         </div>
       </div>
@@ -628,6 +640,7 @@ function EvangelismPage() {
             onFocusChange={setFocusLocally}
             onWitnessChange={load}
             witnessById={witnessById}
+            focusIds={focusIds}
           />
         </TabsContent>
 
@@ -665,6 +678,7 @@ function EvangelismPage() {
             onFocusChange={setFocusLocally}
             onWitnessChange={load}
             witnessById={witnessById}
+            focusIds={focusIds}
           />
         </TabsContent>
       </Tabs>
@@ -681,6 +695,7 @@ function ContactList({
   onFocusChange,
   onWitnessChange,
   witnessById,
+  focusIds,
 }: {
   contacts: Contact[];
   lastContact: Map<string, string>;
@@ -690,6 +705,7 @@ function ContactList({
   onFocusChange: (id: string, next: boolean) => void;
   onWitnessChange: () => void;
   witnessById: Record<string, string>;
+  focusIds: Set<string>;
 }) {
   if (contacts.length === 0) {
     return (
@@ -708,6 +724,7 @@ function ContactList({
             witness_name: c.witness_id ? (witnessById[c.witness_id] ?? null) : null,
           }}
           lastContactAt={lastContact.get(c.id)}
+          isFocus={focusIds.has(c.id)}
           userId={userId}
           canManageEvangelism={canManageEvangelism}
           onFocusChange={onFocusChange}

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { DeleteContactDialog } from "@/components/evangelism/DeleteContactDialog";
 import { ContactActions } from "@/components/evangelism/ContactActions";
-import { FocusToggle } from "@/components/evangelism/FocusToggle";
+import { FocusToggle, loadMyFocusIds } from "@/components/evangelism/FocusToggle";
 import { WitnessField } from "@/components/evangelism/WitnessField";
 import { canEditContact } from "@/lib/contactPermissions";
 import { ContactActivityPanel } from "@/components/evangelism/ContactActivityPanel";
@@ -51,7 +51,6 @@ type Contact = {
   created_at: string;
   met_on: string | null;
   gender: string | null;
-  is_focus: boolean;
   witness_id: string | null;
 };
 
@@ -74,7 +73,6 @@ const editSchema = z.object({
   // — typed from memory days later, or copied from the wrong row — and it drives
   // which month the harvest list files them under.
   met_on: z.string().trim().min(1, "Witness date is required"),
-  gender: z.enum(["male", "female"]).nullable(),
   status: z.enum(STATUS_OPTIONS),
 });
 
@@ -101,6 +99,8 @@ function ContactDetail() {
   }, [contact]);
 
   const [witnessName, setWitnessName] = useState<string | null>(null);
+  // Whether *this* person has starred them, read from their own focus list.
+  const [isFocus, setIsFocus] = useState(false);
 
   const load = async () => {
     const [{ data: c }, { data: f }] = await Promise.all([
@@ -123,6 +123,8 @@ function ContactDetail() {
     } else {
       setWitnessName(null);
     }
+
+    setIsFocus((await loadMyFocusIds()).has(id));
   };
 
   useEffect(() => {
@@ -134,6 +136,29 @@ function ContactDetail() {
   }
 
   const canEdit = user?.id === contact.added_by || isAdmin;
+
+  // Saved on change rather than on submit.
+  //
+  // The star, the witness and the four journey switches all write immediately,
+  // so a gender sitting in a form waiting for "Save Changes" looked recorded
+  // when it was not — set it, click into the witness field, and the unsaved
+  // draft was gone. One save model per control beats explaining which half of
+  // the page needs a button.
+  const updateGender = async (value: string) => {
+    const previous = gender;
+    setGender(value);
+    const next = value === "unknown" ? null : value;
+    const { error } = await supabase
+      .from("evangelism_contacts")
+      .update({ gender: next })
+      .eq("id", id);
+    if (error) {
+      setGender(previous);
+      return toast.error("Couldn't save that — you may not have permission.");
+    }
+    if (contact) setContact({ ...contact, gender: next });
+    toast.success(next ? "Gender saved" : "Gender cleared");
+  };
 
   const updateFlag = async (
     field: "visited" | "baptized" | "holy_ghost" | "gospel_shared",
@@ -164,7 +189,6 @@ function ContactDetail() {
       where_met: (fd.get("where_met") as string) || null,
       prayer_request: (fd.get("prayer_request") as string) || null,
       met_on: fd.get("met_on") as string,
-      gender: gender === "unknown" ? null : (gender as "male" | "female"),
       status,
     });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
@@ -264,15 +288,10 @@ function ContactDetail() {
                 onLogged={() => setActivityKey((k) => k + 1)}
               />
               {/* Beside the actions, because deciding to concentrate on someone
-                  and reaching out to them are the same moment. */}
-              {canEditContact(contact.added_by, user?.id, has("evangelism_management")) && (
-                <FocusToggle
-                  contactId={contact.id}
-                  value={contact.is_focus}
-                  withLabel
-                  onChange={(next) => setContact({ ...contact, is_focus: next })}
-                />
-              )}
+                  and reaching out to them are the same moment. Offered to
+                  anyone who can see them: the star is a note to self, not a
+                  change to the soul's record. */}
+              <FocusToggle contactId={contact.id} value={isFocus} withLabel onChange={setIsFocus} />
             </div>
           </div>
 
@@ -437,7 +456,7 @@ function ContactDetail() {
               </div>
               <div>
                 <Label>Gender</Label>
-                <Select value={gender} onValueChange={setGender}>
+                <Select value={gender} onValueChange={updateGender}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

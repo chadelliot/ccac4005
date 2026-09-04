@@ -40,6 +40,7 @@ import { geocodeAddress as geocodeFn } from "@/lib/evangelismGeocode";
 import { TerritoryPanel } from "@/components/evangelism/TerritoryPanel";
 import { ContactActions } from "@/components/evangelism/ContactActions";
 import { ContactCard } from "@/components/evangelism/ContactCard";
+import { loadMyFocusIds } from "@/components/evangelism/FocusToggle";
 import { WitnessField } from "@/components/evangelism/WitnessField";
 import { canEditContact } from "@/lib/contactPermissions";
 import { FollowUpQueue } from "@/components/evangelism/FollowUpQueue";
@@ -75,7 +76,6 @@ type Contact = {
   geocoded_at: string | null;
   witness_id: string | null;
   gender: string | null;
-  is_focus: boolean;
 };
 
 type Profile = { id: string; display_name: string | null };
@@ -109,8 +109,15 @@ function EvangelismAdmin() {
   const [lastContact, setLastContact] = useState<Map<string, string>>(new Map());
   const { has } = useCapabilities(user);
 
+  const [focusIds, setFocusIds] = useState<Set<string>>(new Set());
+
   const setFocusLocally = (id: string, next: boolean) =>
-    setContacts((prev) => prev.map((c) => (c.id === id ? { ...c, is_focus: next } : c)));
+    setFocusIds((prev) => {
+      const s = new Set(prev);
+      if (next) s.add(id);
+      else s.delete(id);
+      return s;
+    });
 
   // The date a soul was actually met, not the date somebody typed them in.
   // Eighty-three of these were entered in one sitting during the harvest-list
@@ -147,6 +154,7 @@ function EvangelismAdmin() {
       ),
     );
     setContacts((c ?? []) as Contact[]);
+    setFocusIds(await loadMyFocusIds());
     const map: Record<string, Profile> = {};
     (p ?? []).forEach((row) => {
       map[row.id] = row as Profile;
@@ -746,6 +754,7 @@ function EvangelismAdmin() {
                   }}
                   onWitnessChange={() => load()}
                   lastContactAt={lastContact.get(c.id)}
+                  isFocus={focusIds.has(c.id)}
                   userId={user?.id}
                   canManageEvangelism={has("evangelism_management")}
                   onFocusChange={setFocusLocally}
