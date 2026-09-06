@@ -962,6 +962,858 @@ export type Database = {
         }
         Relationships: []
       }
+      event_plan_approvals: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          plan_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_plan_approvals_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_approvals_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "event_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_plan_budget_items: {
+        Row: {
+          actual_cents: number | null
+          category: string | null
+          created_at: string
+          estimated_cents: number | null
+          id: string
+          name: string
+          notes: string | null
+          plan_id: string
+          purchase_by: string | null
+          purchase_status: string
+          purchaser_id: string | null
+          quantity: number
+          receipt_path: string | null
+          reimbursement_status: string
+          sort_order: number
+          source: string
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          actual_cents?: number | null
+          category?: string | null
+          created_at?: string
+          estimated_cents?: number | null
+          id?: string
+          name: string
+          notes?: string | null
+          plan_id: string
+          purchase_by?: string | null
+          purchase_status?: string
+          purchaser_id?: string | null
+          quantity?: number
+          receipt_path?: string | null
+          reimbursement_status?: string
+          sort_order?: number
+          source?: string
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          actual_cents?: number | null
+          category?: string | null
+          created_at?: string
+          estimated_cents?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          plan_id?: string
+          purchase_by?: string | null
+          purchase_status?: string
+          purchaser_id?: string | null
+          quantity?: number
+          receipt_path?: string | null
+          reimbursement_status?: string
+          sort_order?: number
+          source?: string
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_plan_budget_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "event_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_budget_items_purchaser_id_fkey"
+            columns: ["purchaser_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_plan_dayof_items: {
+        Row: {
+          at_time: string | null
+          created_at: string
+          done: boolean
+          done_at: string | null
+          done_by: string | null
+          id: string
+          notes: string | null
+          owner_id: string | null
+          owner_name: string | null
+          plan_id: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          at_time?: string | null
+          created_at?: string
+          done?: boolean
+          done_at?: string | null
+          done_by?: string | null
+          id?: string
+          notes?: string | null
+          owner_id?: string | null
+          owner_name?: string | null
+          plan_id: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          at_time?: string | null
+          created_at?: string
+          done?: boolean
+          done_at?: string | null
+          done_by?: string | null
+          id?: string
+          notes?: string | null
+          owner_id?: string | null
+          owner_name?: string | null
+          plan_id?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_plan_dayof_items_done_by_fkey"
+            columns: ["done_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_dayof_items_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_dayof_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "event_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_plan_modules: {
+        Row: {
+          created_at: string
+          module_key: string
+          plan_id: string
+        }
+        Insert: {
+          created_at?: string
+          module_key: string
+          plan_id: string
+        }
+        Update: {
+          created_at?: string
+          module_key?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_plan_modules_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "event_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_plan_people: {
+        Row: {
+          arrival_time: string | null
+          confirmation_status: string
+          created_at: string
+          email: string | null
+          id: string
+          invitation_status: string
+          name: string
+          notes: string | null
+          person_id: string | null
+          phone: string | null
+          plan_id: string
+          requirements: string | null
+          role: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          arrival_time?: string | null
+          confirmation_status?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          invitation_status?: string
+          name: string
+          notes?: string | null
+          person_id?: string | null
+          phone?: string | null
+          plan_id: string
+          requirements?: string | null
+          role?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          arrival_time?: string | null
+          confirmation_status?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          invitation_status?: string
+          name?: string
+          notes?: string | null
+          person_id?: string | null
+          phone?: string | null
+          plan_id?: string
+          requirements?: string | null
+          role?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_plan_people_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_people_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "event_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_plan_program_items: {
+        Row: {
+          assigned_name: string | null
+          assigned_to: string | null
+          confirmed: boolean
+          created_at: string
+          duration_minutes: number
+          id: string
+          notes: string | null
+          plan_id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_name?: string | null
+          assigned_to?: string | null
+          confirmed?: boolean
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          plan_id: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_name?: string | null
+          assigned_to?: string | null
+          confirmed?: boolean
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          plan_id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_plan_program_items_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_program_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "event_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_plan_promotion: {
+        Row: {
+          announcement_schedule: string | null
+          approval_status: string
+          approver_id: string | null
+          channels: string[]
+          copy: string | null
+          created_at: string
+          creative_owner_id: string | null
+          draft_due: string | null
+          flyer_required: boolean
+          plan_id: string
+          promo_ends_on: string | null
+          promo_starts_on: string | null
+          registration_url: string | null
+          reminder_schedule: string | null
+          reviewer_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          announcement_schedule?: string | null
+          approval_status?: string
+          approver_id?: string | null
+          channels?: string[]
+          copy?: string | null
+          created_at?: string
+          creative_owner_id?: string | null
+          draft_due?: string | null
+          flyer_required?: boolean
+          plan_id: string
+          promo_ends_on?: string | null
+          promo_starts_on?: string | null
+          registration_url?: string | null
+          reminder_schedule?: string | null
+          reviewer_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          announcement_schedule?: string | null
+          approval_status?: string
+          approver_id?: string | null
+          channels?: string[]
+          copy?: string | null
+          created_at?: string
+          creative_owner_id?: string | null
+          draft_due?: string | null
+          flyer_required?: boolean
+          plan_id?: string
+          promo_ends_on?: string | null
+          promo_starts_on?: string | null
+          registration_url?: string | null
+          reminder_schedule?: string | null
+          reviewer_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_plan_promotion_approver_id_fkey"
+            columns: ["approver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_promotion_creative_owner_id_fkey"
+            columns: ["creative_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_promotion_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: true
+            referencedRelation: "event_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_promotion_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_plan_reports: {
+        Row: {
+          actual_attendance: number | null
+          actual_expense_cents: number | null
+          baptisms: number | null
+          created_at: string
+          created_by: string | null
+          followup_contacts: number | null
+          make_template: boolean
+          offering_cents: number | null
+          outcomes: string | null
+          plan_id: string
+          prayer_requests: number | null
+          recommendations: string | null
+          registrations: number | null
+          remaining_supplies: string | null
+          salvations: number | null
+          updated_at: string
+          visitors: number | null
+          what_did_not_work: string | null
+          what_worked: string | null
+        }
+        Insert: {
+          actual_attendance?: number | null
+          actual_expense_cents?: number | null
+          baptisms?: number | null
+          created_at?: string
+          created_by?: string | null
+          followup_contacts?: number | null
+          make_template?: boolean
+          offering_cents?: number | null
+          outcomes?: string | null
+          plan_id: string
+          prayer_requests?: number | null
+          recommendations?: string | null
+          registrations?: number | null
+          remaining_supplies?: string | null
+          salvations?: number | null
+          updated_at?: string
+          visitors?: number | null
+          what_did_not_work?: string | null
+          what_worked?: string | null
+        }
+        Update: {
+          actual_attendance?: number | null
+          actual_expense_cents?: number | null
+          baptisms?: number | null
+          created_at?: string
+          created_by?: string | null
+          followup_contacts?: number | null
+          make_template?: boolean
+          offering_cents?: number | null
+          outcomes?: string | null
+          plan_id?: string
+          prayer_requests?: number | null
+          recommendations?: string | null
+          registrations?: number | null
+          remaining_supplies?: string | null
+          salvations?: number | null
+          updated_at?: string
+          visitors?: number | null
+          what_did_not_work?: string | null
+          what_worked?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_plan_reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_reports_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: true
+            referencedRelation: "event_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_plan_tasks: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          created_by: string | null
+          depends_on_id: string | null
+          description: string | null
+          due_date: string | null
+          evidence_path: string | null
+          id: string
+          module_key: string | null
+          notes: string | null
+          plan_id: string
+          priority: string
+          requires_approval: boolean
+          sort_order: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          depends_on_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          evidence_path?: string | null
+          id?: string
+          module_key?: string | null
+          notes?: string | null
+          plan_id: string
+          priority?: string
+          requires_approval?: boolean
+          sort_order?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          depends_on_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          evidence_path?: string | null
+          id?: string
+          module_key?: string | null
+          notes?: string | null
+          plan_id?: string
+          priority?: string
+          requires_approval?: boolean
+          sort_order?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_plan_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_tasks_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_tasks_depends_on_id_fkey"
+            columns: ["depends_on_id"]
+            isOneToOne: false
+            referencedRelation: "event_plan_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_tasks_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "event_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_plan_template_program_items: {
+        Row: {
+          duration_minutes: number
+          id: string
+          sort_order: number
+          template_id: string
+          title: string
+        }
+        Insert: {
+          duration_minutes?: number
+          id?: string
+          sort_order?: number
+          template_id: string
+          title: string
+        }
+        Update: {
+          duration_minutes?: number
+          id?: string
+          sort_order?: number
+          template_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_plan_template_program_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "event_plan_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_plan_template_tasks: {
+        Row: {
+          category: string
+          description: string | null
+          id: string
+          module_key: string | null
+          priority: string
+          sort_order: number
+          template_id: string
+          title: string
+          weeks_before: number
+        }
+        Insert: {
+          category: string
+          description?: string | null
+          id?: string
+          module_key?: string | null
+          priority?: string
+          sort_order?: number
+          template_id: string
+          title: string
+          weeks_before?: number
+        }
+        Update: {
+          category?: string
+          description?: string | null
+          id?: string
+          module_key?: string | null
+          priority?: string
+          sort_order?: number
+          template_id?: string
+          title?: string
+          weeks_before?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_plan_template_tasks_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "event_plan_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_plan_templates: {
+        Row: {
+          created_at: string
+          default_modules: string[]
+          description: string | null
+          id: string
+          is_active: boolean
+          key: string
+          lead_weeks: number
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          default_modules?: string[]
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          key: string
+          lead_weeks?: number
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          default_modules?: string[]
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          key?: string
+          lead_weeks?: number
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      event_plans: {
+        Row: {
+          approval_status: string
+          attendance_goal: number | null
+          audience: string | null
+          budget_approved_cents: number | null
+          budget_estimate_cents: number | null
+          created_at: string
+          created_by: string
+          desired_outcome: string | null
+          ends_at: string | null
+          event_id: string | null
+          group_id: string | null
+          id: string
+          is_historical: boolean
+          location: string | null
+          owner_id: string | null
+          planning_status: string
+          purpose: string | null
+          registration_required: boolean
+          scripture: string | null
+          source_document_url: string | null
+          starts_at: string | null
+          supporting_team: string | null
+          template_id: string | null
+          theme: string | null
+          title: string
+          updated_at: string
+          venue_kind: string
+          visibility: string
+        }
+        Insert: {
+          approval_status?: string
+          attendance_goal?: number | null
+          audience?: string | null
+          budget_approved_cents?: number | null
+          budget_estimate_cents?: number | null
+          created_at?: string
+          created_by: string
+          desired_outcome?: string | null
+          ends_at?: string | null
+          event_id?: string | null
+          group_id?: string | null
+          id?: string
+          is_historical?: boolean
+          location?: string | null
+          owner_id?: string | null
+          planning_status?: string
+          purpose?: string | null
+          registration_required?: boolean
+          scripture?: string | null
+          source_document_url?: string | null
+          starts_at?: string | null
+          supporting_team?: string | null
+          template_id?: string | null
+          theme?: string | null
+          title: string
+          updated_at?: string
+          venue_kind?: string
+          visibility?: string
+        }
+        Update: {
+          approval_status?: string
+          attendance_goal?: number | null
+          audience?: string | null
+          budget_approved_cents?: number | null
+          budget_estimate_cents?: number | null
+          created_at?: string
+          created_by?: string
+          desired_outcome?: string | null
+          ends_at?: string | null
+          event_id?: string | null
+          group_id?: string | null
+          id?: string
+          is_historical?: boolean
+          location?: string | null
+          owner_id?: string | null
+          planning_status?: string
+          purpose?: string | null
+          registration_required?: boolean
+          scripture?: string | null
+          source_document_url?: string | null
+          starts_at?: string | null
+          supporting_team?: string | null
+          template_id?: string | null
+          theme?: string | null
+          title?: string
+          updated_at?: string
+          venue_kind?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plans_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plans_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plans_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plans_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "event_plan_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_rsvps: {
         Row: {
           created_at: string
@@ -1965,6 +2817,8 @@ export type Database = {
         }[]
       }
       boundary_to_polygon: { Args: { _boundary: Json }; Returns: unknown }
+      can_edit_event_plan: { Args: { _plan_id: string }; Returns: boolean }
+      can_view_event_plan: { Args: { _plan_id: string }; Returns: boolean }
       clear_virtual_service: {
         Args: { _service_id: string }
         Returns: undefined
