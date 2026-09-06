@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
+import { useAuthLinkError } from "@/hooks/useAuthLinkError";
 
 import appCss from "../styles.css?url";
 
@@ -38,14 +39,26 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Christ Cathedral Apostolic Church — Baltimore, MD" },
-      { name: "description", content: "A thriving ministry in the heart of Baltimore where lives are transformed by the power of Jesus Christ." },
+      {
+        name: "description",
+        content:
+          "A thriving ministry in the heart of Baltimore where lives are transformed by the power of Jesus Christ.",
+      },
       { name: "author", content: "CCAC" },
       { property: "og:title", content: "Christ Cathedral Apostolic Church — Baltimore, MD" },
-      { property: "og:description", content: "A thriving ministry in the heart of Baltimore where lives are transformed by the power of Jesus Christ." },
+      {
+        property: "og:description",
+        content:
+          "A thriving ministry in the heart of Baltimore where lives are transformed by the power of Jesus Christ.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Christ Cathedral Apostolic Church — Baltimore, MD" },
-      { name: "twitter:description", content: "A thriving ministry in the heart of Baltimore where lives are transformed by the power of Jesus Christ." },
+      {
+        name: "twitter:description",
+        content:
+          "A thriving ministry in the heart of Baltimore where lives are transformed by the power of Jesus Christ.",
+      },
       { property: "og:image", content: OG_IMAGE },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
@@ -85,6 +98,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  // Mounted at the root because a failed auth link lands on the Site URL — the
+  // homepage — not on any page that knows about authentication.
+  useAuthLinkError();
+
   return (
     <>
       <Outlet />
