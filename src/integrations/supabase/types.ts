@@ -999,6 +999,13 @@ export type Database = {
             foreignKeyName: "event_plan_approvals_plan_id_fkey"
             columns: ["plan_id"]
             isOneToOne: false
+            referencedRelation: "event_plan_rollup"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "event_plan_approvals_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
             referencedRelation: "event_plans"
             referencedColumns: ["id"]
           },
@@ -1066,6 +1073,13 @@ export type Database = {
           vendor?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "event_plan_budget_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "event_plan_rollup"
+            referencedColumns: ["plan_id"]
+          },
           {
             foreignKeyName: "event_plan_budget_items_plan_id_fkey"
             columns: ["plan_id"]
@@ -1144,6 +1158,13 @@ export type Database = {
             foreignKeyName: "event_plan_dayof_items_plan_id_fkey"
             columns: ["plan_id"]
             isOneToOne: false
+            referencedRelation: "event_plan_rollup"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "event_plan_dayof_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
             referencedRelation: "event_plans"
             referencedColumns: ["id"]
           },
@@ -1166,6 +1187,13 @@ export type Database = {
           plan_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "event_plan_modules_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "event_plan_rollup"
+            referencedColumns: ["plan_id"]
+          },
           {
             foreignKeyName: "event_plan_modules_plan_id_fkey"
             columns: ["plan_id"]
@@ -1239,6 +1267,13 @@ export type Database = {
             foreignKeyName: "event_plan_people_plan_id_fkey"
             columns: ["plan_id"]
             isOneToOne: false
+            referencedRelation: "event_plan_rollup"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "event_plan_people_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
             referencedRelation: "event_plans"
             referencedColumns: ["id"]
           },
@@ -1291,6 +1326,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_program_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "event_plan_rollup"
+            referencedColumns: ["plan_id"]
           },
           {
             foreignKeyName: "event_plan_program_items_plan_id_fkey"
@@ -1370,6 +1412,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_promotion_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: true
+            referencedRelation: "event_plan_rollup"
+            referencedColumns: ["plan_id"]
           },
           {
             foreignKeyName: "event_plan_promotion_plan_id_fkey"
@@ -1458,6 +1507,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_reports_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: true
+            referencedRelation: "event_plan_rollup"
+            referencedColumns: ["plan_id"]
           },
           {
             foreignKeyName: "event_plan_reports_plan_id_fkey"
@@ -1563,6 +1619,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "event_plan_tasks"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_plan_tasks_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "event_plan_rollup"
+            referencedColumns: ["plan_id"]
           },
           {
             foreignKeyName: "event_plan_tasks_plan_id_fkey"
@@ -2801,6 +2864,19 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      event_plan_rollup: {
+        Row: {
+          budget_actual_cents: number | null
+          budget_estimated_cents: number | null
+          budget_unpurchased: number | null
+          plan_id: string | null
+          task_blocked: number | null
+          task_done: number | null
+          task_overdue: number | null
+          task_total: number | null
+        }
+        Relationships: []
       }
     }
     Functions: {
