@@ -95,15 +95,13 @@ function EvangelismPage() {
   const { isLeader, loading: rolesLoading } = useRoles(user);
   const { has, loading: capLoading } = useCapabilities(user);
 
-  // Who sees the harvest, and who sees only the week's brief.
+  // Which view to render, not which rows to fetch.
   //
-  // This mirrors the RLS policy on evangelism_contacts exactly — leaders (which
-  // includes admins) and evangelism managers are the accounts the database will
-  // return the full list to. Matching it here means the page never asks for
-  // rows it would be refused, and an ordinary member's browser never receives
-  // other people's names, numbers or addresses at all: the query is gated, not
-  // the rendering. Souls are personal details of people who never signed up for
-  // this site, and hiding a table client-side would still have shipped them.
+  // RLS decides the rows: leadership receives the whole harvest, everyone else
+  // receives only the souls they added or are the credited witness for. So this
+  // flag chooses between the leadership page and the member briefing, and the
+  // database guarantees a member's browser never holds anyone else's contacts
+  // whichever branch renders.
   const canManage = has("evangelism_management") || isLeader;
 
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -152,16 +150,19 @@ function EvangelismPage() {
   const load = async () => {
     if (!user) return;
 
-    // Leadership gets the whole harvest; a member gets only the souls they
-    // logged. The scope is in the query rather than in the rendering — RLS
-    // would also hand a member their own rows, but asking narrowly means their
-    // browser never holds anyone else's name, number or address even briefly.
-    const base = supabase
+    // Scoped by RLS rather than by a filter of our own.
+    //
+    // The policy already returns exactly the right rows: everything for
+    // leadership, and for everyone else the souls they added plus the souls
+    // credited to a witness record linked to their account. Filtering on
+    // added_by here was narrower than the policy and hid the second half —
+    // which is why a witness with twenty-five souls to her name saw an empty
+    // list. Her contacts were logged during the import under someone else's
+    // login; the link is what makes them hers.
+    const { data, error } = await supabase
       .from("evangelism_contacts")
       .select("*")
       .order("met_on", { ascending: false });
-
-    const { data, error } = await (canManage ? base : base.eq("added_by", user.id));
     if (error) toast.error(error.message);
     setContacts((data ?? []) as Contact[]);
 
@@ -364,6 +365,17 @@ function EvangelismPage() {
     [contacts, genderFilter],
   );
 
+  const myStats = useMemo(
+    () => ({
+      souls: contacts.length,
+      gospel: contacts.filter((c) => c.gospel_shared).length,
+      visited: contacts.filter((c) => c.visited).length,
+      baptized: contacts.filter((c) => c.baptized).length,
+      holyGhost: contacts.filter((c) => c.holy_ghost).length,
+    }),
+    [contacts],
+  );
+
   const monthKeys = useMemo(() => {
     const set = new Set(contacts.map((c) => monthKey(c.met_on)));
     return Array.from(set).sort((a, b) => b.localeCompare(a));
@@ -523,10 +535,21 @@ function EvangelismPage() {
   // list. None of that is rendered here and none of it is fetched.
   if (!canManage) {
     return (
-      <div className="space-y-8 max-w-3xl">
+      <div className="space-y-8 max-w-4xl">
         <EvangelismFocusSummary />
 
         <div>{addContactDialog("Add a Soul")}</div>
+
+        {/* Their own numbers only — the same journey the church counts, counted
+            for the person who walked it. No church-wide totals: this answers
+            "what has my work come to", not "how is the church doing". */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <MyStat label="Souls" value={myStats.souls} />
+          <MyStat label="Gospel shared" value={myStats.gospel} />
+          <MyStat label="Visited" value={myStats.visited} />
+          <MyStat label="Baptized" value={myStats.baptized} />
+          <MyStat label="Holy Ghost" value={myStats.holyGhost} />
+        </div>
 
         <div className="space-y-4">
           <div className="flex items-end justify-between gap-4 flex-wrap">
@@ -536,10 +559,9 @@ function EvangelismPage() {
             </div>
           </div>
 
-          {/* Search earns its place once a member has logged a season's worth
-              and is trying to remember one name. */}
-          {contacts.length > 6 && (
-            <div className="relative max-w-md">
+          {/* The same filters leadership gets, over a smaller set of rows. */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative min-w-[14rem] flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 value={q}
@@ -548,7 +570,53 @@ function EvangelismPage() {
                 className="pl-9"
               />
             </div>
-          )}
+            <button
+              type="button"
+              onClick={() => setFocusOnly(!focusOnly)}
+              aria-pressed={focusOnly}
+              className={`eyebrow inline-flex items-center gap-2 border px-4 py-2 text-xs transition-colors ${
+                focusOnly
+                  ? "border-night bg-night text-night-foreground"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Star className="h-3.5 w-3.5" fill={focusOnly ? "currentColor" : "none"} />
+              Focus only
+            </button>
+            <Select value={genderFilter} onValueChange={setGenderFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Everyone</SelectItem>
+                <SelectItem value="male">Male</SelectItem>
+                <SelectItem value="female">Female</SelectItem>
+                <SelectItem value="unknown">Not recorded</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={monthFilter} onValueChange={setMonthFilter}>
+              <SelectTrigger className="w-[170px]">
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All months</SelectItem>
+                {monthKeys.map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {monthLabel(k)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortMode} onValueChange={(v) => setSortMode(v as "alpha" | "recent")}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Most recent</SelectItem>
+                <SelectItem value="alpha">A–Z</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <ContactList
             contacts={allFiltered}
@@ -682,6 +750,15 @@ function EvangelismPage() {
           />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function MyStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="border border-border bg-card p-4">
+      <div className="eyebrow text-muted-foreground text-[10px]">{label}</div>
+      <div className="font-display text-3xl mt-1">{value}</div>
     </div>
   );
 }
