@@ -284,7 +284,7 @@ function dateSortNumber(value) {
   if (m) {
     y = Number(m[1]); month = Number(m[2]); day = Number(m[3]);
   } else {
-    m = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+    m = text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2}|\d{4})$/);
     if (!m) return null;
     month = Number(m[1]); day = Number(m[2]); y = Number(m[3]);
     if (y < 100) y += 2000;
@@ -326,6 +326,27 @@ function sortMonthRows(sheet) {
       .sort({ column: helperCol, ascending: true });
   } finally {
     helperRange.clearContent();
+  }
+}
+
+/**
+ * Also keep manual edits to the Date column chronological. Apps Script's
+ * built-in onEdit trigger runs for human edits; script and API writes do not
+ * recursively fire it, so website synchronization is handled by doPost.
+ */
+function onEdit(e) {
+  if (!e || !e.range) return;
+  var sheet = e.range.getSheet();
+  if (monthIndexOf(sheet.getName()) < 0) return;
+  var header = findHeaderRow(sheet);
+  if (!header || e.range.getLastRow() <= header) return;
+  if (e.range.getColumn() > 1 || e.range.getLastColumn() < 1) return;
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(2000)) return;
+  try {
+    sortMonthRows(sheet);
+  } finally {
+    lock.releaseLock();
   }
 }
 
