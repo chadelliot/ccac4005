@@ -693,21 +693,22 @@ function fillGenderFromNames() {
  *    the existing deployment keeps the same URL, so the Supabase secret still
  *    points at it and nothing else needs changing.
  *
- * 2. Replace CHANGE_ME_TO_A_LONG_RANDOM_STRING above with a long random string.
- *    Keep a copy — you need the same value in step 5.
+ * 2. BEFORE saving, replace the placeholder with the EXISTING Google Apps
+ *    Script shared secret that matches Supabase's HARVEST_SHEET_SECRET.
+ *    Do not publish this secret in GitHub or a chat.
  *
- * 3. Save, then Deploy -> New deployment -> gear icon -> Web app.
- *      Execute as:      Me
- *      Who has access:  Anyone
- *    "Anyone" is what lets the website reach it; the shared secret is what stops
- *    anyone else using it. Authorise when Google asks.
+ * 3. For an EXISTING installation, use Deploy -> Manage deployments ->
+ *    Edit (pencil) -> Version: New version -> Deploy. Keep the original
+ *    Web App URL. Do NOT use New deployment for an upgrade.
  *
- * 4. Copy the Web app URL. It looks like:
- *      https://script.google.com/macros/s/AKfycb…/exec
+ * 4. After the updated script is active, reload HARVEST LIST 2026 and run:
+ *    Harvest list -> Sort all months by outreach date
+ *    This one-time action sorts older data. Future website additions/edits
+ *    and direct manual edits to Date will be sorted automatically.
  *
- * 5. In a terminal, give both values to Supabase:
- *      supabase secrets set HARVEST_SHEET_WEBHOOK=<the URL from step 4>
- *      supabase secrets set HARVEST_SHEET_SECRET=<the string from step 2>
+ * 5. Only for a new installation: configure HARVEST_SHEET_WEBHOOK and
+ *    HARVEST_SHEET_SECRET in Supabase. On upgrades, keep existing values.
+ *    If the shared secret was exposed, rotate it in BOTH systems.
  *
  * 6. GENDER COLUMN (only needed once, after pasting this version in)
  *    Reload the sheet. A "Harvest list" menu appears next to Help.
