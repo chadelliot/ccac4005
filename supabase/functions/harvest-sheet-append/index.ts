@@ -48,15 +48,48 @@ serve(async (req) => {
     }
 
     const c = await req.json();
-    if (!c?.name || !c?.met_on) {
-      return json({ ok: false, error: "name and met_on are required" }, 400);
-    }
+    let sheetPayload: Record<string, unknown>;
 
-    const res = await fetch(webhook, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    if (c?.action === "update") {
+      if (typeof c.contact_id !== "string" || !c.contact_id || !c.previous?.met_on || !c.previous?.name) {
+        return json({ ok: false, error: "Contact ID and previous record details are required" }, 400);
+      }
+
+      // Look up the new values through the caller's RLS-protected session.
+      // Never accept arbitrary replacement names, phone numbers, or locations
+      // from the caller as instructions to write other people's sheet rows.
+      const { data: contact, error: contactError } = await asCaller
+        .from("evangelism_contacts")
+        .select("id,first_name,last_name,phone,where_met,met_on,gender")
+        .eq("id", c.contact_id)
+        .maybeSingle();
+      if (contactError || !contact) {
+        return json({ ok: false, error: "Contact not found or not authorized" }, 403);
+      }
+      sheetPayload = {
         secret,
+        action: "update",
+        contact_id: contact.id,
+        previous: {
+          met_on: String(c.previous.met_on),
+          name: String(c.previous.name),
+          phone: String(c.previous.phone ?? ""),
+          where_met: String(c.previous.where_met ?? ""),
+        },
+        met_on: contact.met_on,
+        where_met: contact.where_met ?? "",
+        name: [contact.first_name, contact.last_name].filter(Boolean).join(" "),
+        phone: contact.phone ?? "",
+        gender: contact.gender ?? "",
+      };
+    } else {
+      if (!c?.name || !c?.met_on) {
+        return json({ ok: false, error: "name and met_on are required" }, 400);
+      }
+      sheetPayload = {
+        secret,
+        action: "append",
+        contact_id: c.contact_id ?? "",
         met_on: c.met_on,
         witness: c.witness ?? "",
         where_met: c.where_met ?? "",
@@ -64,7 +97,13 @@ serve(async (req) => {
         phone: c.phone ?? "",
         notes: c.notes ?? "",
         gender: c.gender ?? "",
-      }),
+      };
+    }
+
+    const res = await fetch(webhook, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(sheetPayload),
       // Apps Script answers a deployment URL with a redirect to its runtime.
       redirect: "follow",
     });
