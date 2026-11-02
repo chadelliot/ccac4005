@@ -119,6 +119,12 @@ serve(async (req) => {
       } catch {
         return json({ ok: false, error: "Could not verify the Google Apps Script deployment version." });
       }
+      if (probe?.error === "bad secret") {
+        return json({
+          ok: false,
+          error: "Google Apps Script rejected the shared secret. Rotate/update HARVEST_SHEET_SECRET in Supabase to match the script.",
+        });
+      }
       if (probe?.error !== "contact_id, met_on, and name are required") {
         return json({
           ok: false,
