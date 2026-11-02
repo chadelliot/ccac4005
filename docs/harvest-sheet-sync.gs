@@ -328,6 +328,7 @@ function findLegacyRow(previous) {
   if (!phone && !location) return { error: 'A phone or location is needed to identify the original row' };
 
   var matches = [];
+  var looseMatches = [];
   var tabs = SpreadsheetApp.getActiveSpreadsheet().getSheets();
   for (var t = 0; t < tabs.length; t++) {
     var sheet = tabs[t];
@@ -337,15 +338,22 @@ function findLegacyRow(previous) {
     var values = sheet.getRange(header + 1, 1, sheet.getLastRow() - header, 5).getValues();
     for (var r = 0; r < values.length; r++) {
       var row = values[r];
-      if (norm(row[3]) !== name || sheetDateIso(row[0]) !== date) continue;
+      if (norm(row[3]) !== name) continue;
       if (phone && digits(row[4]) !== phone) continue;
       if (!phone && norm(row[2]) !== location) continue;
-      matches.push({ sheet: sheet, row: header + 1 + r, headerRow: header });
+      var candidate = { sheet: sheet, row: header + 1 + r, headerRow: header };
+      looseMatches.push(candidate);
+      if (sheetDateIso(row[0]) === date) matches.push(candidate);
     }
   }
   if (matches.length > 1) return { error: 'Multiple historic rows match — resolve manually before syncing' };
-  if (!matches.length) return { error: 'Original Harvest List row not found. Contact remains saved on CCAC; reconcile this row manually.' };
-  return matches[0];
+  if (matches.length === 1) return matches[0];
+  // Earlier website edits may already have changed the outreach date, leaving
+  // the sheet behind. A single name+phone (or name+location) match can still
+  // safely claim the historic row; multiple visits must be resolved manually.
+  if (looseMatches.length === 1) return looseMatches[0];
+  if (looseMatches.length > 1) return { error: 'Multiple historic visits found. Identify the correct row manually.' };
+  return { error: 'Original Harvest List row not found. Contact remains saved on CCAC; reconcile this row manually.' };
 }
 
 function updateContactRow(body) {
