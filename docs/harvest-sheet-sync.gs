@@ -82,7 +82,11 @@ function doPost(e) {
       sheet.getRange(row, idCol).setValue(String(body.contact_id));
     }
 
-    return json({ ok: true, tab: sheet.getName(), row: row, created: created });
+    // Keep new entries in chronological order within their month. Sorting the
+    // complete row keeps attribution, notes, gender and CCAC IDs together.
+    sortMonthRows(sheet);
+    var appended = body.contact_id ? findContactById(body.contact_id) : {};
+    return json({ ok: true, tab: sheet.getName(), row: appended.row || row, created: created });
     } finally {
       lock.releaseLock();
     }
@@ -250,6 +254,100 @@ function titleCase(s) {
 
 
 
+
+/* ===========================================================================
+ * CHRONOLOGICAL HARVEST LIST
+ *
+ * Each month is sorted oldest to newest by Date (column A). Move the entire
+ * record together, including sheet-only notes, witness names and hidden
+ * contact IDs. Equal dates retain their prior order.
+ *
+ * Google Sheets sometimes stores historic dates as strings ("2/28/26",
+ * "9/1st/26") instead of real dates. A temporary numeric key sorts both
+ * reliably without rewriting anyone's displayed outreach date.
+ * Missing/unrecognized dates go last and are never silently guessed.
+ * ========================================================================= */
+
+/** Convert a Google Sheets date or historic human-entered date to YYYYMMDD. */
+function dateSortNumber(value) {
+  if (Object.prototype.toString.call(value) === '[object Date]') {
+    if (isNaN(value.getTime())) return null;
+    var tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    return Number(Utilities.formatDate(value, tz, 'yyyyMMdd'));
+  }
+  var text = String(value == null ? '' : value).trim();
+  if (!text) return null;
+  // Tolerate handwritten ordinal dates, e.g. "9/1st/26", "9/2nd/26".
+  text = text.replace(/(\d+)(st|nd|rd|th)\b/gi, '$1');
+  var m = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  var y, month, day;
+  if (m) {
+    y = Number(m[1]); month = Number(m[2]); day = Number(m[3]);
+  } else {
+    m = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+    if (!m) return null;
+    month = Number(m[1]); day = Number(m[2]); y = Number(m[3]);
+    if (y < 100) y += 2000;
+  }
+  var candidate = new Date(y, month - 1, day);
+  if (candidate.getFullYear() !== y ||
+      candidate.getMonth() !== month - 1 ||
+      candidate.getDate() !== day) return null;
+  return y * 10000 + month * 100 + day;
+}
+
+/**
+ * Sort all populated rows BELOW the existing header. Uses an unused temporary
+ * column at the right, sorting every physical column together so nothing in
+ * a record becomes detached. The temporary values are removed in finally.
+ */
+function sortMonthRows(sheet) {
+  var headerRow = findHeaderRow(sheet);
+  if (!headerRow) throw new Error('Cannot sort ' + sheet.getName() + ': Date header not found');
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= headerRow + 1) return;
+  var count = lastRow - headerRow;
+  var dates = sheet.getRange(headerRow + 1, 1, count, 1).getValues();
+  var helperCol = Math.max(sheet.getLastColumn() + 1, 8);
+  if (helperCol > sheet.getMaxColumns()) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), helperCol - sheet.getMaxColumns());
+  }
+  var helperRange = sheet.getRange(headerRow + 1, helperCol, count, 1);
+  var keys = [];
+  for (var i = 0; i < dates.length; i++) {
+    var sortDate = dateSortNumber(dates[i][0]);
+    // 100,000 slots per date retain the previous row order for equal dates.
+    // Unknown/blank dates sort after the known dates.
+    keys.push([sortDate == null ? 9999999900000 + i : sortDate * 100000 + i]);
+  }
+  helperRange.setValues(keys);
+  try {
+    sheet.getRange(headerRow + 1, 1, count, helperCol)
+      .sort({ column: helperCol, ascending: true });
+  } finally {
+    helperRange.clearContent();
+  }
+}
+
+/** One-time cleanup, available from the sheet's Harvest list menu. */
+function sortAllHarvestMonths() {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets();
+    var count = 0;
+    for (var i = 0; i < sheets.length; i++) {
+      if (monthIndexOf(sheets[i].getName()) < 0) continue;
+      sortMonthRows(sheets[i]);
+      count++;
+    }
+    SpreadsheetApp.getUi().alert('Sorted ' + count +
+      ' Harvest List monthly tabs, earliest to latest. Entire contact rows moved together.');
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 /* ===========================================================================
  * RETROACTIVE SYNC
  *
@@ -412,7 +510,11 @@ function updateContactRow(body) {
   }
   var cidCol = contactIdColumn(destination, destHeader, true);
   destination.getRange(target, cidCol).setValue(String(body.contact_id));
-  return { ok: true, tab: destination.getName(), row: target, moved: moved };
+  // When the date moves to another month, close the gap in the old tab too.
+  if (moved) sortMonthRows(match.sheet);
+  sortMonthRows(destination);
+  var updated = findContactById(body.contact_id);
+  return { ok: true, tab: destination.getName(), row: updated.row || target, moved: moved };
 }
 
 /* ===========================================================================
@@ -431,6 +533,8 @@ function onOpen() {
     .createMenu('Harvest list')
     .addItem('Set up the Gender column', 'setUpGenderColumn')
     .addItem('Fill blank genders from names', 'fillGenderFromNames')
+    .addSeparator()
+    .addItem('Sort all months by outreach date', 'sortAllHarvestMonths')
     .addToUi();
 }
 
