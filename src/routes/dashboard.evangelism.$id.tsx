@@ -206,13 +206,10 @@ function ContactDetail() {
 
     // The website is the source of truth. Send changed profile fields to the
     // original sheet row instead of appending another copy of the contact.
-    const sheetFieldsChanged =
-      parsed.data.met_on !== contact?.met_on ||
-      (parsed.data.where_met ?? null) !== (contact?.where_met ?? null) ||
-      parsed.data.first_name !== contact?.first_name ||
-      (parsed.data.last_name ?? null) !== (contact?.last_name ?? null) ||
-      (parsed.data.phone ?? null) !== (contact?.phone ?? null);
-    if (sheetFieldsChanged && contact) {
+    // Always permit a retry on Save, even if no field changed in this form:
+    // older website edits may not yet have reached the historical sheet row.
+    // Contact IDs make repeated sync calls idempotent.
+    if (contact) {
       void (async () => {
         const { data: synced, error: syncError } = await supabase.functions.invoke("harvest-sheet-append", {
           body: {
