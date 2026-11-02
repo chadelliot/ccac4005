@@ -100,6 +100,39 @@ serve(async (req) => {
       };
     }
 
+    // The original 2026 Apps Script only appends rows and ignores "action".
+    // Before sending an update, prove the deployed web app supports the update
+    // protocol. Both versions reject this deliberately incomplete POST without
+    // modifying a sheet; only the updated script returns this exact validation
+    // error. This fail-closed check prevents historic contacts being duplicated
+    // when Google Apps Script source was saved but not redeployed.
+    if (c?.action === "update") {
+      const probeResponse = await fetch(webhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret, action: "update" }),
+        redirect: "follow",
+      });
+      let probe: { ok?: boolean; error?: string };
+      try {
+        probe = JSON.parse(await probeResponse.text());
+      } catch {
+        return json({ ok: false, error: "Could not verify the Google Apps Script deployment version." });
+      }
+      if (probe?.error === "bad secret") {
+        return json({
+          ok: false,
+          error: "Google Apps Script rejected the shared secret. Rotate/update HARVEST_SHEET_SECRET in Supabase to match the script.",
+        });
+      }
+      if (probe?.error !== "contact_id, met_on, and name are required") {
+        return json({
+          ok: false,
+          error: "The Google Apps Script web app is still using an append-only version. In Apps Script, use Deploy > Manage deployments > Edit > New version > Deploy before retrying.",
+        });
+      }
+    }
+
     const res = await fetch(webhook, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
