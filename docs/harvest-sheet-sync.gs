@@ -116,9 +116,11 @@ function findMonthTab(isoDate) {
     var name = tabs[i].getName().toLowerCase();
     if (name.indexOf(want) === 0 && name.indexOf(year) !== -1) return tabs[i];
   }
-  // Year absent from the tab name is fine — match on the month alone.
+  // Match a yearless legacy tab if one exists, but never route a record
+  // to the wrong year (e.g. January 2027 into January 2026).
   for (var j = 0; j < tabs.length; j++) {
-    if (tabs[j].getName().toLowerCase().indexOf(want) === 0) return tabs[j];
+    var tabName = tabs[j].getName().toLowerCase();
+    if (tabName.indexOf(want) === 0 && !/\b20\d{2}\b/.test(tabName)) return tabs[j];
   }
   return null;
 }
@@ -260,7 +262,9 @@ function titleCase(s) {
 var CONTACT_ID_HEADER = 'CCAC Contact ID';
 
 function contactIdColumn(sheet, headerRow, create) {
-  var last = Math.max(sheet.getLastColumn(), 5);
+  // A:G are reserved for contact fields, including Notes and Gender even if
+  // their headers are blank. Never store internal IDs in those columns.
+  var last = Math.max(sheet.getLastColumn(), 7);
   var headers = sheet.getRange(headerRow, 1, 1, last).getValues()[0];
   for (var i = 0; i < headers.length; i++) {
     if (String(headers[i]).trim().toLowerCase() === CONTACT_ID_HEADER.toLowerCase()) return i + 1;
