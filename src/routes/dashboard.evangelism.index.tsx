@@ -263,6 +263,7 @@ function EvangelismPage() {
     void (async () => {
       const { data: sheetRes } = await supabase.functions.invoke("harvest-sheet-append", {
         body: {
+          contact_id: inserted?.id ?? "",
           met_on: parsed.data.met_on,
           witness: primary || typed,
           where_met: parsed.data.where_met ?? "",

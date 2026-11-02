@@ -26,6 +26,21 @@ function doPost(e) {
       return json({ ok: false, error: 'bad secret' });
     }
 
+    // Serialize simultaneous edits and additions, so two requests do not
+    // claim the same free row before either of them has finished writing.
+    var lock = LockService.getScriptLock();
+    lock.waitLock(20000);
+    try {
+      if (body.action === 'update') return json(updateContactRow(body));
+
+      if (body.contact_id) {
+        var existing = findContactById(body.contact_id);
+        if (existing.error) return json({ ok: false, error: existing.error });
+        if (existing.sheet) {
+          return json({ ok: true, tab: existing.sheet.getName(), row: existing.row, already_exists: true });
+        }
+      }
+
     var sheet = findMonthTab(body.met_on);
     var created = false;
     if (!sheet) {
@@ -62,7 +77,15 @@ function doPost(e) {
       if (gcol) sheet.getRange(row, gcol).setValue(titleCase(body.gender));
     }
 
+    if (body.contact_id) {
+      var idCol = contactIdColumn(sheet, headerRow, true);
+      sheet.getRange(row, idCol).setValue(String(body.contact_id));
+    }
+
     return json({ ok: true, tab: sheet.getName(), row: row, created: created });
+    } finally {
+      lock.releaseLock();
+    }
   } catch (err) {
     return json({ ok: false, error: String(err) });
   }
@@ -93,9 +116,11 @@ function findMonthTab(isoDate) {
     var name = tabs[i].getName().toLowerCase();
     if (name.indexOf(want) === 0 && name.indexOf(year) !== -1) return tabs[i];
   }
-  // Year absent from the tab name is fine — match on the month alone.
+  // Match a yearless legacy tab if one exists, but never route a record
+  // to the wrong year (e.g. January 2027 into January 2026).
   for (var j = 0; j < tabs.length; j++) {
-    if (tabs[j].getName().toLowerCase().indexOf(want) === 0) return tabs[j];
+    var tabName = tabs[j].getName().toLowerCase();
+    if (tabName.indexOf(want) === 0 && !/\b20\d{2}\b/.test(tabName)) return tabs[j];
   }
   return null;
 }
@@ -221,6 +246,173 @@ function titleCase(s) {
   var t = String(s || '').trim();
   if (!t) return '';
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+}
+
+
+
+/* ===========================================================================
+ * RETROACTIVE SYNC
+ *
+ * The CCAC contact UUID identifies the row across month tabs. Historic sheet
+ * entries have no UUID; their first correction may claim exactly one row by
+ * original name + outreach date + phone or location. Ambiguous matches fail
+ * closed rather than altering somebody else's record or appending a duplicate.
+ * ========================================================================= */
+
+var CONTACT_ID_HEADER = 'CCAC Contact ID';
+
+function contactIdColumn(sheet, headerRow, create) {
+  // A:G are reserved for contact fields, including Notes and Gender even if
+  // their headers are blank. Never store internal IDs in those columns.
+  var last = Math.max(sheet.getLastColumn(), 7);
+  var headers = sheet.getRange(headerRow, 1, 1, last).getValues()[0];
+  for (var i = 0; i < headers.length; i++) {
+    if (String(headers[i]).trim().toLowerCase() === CONTACT_ID_HEADER.toLowerCase()) return i + 1;
+  }
+  if (!create) return null;
+  var col = last + 1;
+  if (col > sheet.getMaxColumns()) sheet.insertColumnsAfter(sheet.getMaxColumns(), col - sheet.getMaxColumns());
+  sheet.getRange(headerRow, col).setValue(CONTACT_ID_HEADER);
+  // Internal mapping only, not another field for the evangelism team to fill.
+  sheet.hideColumns(col);
+  return col;
+}
+
+function findContactById(contactId) {
+  if (!contactId) return {};
+  var sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets();
+  var found = [];
+  for (var s = 0; s < sheets.length; s++) {
+    var sheet = sheets[s];
+    if (monthIndexOf(sheet.getName()) === -1) continue;
+    var header = findHeaderRow(sheet);
+    if (!header || sheet.getLastRow() <= header) continue;
+    var col = contactIdColumn(sheet, header, false);
+    if (!col) continue;
+    var ids = sheet.getRange(header + 1, col, sheet.getLastRow() - header, 1).getValues();
+    for (var i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]).trim() === String(contactId)) {
+        found.push({ sheet: sheet, row: header + 1 + i, headerRow: header });
+      }
+    }
+  }
+  if (found.length > 1) return { error: 'Duplicate CCAC contact IDs in Harvest List — resolve before syncing' };
+  return found[0] || {};
+}
+
+function norm(value) {
+  return String(value == null ? '' : value).trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function digits(value) {
+  return String(value == null ? '' : value).replace(/\D/g, '');
+}
+
+function sheetDateIso(value) {
+  if (Object.prototype.toString.call(value) === '[object Date]') {
+    return Utilities.formatDate(value, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+  }
+  var text = String(value == null ? '' : value).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+  var parts = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!parts) return text;
+  return parts[3] + '-' + ('0' + parts[1]).slice(-2) + '-' + ('0' + parts[2]).slice(-2);
+}
+
+function findLegacyRow(previous) {
+  if (!previous || !previous.name || !previous.met_on) return { error: 'Previous name and outreach date required' };
+  var name = norm(previous.name);
+  var date = sheetDateIso(previous.met_on);
+  var phone = digits(previous.phone);
+  var location = norm(previous.where_met);
+  if (!phone && !location) return { error: 'A phone or location is needed to identify the original row' };
+
+  var matches = [];
+  var looseMatches = [];
+  var tabs = SpreadsheetApp.getActiveSpreadsheet().getSheets();
+  for (var t = 0; t < tabs.length; t++) {
+    var sheet = tabs[t];
+    if (monthIndexOf(sheet.getName()) === -1) continue;
+    var header = findHeaderRow(sheet);
+    if (!header || sheet.getLastRow() <= header) continue;
+    var values = sheet.getRange(header + 1, 1, sheet.getLastRow() - header, 5).getValues();
+    for (var r = 0; r < values.length; r++) {
+      var row = values[r];
+      if (norm(row[3]) !== name) continue;
+      if (phone && digits(row[4]) !== phone) continue;
+      if (!phone && norm(row[2]) !== location) continue;
+      var candidate = { sheet: sheet, row: header + 1 + r, headerRow: header };
+      looseMatches.push(candidate);
+      if (sheetDateIso(row[0]) === date) matches.push(candidate);
+    }
+  }
+  if (matches.length > 1) return { error: 'Multiple historic rows match — resolve manually before syncing' };
+  if (matches.length === 1) return matches[0];
+  // Earlier website edits may already have changed the outreach date, leaving
+  // the sheet behind. A single name+phone (or name+location) match can still
+  // safely claim the historic row; multiple visits must be resolved manually.
+  if (looseMatches.length === 1) return looseMatches[0];
+  if (looseMatches.length > 1) return { error: 'Multiple historic visits found. Identify the correct row manually.' };
+  return { error: 'Original Harvest List row not found. Contact remains saved on CCAC; reconcile this row manually.' };
+}
+
+function updateContactRow(body) {
+  if (!body.contact_id || !body.met_on || !body.name) {
+    return { ok: false, error: 'contact_id, met_on, and name are required' };
+  }
+  var match = findContactById(body.contact_id);
+  if (match.error) return { ok: false, error: match.error };
+  if (!match.sheet) {
+    match = findLegacyRow(body.previous);
+    if (match.error) return { ok: false, error: match.error };
+    // Claim the historic record for reliable updates from now on.
+    var legacyCol = contactIdColumn(match.sheet, match.headerRow, true);
+    match.sheet.getRange(match.row, legacyCol).setValue(String(body.contact_id));
+  }
+
+  var destination = findMonthTab(body.met_on) || createMonthTab(body.met_on);
+  if (!destination) return { ok: false, error: 'Unable to find or create outreach month tab' };
+
+  var destHeader = findHeaderRow(destination);
+  if (!destHeader) return { ok: false, error: 'Destination tab has no date header' };
+
+  var target = match.row;
+  var moved = destination.getSheetId() !== match.sheet.getSheetId();
+  if (moved) {
+    var destRow = firstBlankRow(destination, destHeader);
+    var srcIdCol = contactIdColumn(match.sheet, match.headerRow, false);
+    var destIdCol = contactIdColumn(destination, destHeader, true);
+    var width = Math.max(match.sheet.getLastColumn(), destination.getLastColumn(), srcIdCol || 0, destIdCol);
+    if (width > destination.getMaxColumns()) {
+      destination.insertColumnsAfter(destination.getMaxColumns(), width - destination.getMaxColumns());
+    }
+    if (width > match.sheet.getMaxColumns()) {
+      match.sheet.insertColumnsAfter(match.sheet.getMaxColumns(), width - match.sheet.getMaxColumns());
+    }
+    var rowValues = match.sheet.getRange(match.row, 1, 1, width).getValues()[0];
+    if (srcIdCol && srcIdCol !== destIdCol) rowValues[srcIdCol - 1] = '';
+    rowValues[destIdCol - 1] = String(body.contact_id);
+
+    // Write the complete historical row (including notes and other columns)
+    // before clearing its previous location, to avoid losing information.
+    destination.getRange(destRow, 1, 1, width).setValues([rowValues]);
+    match.sheet.getRange(match.row, 1, 1, width).clearContent();
+    target = destRow;
+  }
+
+  // Update only fields managed by the website. Preserve witness attribution
+  // and follow-up notes maintained by the evangelism team in Google Sheets.
+  destination.getRange(target, 1).setValue(body.met_on);
+  destination.getRange(target, 3).setValue(body.where_met || '');
+  destination.getRange(target, 4).setValue(body.name);
+  destination.getRange(target, 5).setValue(body.phone || '');
+  if (body.gender !== undefined) {
+    var genderCol = genderColumn(destination, destHeader, !!body.gender);
+    if (genderCol) destination.getRange(target, genderCol).setValue(body.gender ? titleCase(body.gender) : '');
+  }
+  var cidCol = contactIdColumn(destination, destHeader, true);
+  destination.getRange(target, cidCol).setValue(String(body.contact_id));
+  return { ok: true, tab: destination.getName(), row: target, moved: moved };
 }
 
 /* ===========================================================================

@@ -203,6 +203,35 @@ function ContactDetail() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Saved");
+
+    // The website is the source of truth. Send changed profile fields to the
+    // original sheet row instead of appending another copy of the contact.
+    // Always permit a retry on Save, even if no field changed in this form:
+    // older website edits may not yet have reached the historical sheet row.
+    // Contact IDs make repeated sync calls idempotent.
+    if (contact) {
+      void (async () => {
+        const { data: synced, error: syncError } = await supabase.functions.invoke("harvest-sheet-append", {
+          body: {
+            action: "update",
+            contact_id: id,
+            previous: {
+              met_on: contact.met_on,
+              name: [contact.first_name, contact.last_name].filter(Boolean).join(" "),
+              phone: contact.phone ?? "",
+              where_met: contact.where_met ?? "",
+            },
+          },
+        });
+        const outcome = synced as { ok?: boolean; tab?: string; error?: string; configured?: boolean } | null;
+        if (!syncError && outcome?.ok) {
+          toast.success(`Harvest list updated (${outcome.tab}).`);
+        } else {
+          toast.error(`Saved here, but harvest sheet update failed: ${outcome?.error ?? syncError?.message ?? "check integration setup"}`);
+        }
+      })();
+    }
+
     if (addressChanged) {
       const q = parsed.data.address || parsed.data.where_met;
       if (q) {
